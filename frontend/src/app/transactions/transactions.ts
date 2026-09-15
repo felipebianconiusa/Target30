@@ -17,6 +17,7 @@ type DatePreset = '7d' | '30d' | 'current-month' | 'previous-month' | 'custom' |
 export class Transactions implements OnInit {
   protected readonly transactions = signal<Transaction[]>([]);
   protected readonly loading = signal(true);
+  protected readonly syncing = signal(false);
   protected readonly errorMessage = signal('');
 
   protected readonly search = signal('');
@@ -76,6 +77,24 @@ export class Transactions implements OnInit {
     const institutionFromQuery = this.route.snapshot.queryParamMap.get('institution');
     if (institutionFromQuery) this.institutions.set([institutionFromQuery]);
 
+    this.loadTransactions();
+  }
+
+  protected refresh(): void {
+    this.syncing.set(true);
+    this.plaidService.syncTransactions().subscribe({
+      next: () => {
+        this.syncing.set(false);
+        this.loadTransactions();
+      },
+      error: () => {
+        this.syncing.set(false);
+        this.errorMessage.set('Não foi possível sincronizar com o Plaid.');
+      },
+    });
+  }
+
+  private loadTransactions(): void {
     this.plaidService.getAllTransactions().subscribe({
       next: (transactions) => {
         this.transactions.set(transactions);

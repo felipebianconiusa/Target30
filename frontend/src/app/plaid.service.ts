@@ -61,4 +61,8 @@ export class PlaidService {
   getAllTransactions(): Observable<Transaction[]> {
     return this.http.get<Transaction[]>(`${this.baseUrl}/transactions`);
   }
+
+  syncTransactions(): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/sync`, {});
+  }
 }

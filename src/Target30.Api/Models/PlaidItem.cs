@@ -8,4 +8,5 @@ public class PlaidItem
     public string AccessToken { get; set; } = null!;
     public string? InstitutionName { get; set; }
     public DateTime ConnectedAt { get; set; } = DateTime.UtcNow;
+    public string? NextCursor { get; set; }
 }

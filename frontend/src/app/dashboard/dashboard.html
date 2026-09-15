@@ -10,6 +10,12 @@
   </p>
 } @else {
   <div class="dashboard">
+    <div class="dashboard__toolbar">
+      <button type="button" [disabled]="syncing()" (click)="refresh()">
+        {{ syncing() ? 'Sincronizando...' : 'Atualizar' }}
+      </button>
+    </div>
+
     <div class="dashboard__cards">
       <div class="card">
         <span class="card__label">Receitas</span>

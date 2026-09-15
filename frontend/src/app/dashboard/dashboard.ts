@@ -19,6 +19,7 @@ interface CategoryTotal {
 export class Dashboard implements OnInit {
   protected readonly transactions = signal<Transaction[]>([]);
   protected readonly loading = signal(true);
+  protected readonly syncing = signal(false);
   protected readonly errorMessage = signal('');
 
   protected readonly totalExpenses = computed(() =>
@@ -56,6 +57,24 @@ export class Dashboard implements OnInit {
   constructor(private readonly plaidService: PlaidService) {}
 
   ngOnInit(): void {
+    this.loadTransactions();
+  }
+
+  protected refresh(): void {
+    this.syncing.set(true);
+    this.plaidService.syncTransactions().subscribe({
+      next: () => {
+        this.syncing.set(false);
+        this.loadTransactions();
+      },
+      error: () => {
+        this.syncing.set(false);
+        this.errorMessage.set('Não foi possível sincronizar com o Plaid.');
+      },
+    });
+  }
+
+  private loadTransactions(): void {
     this.plaidService.getAllTransactions().subscribe({
       next: (transactions) => {
         this.transactions.set(transactions);

@@ -73,6 +73,9 @@ public class PlaidController : ControllerBase
         _db.PlaidItems.Add(item);
         await _db.SaveChangesAsync();
 
+        // Primeira carga: já traz o histórico de transações pro banco local.
+        await SyncItemAsync(item);
+
         return Ok(new { itemId = item.ItemId });
     }
 
@@ -89,61 +92,128 @@ public class PlaidController : ControllerBase
         return Ok(items);
     }
 
-    // Sincroniza transações de um item já conectado (só se pertencer ao usuário logado)
+    // Busca com o Plaid o que mudou desde a última sincronização de cada item do usuário
+    // (usa o cursor salvo — não rebaixa o histórico inteiro toda vez).
+    [HttpPost("sync")]
+    public async Task<IActionResult> SyncAll()
+    {
+        var items = await _db.PlaidItems.Where(i => i.UserId == CurrentUserId).ToListAsync();
+        foreach (var item in items)
+            await SyncItemAsync(item);
+
+        return Ok();
+    }
+
+    // Transações de um item específico, lidas do banco local (rápido, sem chamar o Plaid)
     [HttpGet("items/{itemId}/transactions")]
     public async Task<IActionResult> GetTransactions(string itemId)
     {
-        var item = await _db.PlaidItems.FirstOrDefaultAsync(i => i.ItemId == itemId && i.UserId == CurrentUserId);
-        if (item is null)
+        var itemExists = await _db.PlaidItems.AnyAsync(i => i.ItemId == itemId && i.UserId == CurrentUserId);
+        if (!itemExists)
             return NotFound();
 
-        var transactions = await FetchTransactionsAsync(item);
-        return Ok(transactions);
+        var transactions = await _db.PlaidTransactions
+            .Where(t => t.ItemId == itemId && t.UserId == CurrentUserId)
+            .OrderByDescending(t => t.Date)
+            .ToListAsync();
+
+        return Ok(transactions.Select(ToDto));
     }
 
-    // Transações de todas as contas conectadas pelo usuário logado, juntas
+    // Transações de todas as contas conectadas pelo usuário logado, lidas do banco local
     [HttpGet("transactions")]
     public async Task<IActionResult> GetAllTransactions()
     {
-        var items = await _db.PlaidItems.Where(i => i.UserId == CurrentUserId).ToListAsync();
-        var all = new List<TransactionDto>();
+        var transactions = await _db.PlaidTransactions
+            .Where(t => t.UserId == CurrentUserId)
+            .OrderByDescending(t => t.Date)
+            .ToListAsync();
 
-        foreach (var item in items)
+        return Ok(transactions.Select(ToDto));
+    }
+
+    private async Task SyncItemAsync(PlaidItem item)
+    {
+        var cursor = item.NextCursor;
+        var hasMore = true;
+
+        while (hasMore)
         {
-            var transactions = await FetchTransactionsAsync(item);
-            if (transactions is not null)
-                all.AddRange(transactions);
+            var response = await _client.TransactionsSyncAsync(new TransactionsSyncRequest
+            {
+                AccessToken = item.AccessToken,
+                Cursor = cursor,
+            });
+
+            if (response.Error is not null)
+                return; // item com erro (ex.: precisa reconectar) — não trava o sync dos outros
+
+            await UpsertAsync(item, response.Added);
+            await UpsertAsync(item, response.Modified);
+            await RemoveAsync(response.Removed);
+
+            cursor = response.NextCursor;
+            hasMore = response.HasMore;
         }
 
-        return Ok(all.OrderByDescending(t => t.Date));
+        item.NextCursor = cursor;
+        await _db.SaveChangesAsync();
     }
-
-    private async Task<List<TransactionDto>?> FetchTransactionsAsync(PlaidItem item)
-    {
-        var response = await _client.TransactionsSyncAsync(new TransactionsSyncRequest
-        {
-            AccessToken = item.AccessToken,
-        });
-
-        if (response.Error is not null)
-            return null;
 
 #pragma warning disable CS0612 // Category/Name legados usados como fallback
-        return response.Added.Select(t => new TransactionDto(
-            t.TransactionId ?? "",
-            t.AccountId ?? "",
-            item.ItemId,
-            item.InstitutionName,
-            t.Amount ?? 0m,
-            t.IsoCurrencyCode,
-            t.Date ?? DateOnly.FromDateTime(DateTime.UtcNow),
-            t.MerchantName ?? t.Name ?? "Transação sem descrição",
-            t.MerchantName,
-            t.Pending ?? false,
-            t.PersonalFinanceCategory?.Primary ?? t.Category?.FirstOrDefault()
-        )).ToList();
-#pragma warning restore CS0612
+    private async Task UpsertAsync(PlaidItem item, IReadOnlyList<Transaction> transactions)
+    {
+        foreach (var t in transactions)
+        {
+            var transactionId = t.TransactionId ?? "";
+            var existing = await _db.PlaidTransactions
+                .FirstOrDefaultAsync(x => x.PlaidTransactionId == transactionId);
+
+            if (existing is null)
+            {
+                existing = new PlaidTransaction { PlaidTransactionId = transactionId };
+                _db.PlaidTransactions.Add(existing);
+            }
+
+            existing.UserId = item.UserId;
+            existing.AccountId = t.AccountId ?? "";
+            existing.ItemId = item.ItemId;
+            existing.InstitutionName = item.InstitutionName;
+            existing.Amount = t.Amount ?? 0m;
+            existing.IsoCurrencyCode = t.IsoCurrencyCode;
+            existing.Date = t.Date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+            existing.Name = t.MerchantName ?? t.Name ?? "Transação sem descrição";
+            existing.MerchantName = t.MerchantName;
+            existing.Pending = t.Pending ?? false;
+            existing.Category = t.PersonalFinanceCategory?.Primary ?? t.Category?.FirstOrDefault();
+        }
     }
+#pragma warning restore CS0612
+
+    private async Task RemoveAsync(IReadOnlyList<RemovedTransaction> removed)
+    {
+        foreach (var r in removed)
+        {
+            var existing = await _db.PlaidTransactions
+                .FirstOrDefaultAsync(x => x.PlaidTransactionId == r.TransactionId);
+            if (existing is not null)
+                _db.PlaidTransactions.Remove(existing);
+        }
+    }
+
+    private static TransactionDto ToDto(PlaidTransaction t) => new(
+        t.PlaidTransactionId,
+        t.AccountId,
+        t.ItemId,
+        t.InstitutionName,
+        t.Amount,
+        t.IsoCurrencyCode,
+        t.Date,
+        t.Name,
+        t.MerchantName,
+        t.Pending,
+        t.Category
+    );
 }
 
 public record ExchangeTokenRequest(string PublicToken, string? InstitutionName);

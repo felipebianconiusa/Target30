@@ -1,5 +1,10 @@
 <section class="transactions-page">
-  <h1>Transações</h1>
+  <div class="transactions-page__header">
+    <h1>Transações</h1>
+    <button type="button" [disabled]="syncing()" (click)="refresh()">
+      {{ syncing() ? 'Sincronizando...' : 'Atualizar' }}
+    </button>
+  </div>
 
   @if (loading()) {
     <p>Carregando...</p>
