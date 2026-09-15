@@ -8,10 +8,9 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 
   input,
-  select,
   button {
     padding: 0.4rem 0.6rem;
     border: 1px solid #d0d0d0;
@@ -29,7 +28,37 @@
   }
 }
 
-.filters__separator {
+.date-presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+
+  input {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    font: inherit;
+  }
+}
+
+.date-presets__chip {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #d0d0d0;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  &--active {
+    background: #1a73e8;
+    border-color: #1a73e8;
+    color: #fff;
+  }
+}
+
+.date-presets__separator {
   color: #777;
   font-size: 0.85rem;
 }

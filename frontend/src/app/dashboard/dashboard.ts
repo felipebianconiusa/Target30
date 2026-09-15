@@ -2,6 +2,7 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { PlaidService, Transaction } from '../plaid.service';
 import { TransactionTable } from '../shared/transaction-table/transaction-table';
+import { CATEGORY_FALLBACK_CODE, translateCategory } from '../shared/category-labels';
 
 interface CategoryTotal {
   category: string;
@@ -40,13 +41,13 @@ export class Dashboard implements OnInit {
     const totals = new Map<string, number>();
     for (const t of this.transactions()) {
       if (t.amount <= 0) continue;
-      const key = t.category ?? 'Outros';
+      const key = t.category ?? CATEGORY_FALLBACK_CODE;
       totals.set(key, (totals.get(key) ?? 0) + t.amount);
     }
     const entries = [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
     const max = entries.length > 0 ? entries[0][1] : 1;
     return entries.map(([category, total]) => ({
-      category,
+      category: translateCategory(category),
       total,
       percentOfMax: (total / max) * 100,
     }));

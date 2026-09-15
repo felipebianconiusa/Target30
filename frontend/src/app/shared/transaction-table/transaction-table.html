@@ -21,7 +21,7 @@
           @if (showInstitution) {
             <td>{{ tx.institutionName ?? '—' }}</td>
           }
-          <td>{{ tx.category ?? '—' }}</td>
+          <td>{{ translateCategory(tx.category) }}</td>
           <td
             class="transaction-table__amount-col"
             [class.transaction-table__amount--in]="tx.amount < 0"

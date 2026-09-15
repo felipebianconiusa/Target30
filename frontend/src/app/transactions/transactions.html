@@ -14,29 +14,72 @@
         (input)="search.set($any($event.target).value)"
       />
 
-      <select [value]="category()" (change)="category.set($any($event.target).value)">
-        <option value="">Todas as categorias</option>
-        @for (c of categories(); track c) {
-          <option [value]="c">{{ c }}</option>
-        }
-      </select>
+      <app-multi-select
+        allLabel="Todas as categorias"
+        [options]="categoryOptions()"
+        [selected]="categories()"
+        (selectedChange)="categories.set($event)"
+      />
 
-      <select [value]="institution()" (change)="institution.set($any($event.target).value)">
-        <option value="">Todas as contas</option>
-        @for (i of institutions(); track i) {
-          <option [value]="i">{{ i }}</option>
-        }
-      </select>
+      <app-multi-select
+        allLabel="Todas as contas"
+        [options]="institutionOptions()"
+        [selected]="institutions()"
+        (selectedChange)="institutions.set($event)"
+      />
+
+      <button type="button" (click)="clearFilters()">Limpar filtros</button>
+    </div>
+
+    <div class="date-presets">
+      <button
+        type="button"
+        class="date-presets__chip"
+        [class.date-presets__chip--active]="activePreset() === 'all'"
+        (click)="applyPreset('all')"
+      >
+        Tudo
+      </button>
+      <button
+        type="button"
+        class="date-presets__chip"
+        [class.date-presets__chip--active]="activePreset() === '7d'"
+        (click)="applyPreset('7d')"
+      >
+        Últimos 7 dias
+      </button>
+      <button
+        type="button"
+        class="date-presets__chip"
+        [class.date-presets__chip--active]="activePreset() === '30d'"
+        (click)="applyPreset('30d')"
+      >
+        Últimos 30 dias
+      </button>
+      <button
+        type="button"
+        class="date-presets__chip"
+        [class.date-presets__chip--active]="activePreset() === 'current-month'"
+        (click)="applyPreset('current-month')"
+      >
+        Mês atual
+      </button>
+      <button
+        type="button"
+        class="date-presets__chip"
+        [class.date-presets__chip--active]="activePreset() === 'previous-month'"
+        (click)="applyPreset('previous-month')"
+      >
+        Mês anterior
+      </button>
 
       <input
         type="date"
         [value]="dateFrom()"
-        (change)="dateFrom.set($any($event.target).value)"
+        (change)="setDateFrom($any($event.target).value)"
       />
-      <span class="filters__separator">até</span>
-      <input type="date" [value]="dateTo()" (change)="dateTo.set($any($event.target).value)" />
-
-      <button type="button" (click)="clearFilters()">Limpar filtros</button>
+      <span class="date-presets__separator">até</span>
+      <input type="date" [value]="dateTo()" (change)="setDateTo($any($event.target).value)" />
     </div>
 
     <p class="transactions-page__count">
