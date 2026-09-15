@@ -40,9 +40,11 @@ export class ConnectAccount {
   }
 
   private exchangeToken(publicToken: string, metadata: PlaidLinkOnSuccessMetadata): void {
-    this.plaidService.exchangePublicToken(publicToken).subscribe({
+    const institutionName = metadata.institution?.name ?? null;
+
+    this.plaidService.exchangePublicToken(publicToken, institutionName).subscribe({
       next: () => {
-        this.institutionName.set(metadata.institution?.name ?? 'sua instituição');
+        this.institutionName.set(institutionName ?? 'sua instituição');
         this.status.set('connected');
       },
       error: () => this.fail('Falha ao trocar o token com o backend.'),

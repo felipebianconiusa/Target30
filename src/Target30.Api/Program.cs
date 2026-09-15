@@ -1,4 +1,6 @@
 using Going.Plaid;
+using Microsoft.EntityFrameworkCore;
+using Target30.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,9 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 builder.Services.AddPlaid(builder.Configuration.GetSection("Plaid"));
+
+builder.Services.AddDbContext<Target30DbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddCors(options =>
 {
@@ -21,6 +26,11 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider.GetRequiredService<Target30DbContext>().Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -19,3 +19,6 @@ npm-debug.log*
 
 # Secrets (never commit real Plaid/bank credentials)
 **/secrets.json
+*.db
+*.db-shm
+*.db-wal

@@ -20,9 +20,13 @@ export class PlaidService {
     return this.http.post<LinkTokenResponse>(`${this.baseUrl}/link-token`, {});
   }
 
-  exchangePublicToken(publicToken: string): Observable<ExchangeTokenResponse> {
+  exchangePublicToken(
+    publicToken: string,
+    institutionName: string | null,
+  ): Observable<ExchangeTokenResponse> {
     return this.http.post<ExchangeTokenResponse>(`${this.baseUrl}/exchange-token`, {
       publicToken,
+      institutionName,
     });
   }
 }
