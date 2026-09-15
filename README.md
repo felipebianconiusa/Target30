@@ -60,10 +60,20 @@ As migrations rodam automaticamente também no startup da API (`Database.Migrate
 - `GET /api/plaid/items` — lista as instituições já conectadas (sem expor o `access_token`)
 - `GET /api/plaid/items/{itemId}/transactions` — sincroniza transações (`transactions/sync`) do item
 
-Verificado ponta a ponta contra o sandbox real do Plaid (link-token → exchange → 48 transações sincronizadas).
+Verificado ponta a ponta contra o sandbox real do Plaid.
+
+## Autenticação (Google Sign-In)
+
+Login via [Google Identity Services](https://developers.google.com/identity/gsi/web) — o frontend recebe um ID token do Google, o backend valida (`Google.Apis.Auth`) e abre uma sessão por cookie. Todas as rotas de `PlaidController` são `[Authorize]` e filtradas pelo `UserId` (o `sub` do Google) — cada usuário só vê suas próprias contas.
+
+Configuração necessária:
+
+1. Crie um **OAuth Client ID** (tipo *Web application*) em [console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials), com `http://localhost:4200` em *Authorized JavaScript origins*. Não precisa de Client Secret nem de redirect URI — o fluxo usa só o ID token.
+2. Cole o Client ID em dois lugares:
+   - `frontend/src/app/auth/google-client-id.ts`
+   - `src/Target30.Api/appsettings.Development.json` → `Authentication:Google:ClientId`
 
 ## Próximos passos
 
-- [ ] Tela de listagem das contas conectadas + extrato consolidado no Angular
 - [ ] Guardar transações localmente (hoje `transactions/sync` busca do Plaid a cada chamada, sem persistir)
-- [ ] Autenticação de usuário (hoje é single-user, `ClientUserId` fixo em "target30-user")
+- [ ] Tela de settings/perfil (hoje só tem o botão "Sair" no header)
