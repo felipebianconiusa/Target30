@@ -1,0 +1,21 @@
+# .NET
+bin/
+obj/
+*.user
+appsettings.Development.json
+appsettings.*.local.json
+
+# Angular / Node
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+npm-debug.log*
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+
+# Secrets (never commit real Plaid/bank credentials)
+**/secrets.json
