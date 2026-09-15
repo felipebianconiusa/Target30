@@ -1,8 +1,10 @@
+using System.Security.Claims;
 using Going.Plaid;
 using Going.Plaid.Entity;
 using Going.Plaid.Item;
 using Going.Plaid.Link;
 using Going.Plaid.Transactions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Target30.Api.Data;
@@ -10,6 +12,7 @@ using Target30.Api.Models;
 
 namespace Target30.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class PlaidController : ControllerBase
@@ -23,6 +26,8 @@ public class PlaidController : ControllerBase
         _db = db;
     }
 
+    private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
     // Passo 1: o frontend chama isso para obter um link_token e abrir o Plaid Link
     [HttpPost("link-token")]
     public async Task<IActionResult> CreateLinkToken()
@@ -31,7 +36,7 @@ public class PlaidController : ControllerBase
         {
             User = new LinkTokenCreateRequestUser
             {
-                ClientUserId = "target30-user", // TODO: usar o id do usuário autenticado
+                ClientUserId = CurrentUserId,
             },
             ClientName = "Target30",
             Products = [Products.Transactions],
@@ -60,6 +65,7 @@ public class PlaidController : ControllerBase
 
         var item = new PlaidItem
         {
+            UserId = CurrentUserId,
             ItemId = response.ItemId,
             AccessToken = response.AccessToken,
             InstitutionName = request.InstitutionName,
@@ -70,11 +76,12 @@ public class PlaidController : ControllerBase
         return Ok(new { itemId = item.ItemId });
     }
 
-    // Lista as contas/instituições já conectadas (sem expor o access_token)
+    // Lista as contas/instituições já conectadas pelo usuário logado (sem expor o access_token)
     [HttpGet("items")]
     public async Task<IActionResult> GetItems()
     {
         var items = await _db.PlaidItems
+            .Where(i => i.UserId == CurrentUserId)
             .OrderByDescending(i => i.ConnectedAt)
             .Select(i => new { i.ItemId, i.InstitutionName, i.ConnectedAt })
             .ToListAsync();
@@ -82,11 +89,11 @@ public class PlaidController : ControllerBase
         return Ok(items);
     }
 
-    // Sincroniza transações de um item já conectado
+    // Sincroniza transações de um item já conectado (só se pertencer ao usuário logado)
     [HttpGet("items/{itemId}/transactions")]
     public async Task<IActionResult> GetTransactions(string itemId)
     {
-        var item = await _db.PlaidItems.FirstOrDefaultAsync(i => i.ItemId == itemId);
+        var item = await _db.PlaidItems.FirstOrDefaultAsync(i => i.ItemId == itemId && i.UserId == CurrentUserId);
         if (item is null)
             return NotFound();
 
@@ -94,11 +101,11 @@ public class PlaidController : ControllerBase
         return Ok(transactions);
     }
 
-    // Transações de todas as contas conectadas, juntas (para o dashboard e a tela de transações)
+    // Transações de todas as contas conectadas pelo usuário logado, juntas
     [HttpGet("transactions")]
     public async Task<IActionResult> GetAllTransactions()
     {
-        var items = await _db.PlaidItems.ToListAsync();
+        var items = await _db.PlaidItems.Where(i => i.UserId == CurrentUserId).ToListAsync();
         var all = new List<TransactionDto>();
 
         foreach (var item in items)
