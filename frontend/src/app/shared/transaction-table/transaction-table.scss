@@ -1,0 +1,24 @@
+.transaction-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9rem;
+  }
+}
+
+.transaction-table__amount-col {
+  text-align: right;
+}
+
+.transaction-table__amount--in {
+  color: #1a7f37;
+}
+
+.transaction-table__empty {
+  color: #777;
+}

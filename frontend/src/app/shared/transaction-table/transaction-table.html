@@ -1,0 +1,35 @@
+@if (transactions.length === 0) {
+  <p class="transaction-table__empty">Nenhuma transação encontrada.</p>
+} @else {
+  <table class="transaction-table">
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Descrição</th>
+        @if (showInstitution) {
+          <th>Conta</th>
+        }
+        <th>Categoria</th>
+        <th class="transaction-table__amount-col">Valor</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (tx of transactions; track tx.transactionId) {
+        <tr>
+          <td>{{ tx.date }}</td>
+          <td>{{ tx.merchantName ?? tx.name }}</td>
+          @if (showInstitution) {
+            <td>{{ tx.institutionName ?? '—' }}</td>
+          }
+          <td>{{ tx.category ?? '—' }}</td>
+          <td
+            class="transaction-table__amount-col"
+            [class.transaction-table__amount--in]="tx.amount < 0"
+          >
+            {{ formatAmount(tx) }}
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}

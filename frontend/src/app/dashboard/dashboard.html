@@ -1,0 +1,51 @@
+@if (loading()) {
+  <p>Carregando...</p>
+} @else if (errorMessage()) {
+  <p class="dashboard__error">{{ errorMessage() }}</p>
+} @else if (transactions().length === 0) {
+  <p>
+    Nenhuma conta conectada ainda.
+    <a routerLink="/accounts">Conecte uma conta</a>
+    para ver seu resumo financeiro.
+  </p>
+} @else {
+  <div class="dashboard">
+    <div class="dashboard__cards">
+      <div class="card">
+        <span class="card__label">Receitas</span>
+        <span class="card__value card__value--in">{{ formatCurrency(totalIncome()) }}</span>
+      </div>
+      <div class="card">
+        <span class="card__label">Despesas</span>
+        <span class="card__value">{{ formatCurrency(totalExpenses()) }}</span>
+      </div>
+      <div class="card">
+        <span class="card__label">Saldo do período</span>
+        <span class="card__value" [class.card__value--in]="net() >= 0">
+          {{ formatCurrency(net()) }}
+        </span>
+      </div>
+    </div>
+
+    <div class="dashboard__section">
+      <h2>Gastos por categoria</h2>
+      <div class="category-bars">
+        @for (c of categoryTotals(); track c.category) {
+          <div class="category-bar">
+            <span class="category-bar__label">{{ c.category }}</span>
+            <div class="category-bar__track">
+              <div class="category-bar__fill" [style.width.%]="c.percentOfMax"></div>
+            </div>
+            <span class="category-bar__value">{{ formatCurrency(c.total) }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="dashboard__section">
+      <h2>Transações recentes</h2>
+      <app-transaction-table [transactions]="recentTransactions()" [showInstitution]="true" />
+      <a routerLink="/transactions">Ver todas as transações →</a>
+    </div>
+  </div>
+}

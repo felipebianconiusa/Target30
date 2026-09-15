@@ -1,6 +1,6 @@
 .shell {
-  max-width: 40rem;
-  margin: 3rem auto;
+  max-width: 56rem;
+  margin: 0 auto;
   padding: 0 1rem;
   font-family:
     system-ui,
@@ -8,11 +8,36 @@
     sans-serif;
 }
 
-.shell__header h1 {
-  margin: 0 0 0.25rem;
+.shell__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 2rem 0 1rem;
+  border-bottom: 1px solid #e2e2e2;
+  margin-bottom: 2rem;
 }
 
-.shell__header p {
-  margin: 0 0 2rem;
-  color: #555;
+.shell__header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.shell__nav {
+  display: flex;
+  gap: 1.25rem;
+
+  a {
+    text-decoration: none;
+    color: #666;
+    font-size: 0.95rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 2px solid transparent;
+  }
+}
+
+.shell__nav-link--active {
+  color: #1a73e8;
+  border-bottom-color: #1a73e8;
 }

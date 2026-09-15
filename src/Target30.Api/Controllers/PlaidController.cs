@@ -90,21 +90,52 @@ public class PlaidController : ControllerBase
         if (item is null)
             return NotFound();
 
+        var transactions = await FetchTransactionsAsync(item);
+        return Ok(transactions);
+    }
+
+    // Transações de todas as contas conectadas, juntas (para o dashboard e a tela de transações)
+    [HttpGet("transactions")]
+    public async Task<IActionResult> GetAllTransactions()
+    {
+        var items = await _db.PlaidItems.ToListAsync();
+        var all = new List<TransactionDto>();
+
+        foreach (var item in items)
+        {
+            var transactions = await FetchTransactionsAsync(item);
+            if (transactions is not null)
+                all.AddRange(transactions);
+        }
+
+        return Ok(all.OrderByDescending(t => t.Date));
+    }
+
+    private async Task<List<TransactionDto>?> FetchTransactionsAsync(PlaidItem item)
+    {
         var response = await _client.TransactionsSyncAsync(new TransactionsSyncRequest
         {
             AccessToken = item.AccessToken,
         });
 
         if (response.Error is not null)
-            return Problem(response.Error.ErrorMessage);
+            return null;
 
-        return Ok(new
-        {
-            added = response.Added,
-            modified = response.Modified,
-            removed = response.Removed,
-            hasMore = response.HasMore,
-        });
+#pragma warning disable CS0612 // Category/Name legados usados como fallback
+        return response.Added.Select(t => new TransactionDto(
+            t.TransactionId ?? "",
+            t.AccountId ?? "",
+            item.ItemId,
+            item.InstitutionName,
+            t.Amount ?? 0m,
+            t.IsoCurrencyCode,
+            t.Date ?? DateOnly.FromDateTime(DateTime.UtcNow),
+            t.MerchantName ?? t.Name ?? "Transação sem descrição",
+            t.MerchantName,
+            t.Pending ?? false,
+            t.PersonalFinanceCategory?.Primary ?? t.Category?.FirstOrDefault()
+        )).ToList();
+#pragma warning restore CS0612
     }
 }
 

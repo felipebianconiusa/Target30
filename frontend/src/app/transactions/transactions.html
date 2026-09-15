@@ -1,0 +1,48 @@
+<section class="transactions-page">
+  <h1>Transações</h1>
+
+  @if (loading()) {
+    <p>Carregando...</p>
+  } @else if (errorMessage()) {
+    <p class="transactions-page__error">{{ errorMessage() }}</p>
+  } @else {
+    <div class="filters">
+      <input
+        type="text"
+        placeholder="Buscar por descrição..."
+        [value]="search()"
+        (input)="search.set($any($event.target).value)"
+      />
+
+      <select [value]="category()" (change)="category.set($any($event.target).value)">
+        <option value="">Todas as categorias</option>
+        @for (c of categories(); track c) {
+          <option [value]="c">{{ c }}</option>
+        }
+      </select>
+
+      <select [value]="institution()" (change)="institution.set($any($event.target).value)">
+        <option value="">Todas as contas</option>
+        @for (i of institutions(); track i) {
+          <option [value]="i">{{ i }}</option>
+        }
+      </select>
+
+      <input
+        type="date"
+        [value]="dateFrom()"
+        (change)="dateFrom.set($any($event.target).value)"
+      />
+      <span class="filters__separator">até</span>
+      <input type="date" [value]="dateTo()" (change)="dateTo.set($any($event.target).value)" />
+
+      <button type="button" (click)="clearFilters()">Limpar filtros</button>
+    </div>
+
+    <p class="transactions-page__count">
+      {{ filteredTransactions().length }} de {{ transactions().length }} transações
+    </p>
+
+    <app-transaction-table [transactions]="filteredTransactions()" [showInstitution]="true" />
+  }
+</section>
