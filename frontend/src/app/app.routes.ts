@@ -1,4 +1,4 @@
 import { Routes } from '@angular/router';
-import { ConnectAccount } from './connect-account/connect-account';
+import { Accounts } from './accounts/accounts';
 
-export const routes: Routes = [{ path: '', component: ConnectAccount }];
+export const routes: Routes = [{ path: '', component: Accounts }];

@@ -10,6 +10,31 @@ export interface ExchangeTokenResponse {
   itemId: string;
 }
 
+export interface PlaidItemSummary {
+  itemId: string;
+  institutionName: string | null;
+  connectedAt: string;
+}
+
+export interface PlaidTransaction {
+  transaction_id: string;
+  account_id: string;
+  amount: number;
+  iso_currency_code: string | null;
+  date: string;
+  name: string;
+  merchant_name: string | null;
+  pending: boolean;
+  category: string[] | null;
+}
+
+export interface TransactionsSyncResponse {
+  added: PlaidTransaction[];
+  modified: PlaidTransaction[];
+  removed: unknown[];
+  hasMore: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PlaidService {
   private readonly baseUrl = '/api/plaid';
@@ -28,5 +53,15 @@ export class PlaidService {
       publicToken,
       institutionName,
     });
+  }
+
+  getItems(): Observable<PlaidItemSummary[]> {
+    return this.http.get<PlaidItemSummary[]>(`${this.baseUrl}/items`);
+  }
+
+  getTransactions(itemId: string): Observable<TransactionsSyncResponse> {
+    return this.http.get<TransactionsSyncResponse>(
+      `${this.baseUrl}/items/${itemId}/transactions`,
+    );
   }
 }

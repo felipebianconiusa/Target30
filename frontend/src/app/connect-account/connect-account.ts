@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, EventEmitter, Output, signal } from '@angular/core';
 import { PlaidService } from '../plaid.service';
 import type { PlaidLinkOnSuccessMetadata } from '../plaid-link';
 
@@ -11,6 +11,8 @@ type ConnectStatus = 'idle' | 'loading' | 'connected' | 'error';
   styleUrl: './connect-account.scss',
 })
 export class ConnectAccount {
+  @Output() connected = new EventEmitter<void>();
+
   protected readonly status = signal<ConnectStatus>('idle');
   protected readonly errorMessage = signal('');
   protected readonly institutionName = signal('');
@@ -46,6 +48,7 @@ export class ConnectAccount {
       next: () => {
         this.institutionName.set(institutionName ?? 'sua instituição');
         this.status.set('connected');
+        this.connected.emit();
       },
       error: () => this.fail('Falha ao trocar o token com o backend.'),
     });

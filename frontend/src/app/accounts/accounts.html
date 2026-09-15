@@ -1,0 +1,63 @@
+<section class="accounts">
+  <app-connect-account (connected)="loadItems()" />
+
+  @if (items().length > 0) {
+    <div class="accounts__list">
+      <h2>Contas conectadas</h2>
+      <ul>
+        @for (item of items(); track item.itemId) {
+          <li>
+            <button
+              type="button"
+              class="accounts__item"
+              [class.accounts__item--active]="selectedItemId() === item.itemId"
+              (click)="selectItem(item.itemId)"
+            >
+              {{ item.institutionName ?? 'Instituição sem nome' }}
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  @if (selectedItemId()) {
+    <div class="transactions">
+      <h2>Transações</h2>
+
+      @if (transactionsLoading()) {
+        <p>Carregando transações...</p>
+      } @else if (transactionsError()) {
+        <p class="transactions__error">{{ transactionsError() }}</p>
+      } @else if (transactions().length === 0) {
+        <p>Nenhuma transação encontrada.</p>
+      } @else {
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th class="transactions__amount-col">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (tx of transactions(); track tx.transaction_id) {
+              <tr>
+                <td>{{ tx.date }}</td>
+                <td>{{ tx.merchant_name ?? tx.name }}</td>
+                <td>{{ tx.category?.[0] ?? '—' }}</td>
+                <td
+                  class="transactions__amount-col"
+                  [class.transactions__amount--in]="tx.amount < 0"
+                >
+                  {{ formatAmount(tx) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  }
+</section>

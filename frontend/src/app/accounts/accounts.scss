@@ -1,0 +1,55 @@
+.accounts {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.accounts__list ul {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.accounts__item {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d0d0d0;
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+
+  &--active {
+    background: #1a73e8;
+    border-color: #1a73e8;
+    color: #fff;
+  }
+}
+
+.transactions table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.transactions th,
+.transactions td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+.transactions__amount-col {
+  text-align: right;
+}
+
+.transactions__amount--in {
+  color: #1a7f37;
+}
+
+.transactions__error {
+  color: #c0392b;
+}
