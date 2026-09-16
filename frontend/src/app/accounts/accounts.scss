@@ -34,3 +34,24 @@
     }
   }
 }
+
+.accounts__row-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.accounts__remove {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid #e2b8b8;
+  border-radius: 6px;
+  background: #fff;
+  color: #c0392b;
+  font-size: 0.8rem;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}

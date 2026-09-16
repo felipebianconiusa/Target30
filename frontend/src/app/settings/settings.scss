@@ -1,0 +1,86 @@
+.settings h1 {
+  font-size: 1.3rem;
+  margin-bottom: 1.5rem;
+}
+
+.settings__section {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid #eee;
+
+  h2 {
+    font-size: 1rem;
+    margin: 0 0 0.75rem;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.settings__lang-options {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.settings__lang-chip {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #d0d0d0;
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  &--active {
+    background: #1a73e8;
+    border-color: #1a73e8;
+    color: #fff;
+  }
+}
+
+.settings__profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.settings__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.settings__email {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.settings__section button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.settings__section--danger h2 {
+  color: #c0392b;
+}
+
+.settings__danger-button {
+  border-color: #e2b8b8 !important;
+  color: #c0392b;
+}
+
+.settings__done {
+  color: #1a7f37;
+  font-size: 0.9rem;
+}

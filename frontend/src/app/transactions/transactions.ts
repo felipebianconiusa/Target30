@@ -5,12 +5,14 @@ import { TransactionTable } from '../shared/transaction-table/transaction-table'
 import { CATEGORY_FALLBACK_CODE, translateCategory } from '../shared/category-labels';
 import { MultiSelect, MultiSelectOption } from '../shared/multi-select/multi-select';
 import * as dateRanges from '../shared/date-ranges';
+import { TranslationService } from '../i18n/translation.service';
+import { TranslatePipe } from '../i18n/translate.pipe';
 
 type DatePreset = '7d' | '30d' | 'current-month' | 'previous-month' | 'custom' | 'all';
 
 @Component({
   selector: 'app-transactions',
-  imports: [TransactionTable, MultiSelect],
+  imports: [TransactionTable, MultiSelect, TranslatePipe],
   templateUrl: './transactions.html',
   styleUrl: './transactions.scss',
 })
@@ -28,16 +30,16 @@ export class Transactions implements OnInit {
   protected readonly activePreset = signal<DatePreset>('all');
 
   protected readonly categoryOptions = computed<MultiSelectOption[]>(() => {
+    const lang = this.translationService.lang();
     const codes = new Set(this.transactions().map((t) => t.category ?? CATEGORY_FALLBACK_CODE));
     return [...codes]
-      .map((value) => ({ value, label: translateCategory(value) }))
+      .map((value) => ({ value, label: translateCategory(value, lang) }))
       .sort((a, b) => a.label.localeCompare(b.label));
   });
 
   protected readonly institutionOptions = computed<MultiSelectOption[]>(() => {
-    const names = new Set(
-      this.transactions().map((t) => t.institutionName ?? 'Instituição sem nome'),
-    );
+    const unnamed = this.translationService.t('accounts.unnamedInstitution');
+    const names = new Set(this.transactions().map((t) => t.institutionName ?? unnamed));
     return [...names].map((value) => ({ value, label: value })).sort((a, b) =>
       a.label.localeCompare(b.label),
     );
@@ -49,6 +51,7 @@ export class Transactions implements OnInit {
     const institutions = this.institutions();
     const dateFrom = this.dateFrom();
     const dateTo = this.dateTo();
+    const unnamed = this.translationService.t('accounts.unnamedInstitution');
 
     return this.transactions().filter((t) => {
       if (search) {
@@ -57,10 +60,7 @@ export class Transactions implements OnInit {
       }
       if (categories.length > 0 && !categories.includes(t.category ?? CATEGORY_FALLBACK_CODE))
         return false;
-      if (
-        institutions.length > 0 &&
-        !institutions.includes(t.institutionName ?? 'Instituição sem nome')
-      )
+      if (institutions.length > 0 && !institutions.includes(t.institutionName ?? unnamed))
         return false;
       if (dateFrom && t.date < dateFrom) return false;
       if (dateTo && t.date > dateTo) return false;
@@ -71,6 +71,7 @@ export class Transactions implements OnInit {
   constructor(
     private readonly plaidService: PlaidService,
     private readonly route: ActivatedRoute,
+    protected readonly translationService: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -89,7 +90,7 @@ export class Transactions implements OnInit {
       },
       error: () => {
         this.syncing.set(false);
-        this.errorMessage.set('Não foi possível sincronizar com o Plaid.');
+        this.errorMessage.set(this.translationService.t('transactions.syncError'));
       },
     });
   }
@@ -101,7 +102,7 @@ export class Transactions implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.errorMessage.set('Não foi possível carregar as transações.');
+        this.errorMessage.set(this.translationService.t('transactions.error'));
         this.loading.set(false);
       },
     });

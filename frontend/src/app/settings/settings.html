@@ -1,0 +1,52 @@
+<section class="settings">
+  <h1>{{ 'settings.title' | translate }}</h1>
+
+  <div class="settings__section">
+    <h2>{{ 'settings.language' | translate }}</h2>
+    <div class="settings__lang-options">
+      @for (lang of langs; track lang) {
+        <button
+          type="button"
+          class="settings__lang-chip"
+          [class.settings__lang-chip--active]="translationService.lang() === lang"
+          (click)="setLang(lang)"
+        >
+          {{ langLabels[lang] }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="settings__section">
+    <h2>{{ 'settings.profile' | translate }}</h2>
+    <div class="settings__profile">
+      @if (authService.user()?.picture) {
+        <img class="settings__avatar" [src]="authService.user()?.picture" alt="" />
+      }
+      <div>
+        <div>{{ authService.user()?.name }}</div>
+        <div class="settings__email">{{ authService.user()?.email }}</div>
+      </div>
+    </div>
+    <button type="button" (click)="authService.logout()">{{ 'settings.signOut' | translate }}</button>
+  </div>
+
+  <div class="settings__section">
+    <h2>{{ 'settings.connectedAccounts' | translate }}</h2>
+    <p>
+      {{ 'settings.manageAccountsHint' | translate }}
+      <a routerLink="/accounts">{{ 'nav.accounts' | translate }}</a>.
+    </p>
+  </div>
+
+  <div class="settings__section settings__section--danger">
+    <h2>{{ 'settings.dangerZone' | translate }}</h2>
+    @if (deleteDone()) {
+      <p class="settings__done">{{ 'settings.deleteAllDataDone' | translate }}</p>
+    } @else {
+      <button type="button" class="settings__danger-button" [disabled]="deleting()" (click)="deleteAllData()">
+        {{ 'settings.deleteAllData' | translate }}
+      </button>
+    }
+  </div>
+</section>

@@ -7,6 +7,7 @@ import {
   Output,
   signal,
 } from '@angular/core';
+import { TranslationService } from '../../i18n/translation.service';
 
 export interface MultiSelectOption {
   value: string;
@@ -34,10 +35,13 @@ export class MultiSelect {
     if (this.selected.length === 1) {
       return this.options.find((o) => o.value === this.selected[0])?.label ?? this.selected[0];
     }
-    return `${this.selected.length} selecionadas`;
+    return this.translationService.t('multiSelect.selectedCount', { count: this.selected.length });
   }
 
-  constructor(private readonly elementRef: ElementRef<HTMLElement>) {}
+  constructor(
+    private readonly elementRef: ElementRef<HTMLElement>,
+    private readonly translationService: TranslationService,
+  ) {}
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {

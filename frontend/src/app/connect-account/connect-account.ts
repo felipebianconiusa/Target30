@@ -1,12 +1,14 @@
 import { Component, EventEmitter, Output, signal } from '@angular/core';
 import { PlaidService } from '../plaid.service';
 import type { PlaidLinkOnSuccessMetadata } from '../plaid-link';
+import { TranslationService } from '../i18n/translation.service';
+import { TranslatePipe } from '../i18n/translate.pipe';
 
 type ConnectStatus = 'idle' | 'loading' | 'connected' | 'error';
 
 @Component({
   selector: 'app-connect-account',
-  imports: [],
+  imports: [TranslatePipe],
   templateUrl: './connect-account.html',
   styleUrl: './connect-account.scss',
 })
@@ -17,7 +19,10 @@ export class ConnectAccount {
   protected readonly errorMessage = signal('');
   protected readonly institutionName = signal('');
 
-  constructor(private readonly plaidService: PlaidService) {}
+  constructor(
+    private readonly plaidService: PlaidService,
+    protected readonly translationService: TranslationService,
+  ) {}
 
   connect(): void {
     this.status.set('loading');
@@ -25,7 +30,7 @@ export class ConnectAccount {
 
     this.plaidService.createLinkToken().subscribe({
       next: ({ linkToken }) => this.openPlaidLink(linkToken),
-      error: () => this.fail('Não foi possível gerar o link token. Verifique o backend.'),
+      error: () => this.fail(this.translationService.t('accounts.errorLinkToken')),
     });
   }
 
@@ -34,7 +39,7 @@ export class ConnectAccount {
       token: linkToken,
       onSuccess: (publicToken, metadata) => this.exchangeToken(publicToken, metadata),
       onExit: (error) => {
-        if (error) this.fail('Conexão cancelada ou falhou no Plaid Link.');
+        if (error) this.fail(this.translationService.t('accounts.errorExit'));
         else this.status.set('idle');
       },
     });
@@ -46,11 +51,11 @@ export class ConnectAccount {
 
     this.plaidService.exchangePublicToken(publicToken, institutionName).subscribe({
       next: () => {
-        this.institutionName.set(institutionName ?? 'sua instituição');
+        this.institutionName.set(institutionName ?? '');
         this.status.set('connected');
         this.connected.emit();
       },
-      error: () => this.fail('Falha ao trocar o token com o backend.'),
+      error: () => this.fail(this.translationService.t('accounts.errorExchange')),
     });
   }
 

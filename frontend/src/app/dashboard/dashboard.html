@@ -1,32 +1,32 @@
 @if (loading()) {
-  <p>Carregando...</p>
+  <p>{{ 'common.loading' | translate }}</p>
 } @else if (errorMessage()) {
   <p class="dashboard__error">{{ errorMessage() }}</p>
 } @else if (transactions().length === 0) {
   <p>
-    Nenhuma conta conectada ainda.
-    <a routerLink="/accounts">Conecte uma conta</a>
-    para ver seu resumo financeiro.
+    {{ 'dashboard.emptyNoAccounts' | translate }}
+    <a routerLink="/accounts">{{ 'dashboard.emptyConnectLink' | translate }}</a>
+    {{ 'dashboard.emptySuffix' | translate }}
   </p>
 } @else {
   <div class="dashboard">
     <div class="dashboard__toolbar">
       <button type="button" [disabled]="syncing()" (click)="refresh()">
-        {{ syncing() ? 'Sincronizando...' : 'Atualizar' }}
+        {{ (syncing() ? 'common.syncing' : 'common.refresh') | translate }}
       </button>
     </div>
 
     <div class="dashboard__cards">
       <div class="card">
-        <span class="card__label">Receitas</span>
+        <span class="card__label">{{ 'dashboard.income' | translate }}</span>
         <span class="card__value card__value--in">{{ formatCurrency(totalIncome()) }}</span>
       </div>
       <div class="card">
-        <span class="card__label">Despesas</span>
+        <span class="card__label">{{ 'dashboard.expenses' | translate }}</span>
         <span class="card__value">{{ formatCurrency(totalExpenses()) }}</span>
       </div>
       <div class="card">
-        <span class="card__label">Saldo do período</span>
+        <span class="card__label">{{ 'dashboard.netBalance' | translate }}</span>
         <span class="card__value" [class.card__value--in]="net() >= 0">
           {{ formatCurrency(net()) }}
         </span>
@@ -34,7 +34,7 @@
     </div>
 
     <div class="dashboard__section">
-      <h2>Gastos por categoria</h2>
+      <h2>{{ 'dashboard.spendingByCategory' | translate }}</h2>
       <div class="category-bars">
         @for (c of categoryTotals(); track c.category) {
           <div class="category-bar">
@@ -49,9 +49,9 @@
     </div>
 
     <div class="dashboard__section">
-      <h2>Transações recentes</h2>
+      <h2>{{ 'dashboard.recentTransactions' | translate }}</h2>
       <app-transaction-table [transactions]="recentTransactions()" [showInstitution]="true" />
-      <a routerLink="/transactions">Ver todas as transações →</a>
+      <a routerLink="/transactions">{{ 'dashboard.viewAll' | translate }}</a>
     </div>
   </div>
 }

@@ -1,21 +1,31 @@
 <section class="accounts">
-  <h1>Contas</h1>
+  <h1>{{ 'accounts.title' | translate }}</h1>
 
   <app-connect-account (connected)="loadItems()" />
 
   @if (items().length > 0) {
     <div class="accounts__list">
-      <h2>Contas conectadas</h2>
+      <h2>{{ 'accounts.connectedList' | translate }}</h2>
       <ul>
         @for (item of items(); track item.itemId) {
           <li class="accounts__row">
-            <span>{{ item.institutionName ?? 'Instituição sem nome' }}</span>
-            <a
-              [routerLink]="['/transactions']"
-              [queryParams]="{ institution: item.institutionName }"
-            >
-              ver transações →
-            </a>
+            <span>{{ item.institutionName ?? 'accounts.unnamedInstitution' | translate }}</span>
+            <div class="accounts__row-actions">
+              <a
+                [routerLink]="['/transactions']"
+                [queryParams]="{ institution: item.institutionName }"
+              >
+                {{ 'accounts.viewTransactions' | translate }}
+              </a>
+              <button
+                type="button"
+                class="accounts__remove"
+                [disabled]="removingItemId() === item.itemId"
+                (click)="remove(item)"
+              >
+                {{ 'common.remove' | translate }}
+              </button>
+            </div>
           </li>
         }
       </ul>

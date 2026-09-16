@@ -1,16 +1,16 @@
 @if (transactions.length === 0) {
-  <p class="transaction-table__empty">Nenhuma transação encontrada.</p>
+  <p class="transaction-table__empty">{{ 'table.empty' | translate }}</p>
 } @else {
   <table class="transaction-table">
     <thead>
       <tr>
-        <th>Data</th>
-        <th>Descrição</th>
+        <th>{{ 'table.date' | translate }}</th>
+        <th>{{ 'table.description' | translate }}</th>
         @if (showInstitution) {
-          <th>Conta</th>
+          <th>{{ 'table.account' | translate }}</th>
         }
-        <th>Categoria</th>
-        <th class="transaction-table__amount-col">Valor</th>
+        <th>{{ 'table.category' | translate }}</th>
+        <th class="transaction-table__amount-col">{{ 'table.amount' | translate }}</th>
       </tr>
     </thead>
     <tbody>
@@ -21,7 +21,7 @@
           @if (showInstitution) {
             <td>{{ tx.institutionName ?? '—' }}</td>
           }
-          <td>{{ translateCategory(tx.category) }}</td>
+          <td>{{ categoryLabel(tx.category) }}</td>
           <td
             class="transaction-table__amount-col"
             [class.transaction-table__amount--in]="tx.amount < 0"

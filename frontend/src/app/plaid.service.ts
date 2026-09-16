@@ -65,4 +65,8 @@ export class PlaidService {
   syncTransactions(): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/sync`, {});
   }
+
+  removeItem(itemId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/items/${itemId}`);
+  }
 }

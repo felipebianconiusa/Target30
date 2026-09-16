@@ -2,18 +2,18 @@
   @switch (status()) {
     @case ('connected') {
       <p class="connect__success">
-        Conta conectada com sucesso em <strong>{{ institutionName() }}</strong>.
+        {{ 'accounts.connectedSuccess' | translate: { institution: institutionName() } }}
       </p>
     }
     @default {
-      <p class="connect__hint">Conecte uma conta bancária ou cartão via Plaid.</p>
+      <p class="connect__hint">{{ 'accounts.connectHint' | translate }}</p>
       <button
         class="connect__button"
         type="button"
         [disabled]="status() === 'loading'"
         (click)="connect()"
       >
-        {{ status() === 'loading' ? 'Abrindo...' : 'Conectar conta' }}
+        {{ (status() === 'loading' ? 'accounts.opening' : 'accounts.connectButton') | translate }}
       </button>
       @if (status() === 'error') {
         <p class="connect__error">{{ errorMessage() }}</p>

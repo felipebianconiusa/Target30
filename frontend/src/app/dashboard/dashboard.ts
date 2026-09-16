@@ -3,6 +3,9 @@ import { RouterLink } from '@angular/router';
 import { PlaidService, Transaction } from '../plaid.service';
 import { TransactionTable } from '../shared/transaction-table/transaction-table';
 import { CATEGORY_FALLBACK_CODE, translateCategory } from '../shared/category-labels';
+import { TranslationService } from '../i18n/translation.service';
+import { LOCALE_BY_LANG } from '../i18n/translations';
+import { TranslatePipe } from '../i18n/translate.pipe';
 
 interface CategoryTotal {
   category: string;
@@ -12,7 +15,7 @@ interface CategoryTotal {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [TransactionTable, RouterLink],
+  imports: [TransactionTable, RouterLink, TranslatePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -47,14 +50,18 @@ export class Dashboard implements OnInit {
     }
     const entries = [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
     const max = entries.length > 0 ? entries[0][1] : 1;
+    const lang = this.translationService.lang();
     return entries.map(([category, total]) => ({
-      category: translateCategory(category),
+      category: translateCategory(category, lang),
       total,
       percentOfMax: (total / max) * 100,
     }));
   });
 
-  constructor(private readonly plaidService: PlaidService) {}
+  constructor(
+    private readonly plaidService: PlaidService,
+    protected readonly translationService: TranslationService,
+  ) {}
 
   ngOnInit(): void {
     this.loadTransactions();
@@ -69,7 +76,7 @@ export class Dashboard implements OnInit {
       },
       error: () => {
         this.syncing.set(false);
-        this.errorMessage.set('Não foi possível sincronizar com o Plaid.');
+        this.errorMessage.set(this.translationService.t('transactions.syncError'));
       },
     });
   }
@@ -81,13 +88,14 @@ export class Dashboard implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.errorMessage.set('Não foi possível carregar as transações.');
+        this.errorMessage.set(this.translationService.t('dashboard.error'));
         this.loading.set(false);
       },
     });
   }
 
   protected formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'USD' }).format(value);
+    const locale = LOCALE_BY_LANG[this.translationService.lang()];
+    return new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(value);
   }
 }

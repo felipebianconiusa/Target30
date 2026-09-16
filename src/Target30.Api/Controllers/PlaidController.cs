@@ -92,6 +92,31 @@ public class PlaidController : ControllerBase
         return Ok(items);
     }
 
+    // Desconecta uma conta: remove o item no Plaid e apaga os dados locais (item + transações)
+    [HttpDelete("items/{itemId}")]
+    public async Task<IActionResult> RemoveItem(string itemId)
+    {
+        var item = await _db.PlaidItems.FirstOrDefaultAsync(i => i.ItemId == itemId && i.UserId == CurrentUserId);
+        if (item is null)
+            return NotFound();
+
+        try
+        {
+            await _client.ItemRemoveAsync(new ItemRemoveRequest { AccessToken = item.AccessToken });
+        }
+        catch
+        {
+            // Mesmo se o Plaid recusar (ex.: item já inválido), ainda removemos localmente.
+        }
+
+        var transactions = _db.PlaidTransactions.Where(t => t.ItemId == itemId && t.UserId == CurrentUserId);
+        _db.PlaidTransactions.RemoveRange(transactions);
+        _db.PlaidItems.Remove(item);
+        await _db.SaveChangesAsync();
+
+        return NoContent();
+    }
+
     // Busca com o Plaid o que mudou desde a última sincronização de cada item do usuário
     // (usa o cursor salvo — não rebaixa o histórico inteiro toda vez).
     [HttpPost("sync")]

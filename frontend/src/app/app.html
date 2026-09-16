@@ -1,11 +1,11 @@
 @if (!authService.checkedSession()) {
   <div class="shell shell--centered">
-    <p>Carregando...</p>
+    <p>{{ 'common.loading' | translate }}</p>
   </div>
 } @else if (!authService.user()) {
   <div class="shell shell--centered login-screen">
     <h1>Target30</h1>
-    <p>Suas contas e cartões, num só lugar.</p>
+    <p>{{ 'login.tagline' | translate }}</p>
     <app-google-login-button />
   </div>
 } @else {
@@ -18,17 +18,26 @@
           routerLinkActive="shell__nav-link--active"
           [routerLinkActiveOptions]="{ exact: true }"
         >
-          Dashboard
+          {{ 'nav.dashboard' | translate }}
         </a>
-        <a routerLink="/accounts" routerLinkActive="shell__nav-link--active">Contas</a>
-        <a routerLink="/transactions" routerLinkActive="shell__nav-link--active">Transações</a>
+        <a routerLink="/accounts" routerLinkActive="shell__nav-link--active">
+          {{ 'nav.accounts' | translate }}
+        </a>
+        <a routerLink="/transactions" routerLinkActive="shell__nav-link--active">
+          {{ 'nav.transactions' | translate }}
+        </a>
+        <a routerLink="/settings" routerLinkActive="shell__nav-link--active">
+          {{ 'nav.settings' | translate }}
+        </a>
       </nav>
       <div class="shell__user">
         @if (authService.user()?.picture) {
           <img class="shell__avatar" [src]="authService.user()?.picture" alt="" />
         }
         <span>{{ authService.user()?.name ?? authService.user()?.email }}</span>
-        <button type="button" class="shell__logout" (click)="authService.logout()">Sair</button>
+        <button type="button" class="shell__logout" (click)="authService.logout()">
+          {{ 'common.signOut' | translate }}
+        </button>
       </div>
     </header>
     <main class="shell__content">

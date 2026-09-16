@@ -1,39 +1,39 @@
 <section class="transactions-page">
   <div class="transactions-page__header">
-    <h1>Transações</h1>
+    <h1>{{ 'transactions.title' | translate }}</h1>
     <button type="button" [disabled]="syncing()" (click)="refresh()">
-      {{ syncing() ? 'Sincronizando...' : 'Atualizar' }}
+      {{ (syncing() ? 'common.syncing' : 'common.refresh') | translate }}
     </button>
   </div>
 
   @if (loading()) {
-    <p>Carregando...</p>
+    <p>{{ 'common.loading' | translate }}</p>
   } @else if (errorMessage()) {
     <p class="transactions-page__error">{{ errorMessage() }}</p>
   } @else {
     <div class="filters">
       <input
         type="text"
-        placeholder="Buscar por descrição..."
+        [placeholder]="'transactions.searchPlaceholder' | translate"
         [value]="search()"
         (input)="search.set($any($event.target).value)"
       />
 
       <app-multi-select
-        allLabel="Todas as categorias"
+        [allLabel]="'transactions.allCategories' | translate"
         [options]="categoryOptions()"
         [selected]="categories()"
         (selectedChange)="categories.set($event)"
       />
 
       <app-multi-select
-        allLabel="Todas as contas"
+        [allLabel]="'transactions.allAccounts' | translate"
         [options]="institutionOptions()"
         [selected]="institutions()"
         (selectedChange)="institutions.set($event)"
       />
 
-      <button type="button" (click)="clearFilters()">Limpar filtros</button>
+      <button type="button" (click)="clearFilters()">{{ 'common.clearFilters' | translate }}</button>
     </div>
 
     <div class="date-presets">
@@ -43,7 +43,7 @@
         [class.date-presets__chip--active]="activePreset() === 'all'"
         (click)="applyPreset('all')"
       >
-        Tudo
+        {{ 'transactions.presetAll' | translate }}
       </button>
       <button
         type="button"
@@ -51,7 +51,7 @@
         [class.date-presets__chip--active]="activePreset() === '7d'"
         (click)="applyPreset('7d')"
       >
-        Últimos 7 dias
+        {{ 'transactions.preset7d' | translate }}
       </button>
       <button
         type="button"
@@ -59,7 +59,7 @@
         [class.date-presets__chip--active]="activePreset() === '30d'"
         (click)="applyPreset('30d')"
       >
-        Últimos 30 dias
+        {{ 'transactions.preset30d' | translate }}
       </button>
       <button
         type="button"
@@ -67,7 +67,7 @@
         [class.date-presets__chip--active]="activePreset() === 'current-month'"
         (click)="applyPreset('current-month')"
       >
-        Mês atual
+        {{ 'transactions.presetCurrentMonth' | translate }}
       </button>
       <button
         type="button"
@@ -75,7 +75,7 @@
         [class.date-presets__chip--active]="activePreset() === 'previous-month'"
         (click)="applyPreset('previous-month')"
       >
-        Mês anterior
+        {{ 'transactions.presetPreviousMonth' | translate }}
       </button>
 
       <input
@@ -83,12 +83,12 @@
         [value]="dateFrom()"
         (change)="setDateFrom($any($event.target).value)"
       />
-      <span class="date-presets__separator">até</span>
+      <span class="date-presets__separator">{{ 'transactions.dateTo' | translate }}</span>
       <input type="date" [value]="dateTo()" (change)="setDateTo($any($event.target).value)" />
     </div>
 
     <p class="transactions-page__count">
-      {{ filteredTransactions().length }} de {{ transactions().length }} transações
+      {{ 'transactions.count' | translate: { filtered: filteredTransactions().length, total: transactions().length } }}
     </p>
 
     <app-transaction-table [transactions]="filteredTransactions()" [showInstitution]="true" />
