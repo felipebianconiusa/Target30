@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using Going.Plaid;
+using Going.Plaid.Accounts;
 using Going.Plaid.Entity;
 using Going.Plaid.Item;
+using Going.Plaid.Liabilities;
 using Going.Plaid.Link;
 using Going.Plaid.Transactions;
 using Microsoft.AspNetCore.Authorization;
@@ -39,7 +41,7 @@ public class PlaidController : ControllerBase
                 ClientUserId = CurrentUserId,
             },
             ClientName = "Target30",
-            Products = [Products.Transactions],
+            Products = [Products.Transactions, Products.Liabilities],
             CountryCodes = [CountryCode.Us],
             Language = Language.English,
         });
@@ -111,6 +113,8 @@ public class PlaidController : ControllerBase
 
         var transactions = _db.PlaidTransactions.Where(t => t.ItemId == itemId && t.UserId == CurrentUserId);
         _db.PlaidTransactions.RemoveRange(transactions);
+        var accounts = _db.PlaidAccounts.Where(a => a.ItemId == itemId && a.UserId == CurrentUserId);
+        _db.PlaidAccounts.RemoveRange(accounts);
         _db.PlaidItems.Remove(item);
         await _db.SaveChangesAsync();
 
@@ -267,6 +271,71 @@ public class PlaidController : ControllerBase
         }
 
         item.NextCursor = cursor;
+        await _db.SaveChangesAsync();
+
+        await SyncAccountsAsync(item);
+    }
+
+    private async Task SyncAccountsAsync(PlaidItem item)
+    {
+        var accountsResponse = await _client.AccountsGetAsync(new AccountsGetRequest
+        {
+            AccessToken = item.AccessToken,
+        });
+        if (accountsResponse.Error is not null)
+            return;
+
+        // /liabilities/get só funciona se o Item tiver o produto Liabilities habilitado (itens
+        // conectados antes desse produto existir vão falhar aqui — não deve travar o resto).
+        var creditByAccountId = new Dictionary<string, CreditCardLiability>();
+        var liabilitiesResponse = await _client.LiabilitiesGetAsync(new LiabilitiesGetRequest
+        {
+            AccessToken = item.AccessToken,
+        });
+        if (liabilitiesResponse.Error is null && liabilitiesResponse.Liabilities?.Credit is not null)
+        {
+            foreach (var credit in liabilitiesResponse.Liabilities.Credit)
+                if (credit.AccountId is not null)
+                    creditByAccountId[credit.AccountId] = credit;
+        }
+
+        foreach (var acc in accountsResponse.Accounts)
+        {
+            var existing = await _db.PlaidAccounts.FirstOrDefaultAsync(a => a.AccountId == acc.AccountId);
+            if (existing is null)
+            {
+                existing = new PlaidAccount { AccountId = acc.AccountId };
+                _db.PlaidAccounts.Add(existing);
+            }
+
+            existing.UserId = item.UserId;
+            existing.ItemId = item.ItemId;
+            existing.Name = acc.Name;
+            existing.OfficialName = acc.OfficialName;
+            existing.InstitutionName = item.InstitutionName;
+            existing.Type = acc.Type.ToString();
+            existing.Subtype = acc.Subtype?.ToString();
+            existing.CurrentBalance = acc.Balances.Current;
+            existing.AvailableBalance = acc.Balances.Available;
+            existing.CreditLimit = acc.Balances.Limit;
+            existing.IsoCurrencyCode = acc.Balances.IsoCurrencyCode;
+
+            if (creditByAccountId.TryGetValue(acc.AccountId, out var credit))
+            {
+                existing.LastStatementBalance = credit.LastStatementBalance;
+                existing.LastStatementIssueDate = credit.LastStatementIssueDate;
+                existing.NextPaymentDueDate = credit.NextPaymentDueDate;
+                existing.MinimumPaymentAmount = credit.MinimumPaymentAmount;
+                existing.IsOverdue = credit.IsOverdue;
+
+                // Sugere o dia de fechamento a partir do último extrato (só na 1ª vez — o
+                // Plaid não informa a próxima data, então isso é só um ponto de partida
+                // editável pelo usuário).
+                if (existing.StatementClosingDay is null && credit.LastStatementIssueDate is not null)
+                    existing.StatementClosingDay = credit.LastStatementIssueDate.Value.Day;
+            }
+        }
+
         await _db.SaveChangesAsync();
     }
 

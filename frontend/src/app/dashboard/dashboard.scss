@@ -101,3 +101,27 @@
 .dashboard__error {
   color: var(--color-danger);
 }
+
+.dashboard__alert {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--color-danger-border);
+  background: var(--color-danger-bg);
+  border-radius: 8px;
+
+  h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    color: var(--color-danger);
+  }
+
+  ul {
+    margin: 0 0 0.5rem;
+    padding-left: 1.2rem;
+    font-size: 0.9rem;
+  }
+
+  a {
+    font-size: 0.85rem;
+    color: var(--color-primary);
+  }
+}

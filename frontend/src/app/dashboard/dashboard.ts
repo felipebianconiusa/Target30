@@ -2,6 +2,7 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { PlaidService, Transaction, TransactionsSummary } from '../plaid.service';
+import { Card, CardsService } from '../cards/cards.service';
 import { TransactionTable } from '../shared/transaction-table/transaction-table';
 import { translateCategory } from '../shared/category-labels';
 import { TranslationService } from '../i18n/translation.service';
@@ -30,6 +31,7 @@ const EMPTY_SUMMARY: TransactionsSummary = {
 export class Dashboard implements OnInit {
   protected readonly summary = signal<TransactionsSummary>(EMPTY_SUMMARY);
   protected readonly itemCount = signal(0);
+  protected readonly cardAlerts = signal<Card[]>([]);
   protected readonly loading = signal(true);
   protected readonly syncing = signal(false);
   protected readonly errorMessage = signal('');
@@ -53,6 +55,7 @@ export class Dashboard implements OnInit {
 
   constructor(
     private readonly plaidService: PlaidService,
+    private readonly cardsService: CardsService,
     protected readonly translationService: TranslationService,
   ) {}
 
@@ -78,10 +81,12 @@ export class Dashboard implements OnInit {
     forkJoin({
       summary: this.plaidService.getSummary(),
       items: this.plaidService.getItems(),
+      cards: this.cardsService.getCards(),
     }).subscribe({
-      next: ({ summary, items }) => {
+      next: ({ summary, items, cards }) => {
         this.summary.set(summary);
         this.itemCount.set(items.length);
+        this.cardAlerts.set(cards.filter((c) => c.needsAlert));
         this.loading.set(false);
       },
       error: () => {

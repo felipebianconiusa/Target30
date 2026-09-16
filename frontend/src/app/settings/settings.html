@@ -54,6 +54,39 @@
   </div>
 
   <div class="settings__section">
+    <h2>{{ 'settings.utilization' | translate }}</h2>
+    <p class="settings__hint">{{ 'settings.utilizationHint' | translate }}</p>
+    <div class="settings__fields">
+      <label>
+        {{ 'settings.utilization' | translate }} (%)
+        <input
+          type="number"
+          min="0"
+          max="100"
+          [value]="globalTargetUtilizationPercent()"
+          (input)="setGlobalTarget($any($event.target).value)"
+        />
+      </label>
+      <label>
+        {{ 'settings.notifyDays' | translate }}
+        <input
+          type="number"
+          min="0"
+          max="30"
+          [value]="notifyDaysBeforeClosing()"
+          (input)="setNotifyDays($any($event.target).value)"
+        />
+      </label>
+    </div>
+    <button type="button" [disabled]="savingSettings()" (click)="saveSettings()">
+      {{ 'settings.saveSettings' | translate }}
+    </button>
+    @if (settingsSaved()) {
+      <p class="settings__done">{{ 'settings.settingsSaved' | translate }}</p>
+    }
+  </div>
+
+  <div class="settings__section">
     <h2>{{ 'settings.connectedAccounts' | translate }}</h2>
     <p>
       {{ 'settings.manageAccountsHint' | translate }}

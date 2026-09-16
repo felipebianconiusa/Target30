@@ -1,7 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { PlaidService } from '../plaid.service';
+import { AppSettings, CardsService } from '../cards/cards.service';
 import { TranslationService } from '../i18n/translation.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { Lang, LANG_LABELS, SUPPORTED_LANGS } from '../i18n/translations';
@@ -13,19 +14,56 @@ import { Theme, ThemeService } from '../theme/theme.service';
   templateUrl: './settings.html',
   styleUrl: './settings.scss',
 })
-export class Settings {
+export class Settings implements OnInit {
   protected readonly langs = SUPPORTED_LANGS;
   protected readonly langLabels = LANG_LABELS;
   protected readonly themes: Theme[] = ['light', 'dark', 'system'];
   protected readonly deleting = signal(false);
   protected readonly deleteDone = signal(false);
 
+  protected readonly globalTargetUtilizationPercent = signal(30);
+  protected readonly notifyDaysBeforeClosing = signal(3);
+  protected readonly savingSettings = signal(false);
+  protected readonly settingsSaved = signal(false);
+
   constructor(
     protected readonly authService: AuthService,
     private readonly plaidService: PlaidService,
+    private readonly cardsService: CardsService,
     protected readonly translationService: TranslationService,
     protected readonly themeService: ThemeService,
   ) {}
+
+  ngOnInit(): void {
+    this.cardsService.getSettings().subscribe((settings) => {
+      this.globalTargetUtilizationPercent.set(settings.globalTargetUtilizationPercent);
+      this.notifyDaysBeforeClosing.set(settings.notifyDaysBeforeClosing);
+    });
+  }
+
+  protected setGlobalTarget(value: string): void {
+    this.globalTargetUtilizationPercent.set(Number(value));
+  }
+
+  protected setNotifyDays(value: string): void {
+    this.notifyDaysBeforeClosing.set(Number(value));
+  }
+
+  protected saveSettings(): void {
+    this.savingSettings.set(true);
+    this.settingsSaved.set(false);
+    const payload: AppSettings = {
+      globalTargetUtilizationPercent: this.globalTargetUtilizationPercent(),
+      notifyDaysBeforeClosing: this.notifyDaysBeforeClosing(),
+    };
+    this.cardsService.updateSettings(payload).subscribe({
+      next: () => {
+        this.savingSettings.set(false);
+        this.settingsSaved.set(true);
+      },
+      error: () => this.savingSettings.set(false),
+    });
+  }
 
   protected setLang(lang: Lang): void {
     this.translationService.setLang(lang);
