@@ -2,6 +2,28 @@ import { Lang } from '../i18n/translations';
 
 export const CATEGORY_FALLBACK_CODE = 'OUTROS';
 
+// Lista fixa dos primary categories do Plaid (personal_finance_category) + o fallback local.
+// Usada pra montar as opções do filtro sem depender de ter os dados todos carregados no cliente.
+export const ALL_CATEGORY_CODES: string[] = [
+  'INCOME',
+  'TRANSFER_IN',
+  'TRANSFER_OUT',
+  'LOAN_PAYMENTS',
+  'BANK_FEES',
+  'ENTERTAINMENT',
+  'FOOD_AND_DRINK',
+  'GENERAL_MERCHANDISE',
+  'HOME_IMPROVEMENT',
+  'MEDICAL',
+  'PERSONAL_CARE',
+  'GENERAL_SERVICES',
+  'GOVERNMENT_AND_NON_PROFIT',
+  'TRANSPORTATION',
+  'TRAVEL',
+  'RENT_AND_UTILITIES',
+  CATEGORY_FALLBACK_CODE,
+];
+
 const LABELS: Record<Lang, Record<string, string>> = {
   pt: {
     INCOME: 'Renda',

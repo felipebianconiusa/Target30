@@ -6,9 +6,10 @@
 
   button {
     padding: 0.4rem 0.8rem;
-    border: 1px solid #d0d0d0;
+    border: 1px solid var(--color-border-strong);
     border-radius: 6px;
-    background: #fff;
+    background: var(--color-surface);
+    color: var(--color-text);
     font: inherit;
     font-size: 0.85rem;
     cursor: pointer;
@@ -35,8 +36,10 @@
   input,
   button {
     padding: 0.4rem 0.6rem;
-    border: 1px solid #d0d0d0;
+    border: 1px solid var(--color-border-strong);
     border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text);
     font: inherit;
   }
 
@@ -45,7 +48,6 @@
   }
 
   button {
-    background: #fff;
     cursor: pointer;
   }
 }
@@ -59,38 +61,66 @@
 
   input {
     padding: 0.35rem 0.5rem;
-    border: 1px solid #d0d0d0;
+    border: 1px solid var(--color-border-strong);
     border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text);
     font: inherit;
   }
 }
 
 .date-presets__chip {
   padding: 0.35rem 0.75rem;
-  border: 1px solid #d0d0d0;
+  border: 1px solid var(--color-border-strong);
   border-radius: 999px;
-  background: #fff;
+  background: var(--color-surface);
+  color: var(--color-text);
   font-size: 0.85rem;
   cursor: pointer;
 
   &--active {
-    background: #1a73e8;
-    border-color: #1a73e8;
-    color: #fff;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-primary-text);
   }
 }
 
 .date-presets__separator {
-  color: #777;
+  color: var(--color-text-muted);
   font-size: 0.85rem;
 }
 
 .transactions-page__count {
   font-size: 0.85rem;
-  color: #666;
+  color: var(--color-text-muted);
   margin-bottom: 0.5rem;
 }
 
 .transactions-page__error {
-  color: #c0392b;
+  color: var(--color-danger);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+
+  button {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+  }
 }

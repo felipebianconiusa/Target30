@@ -2,6 +2,7 @@
   max-width: 56rem;
   margin: 0 auto;
   padding: 0 1rem;
+  color: var(--color-text);
   font-family:
     system-ui,
     -apple-system,
@@ -15,7 +16,7 @@
   flex-wrap: wrap;
   gap: 1rem;
   padding: 2rem 0 1rem;
-  border-bottom: 1px solid #e2e2e2;
+  border-bottom: 1px solid var(--color-border);
   margin-bottom: 2rem;
 }
 
@@ -30,7 +31,7 @@
 
   a {
     text-decoration: none;
-    color: #666;
+    color: var(--color-text-muted);
     font-size: 0.95rem;
     padding-bottom: 0.25rem;
     border-bottom: 2px solid transparent;
@@ -38,8 +39,8 @@
 }
 
 .shell__nav-link--active {
-  color: #1a73e8;
-  border-bottom-color: #1a73e8;
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 
 .shell__user {
@@ -57,9 +58,10 @@
 
 .shell__logout {
   padding: 0.3rem 0.7rem;
-  border: 1px solid #d0d0d0;
+  border: 1px solid var(--color-border-strong);
   border-radius: 6px;
-  background: #fff;
+  background: var(--color-surface);
+  color: var(--color-text);
   font: inherit;
   font-size: 0.8rem;
   cursor: pointer;
@@ -73,6 +75,7 @@
   justify-content: center;
   text-align: center;
   gap: 0.5rem;
+  color: var(--color-text);
 }
 
 .login-screen h1 {
@@ -81,6 +84,6 @@
 }
 
 .login-screen p {
-  color: #666;
+  color: var(--color-text-muted);
   margin: 0 0 1.5rem;
 }

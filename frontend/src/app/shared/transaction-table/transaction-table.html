@@ -15,9 +15,11 @@
     </thead>
     <tbody>
       @for (tx of transactions; track tx.transactionId) {
-        <tr>
+        <tr [class.transaction-table__row--expense]="tx.amount > 0" [class.transaction-table__row--income]="tx.amount < 0">
           <td>{{ tx.date }}</td>
-          <td>{{ tx.merchantName ?? tx.name }}</td>
+          <td class="transaction-table__description" [title]="tx.merchantName ?? tx.name">
+            {{ tx.merchantName ?? tx.name }}
+          </td>
           @if (showInstitution) {
             <td>{{ tx.institutionName ?? '—' }}</td>
           }

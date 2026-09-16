@@ -145,17 +145,102 @@ public class PlaidController : ControllerBase
         return Ok(transactions.Select(ToDto));
     }
 
-    // Transações de todas as contas conectadas pelo usuário logado, lidas do banco local
+    // Transações de todas as contas conectadas pelo usuário logado, paginadas e filtradas no
+    // servidor (o front nunca busca "tudo" pra paginar do lado dele).
     [HttpGet("transactions")]
-    public async Task<IActionResult> GetAllTransactions()
+    public async Task<IActionResult> GetAllTransactions(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        [FromQuery] string? search = null,
+        [FromQuery] string? categories = null,
+        [FromQuery] string? institutions = null,
+        [FromQuery] string? dateFrom = null,
+        [FromQuery] string? dateTo = null)
     {
-        var transactions = await _db.PlaidTransactions
-            .Where(t => t.UserId == CurrentUserId)
+        page = Math.Max(page, 1);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var query = _db.PlaidTransactions.Where(t => t.UserId == CurrentUserId);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            // EF.Functions.Like em vez de .Contains(): no SQLite, Contains() vira instr() e é
+            // case-sensitive; LIKE é case-insensitive para ASCII, que é o que queremos aqui.
+            var pattern = $"%{search.Trim()}%";
+            query = query.Where(t =>
+                EF.Functions.Like(t.Name, pattern) ||
+                (t.MerchantName != null && EF.Functions.Like(t.MerchantName, pattern)));
+        }
+
+        var categoryList = SplitParam(categories);
+        if (categoryList.Length > 0)
+            query = query.Where(t => categoryList.Contains(t.Category ?? CategoryFallback));
+
+        var institutionList = SplitParam(institutions);
+        if (institutionList.Length > 0)
+            query = query.Where(t => t.InstitutionName != null && institutionList.Contains(t.InstitutionName));
+
+        if (DateOnly.TryParse(dateFrom, out var from))
+            query = query.Where(t => t.Date >= from);
+        if (DateOnly.TryParse(dateTo, out var to))
+            query = query.Where(t => t.Date <= to);
+
+        var total = await query.CountAsync();
+        var items = await query
             .OrderByDescending(t => t.Date)
+            .ThenByDescending(t => t.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
-        return Ok(transactions.Select(ToDto));
+        return Ok(new
+        {
+            items = items.Select(ToDto),
+            total,
+            page,
+            pageSize,
+        });
     }
+
+    // Resumo agregado (receitas, despesas, gastos por categoria, transações recentes) —
+    // calculado no banco, sem trazer o histórico inteiro pro servidor nem pro cliente.
+    [HttpGet("summary")]
+    public async Task<IActionResult> GetSummary()
+    {
+        var query = _db.PlaidTransactions.Where(t => t.UserId == CurrentUserId);
+
+        var totalExpenses = await query.Where(t => t.Amount > 0).SumAsync(t => (decimal?)t.Amount) ?? 0m;
+        var totalIncome = -(await query.Where(t => t.Amount < 0).SumAsync(t => (decimal?)t.Amount) ?? 0m);
+
+        var categoryTotals = await query
+            .Where(t => t.Amount > 0)
+            .GroupBy(t => t.Category)
+            .Select(g => new { Category = g.Key, Total = g.Sum(t => t.Amount) })
+            .OrderByDescending(g => g.Total)
+            .Take(6)
+            .ToListAsync();
+
+        var recent = await query
+            .OrderByDescending(t => t.Date)
+            .ThenByDescending(t => t.Id)
+            .Take(8)
+            .ToListAsync();
+
+        return Ok(new
+        {
+            totalIncome,
+            totalExpenses,
+            categoryTotals = categoryTotals.Select(c => new { category = c.Category ?? CategoryFallback, total = c.Total }),
+            recentTransactions = recent.Select(ToDto),
+        });
+    }
+
+    private const string CategoryFallback = "OUTROS";
+
+    private static string[] SplitParam(string? value) =>
+        string.IsNullOrWhiteSpace(value)
+            ? []
+            : value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     private async Task SyncItemAsync(PlaidItem item)
     {

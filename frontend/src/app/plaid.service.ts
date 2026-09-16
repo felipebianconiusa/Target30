@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -30,6 +30,30 @@ export interface Transaction {
   category: string | null;
 }
 
+export interface TransactionsFilter {
+  page: number;
+  pageSize: number;
+  search?: string;
+  categories?: string[];
+  institutions?: string[];
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface PagedTransactions {
+  items: Transaction[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface TransactionsSummary {
+  totalIncome: number;
+  totalExpenses: number;
+  categoryTotals: { category: string; total: number }[];
+  recentTransactions: Transaction[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class PlaidService {
   private readonly baseUrl = '/api/plaid';
@@ -54,19 +78,27 @@ export class PlaidService {
     return this.http.get<PlaidItemSummary[]>(`${this.baseUrl}/items`);
   }
 
-  getItemTransactions(itemId: string): Observable<Transaction[]> {
-    return this.http.get<Transaction[]>(`${this.baseUrl}/items/${itemId}/transactions`);
-  }
-
-  getAllTransactions(): Observable<Transaction[]> {
-    return this.http.get<Transaction[]>(`${this.baseUrl}/transactions`);
+  removeItem(itemId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/items/${itemId}`);
   }
 
   syncTransactions(): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/sync`, {});
   }
 
-  removeItem(itemId: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/items/${itemId}`);
+  getTransactionsPage(filter: TransactionsFilter): Observable<PagedTransactions> {
+    let params = new HttpParams().set('page', filter.page).set('pageSize', filter.pageSize);
+    if (filter.search) params = params.set('search', filter.search);
+    if (filter.categories?.length) params = params.set('categories', filter.categories.join(','));
+    if (filter.institutions?.length)
+      params = params.set('institutions', filter.institutions.join(','));
+    if (filter.dateFrom) params = params.set('dateFrom', filter.dateFrom);
+    if (filter.dateTo) params = params.set('dateTo', filter.dateTo);
+
+    return this.http.get<PagedTransactions>(`${this.baseUrl}/transactions`, { params });
+  }
+
+  getSummary(): Observable<TransactionsSummary> {
+    return this.http.get<TransactionsSummary>(`${this.baseUrl}/summary`);
   }
 }

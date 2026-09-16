@@ -6,91 +6,99 @@
     </button>
   </div>
 
+  <div class="filters">
+    <input
+      type="text"
+      [placeholder]="'transactions.searchPlaceholder' | translate"
+      [value]="search()"
+      (input)="onSearchInput($any($event.target).value)"
+    />
+
+    <app-multi-select
+      [allLabel]="'transactions.allCategories' | translate"
+      [options]="categoryOptions()"
+      [selected]="categories()"
+      (selectedChange)="onCategoriesChange($event)"
+    />
+
+    <app-multi-select
+      [allLabel]="'transactions.allAccounts' | translate"
+      [options]="institutionOptions()"
+      [selected]="institutions()"
+      (selectedChange)="onInstitutionsChange($event)"
+    />
+
+    <button type="button" (click)="clearFilters()">{{ 'common.clearFilters' | translate }}</button>
+  </div>
+
+  <div class="date-presets">
+    <button
+      type="button"
+      class="date-presets__chip"
+      [class.date-presets__chip--active]="activePreset() === 'all'"
+      (click)="applyPreset('all')"
+    >
+      {{ 'transactions.presetAll' | translate }}
+    </button>
+    <button
+      type="button"
+      class="date-presets__chip"
+      [class.date-presets__chip--active]="activePreset() === '7d'"
+      (click)="applyPreset('7d')"
+    >
+      {{ 'transactions.preset7d' | translate }}
+    </button>
+    <button
+      type="button"
+      class="date-presets__chip"
+      [class.date-presets__chip--active]="activePreset() === '30d'"
+      (click)="applyPreset('30d')"
+    >
+      {{ 'transactions.preset30d' | translate }}
+    </button>
+    <button
+      type="button"
+      class="date-presets__chip"
+      [class.date-presets__chip--active]="activePreset() === 'current-month'"
+      (click)="applyPreset('current-month')"
+    >
+      {{ 'transactions.presetCurrentMonth' | translate }}
+    </button>
+    <button
+      type="button"
+      class="date-presets__chip"
+      [class.date-presets__chip--active]="activePreset() === 'previous-month'"
+      (click)="applyPreset('previous-month')"
+    >
+      {{ 'transactions.presetPreviousMonth' | translate }}
+    </button>
+
+    <input type="date" [value]="dateFrom()" (change)="setDateFrom($any($event.target).value)" />
+    <span class="date-presets__separator">{{ 'transactions.dateTo' | translate }}</span>
+    <input type="date" [value]="dateTo()" (change)="setDateTo($any($event.target).value)" />
+  </div>
+
+  @if (errorMessage()) {
+    <p class="transactions-page__error">{{ errorMessage() }}</p>
+  }
+
+  <p class="transactions-page__count">{{ 'transactions.totalCount' | translate: { total: total() } }}</p>
+
   @if (loading()) {
     <p>{{ 'common.loading' | translate }}</p>
-  } @else if (errorMessage()) {
-    <p class="transactions-page__error">{{ errorMessage() }}</p>
   } @else {
-    <div class="filters">
-      <input
-        type="text"
-        [placeholder]="'transactions.searchPlaceholder' | translate"
-        [value]="search()"
-        (input)="search.set($any($event.target).value)"
-      />
+    <app-transaction-table [transactions]="transactions()" [showInstitution]="true" />
 
-      <app-multi-select
-        [allLabel]="'transactions.allCategories' | translate"
-        [options]="categoryOptions()"
-        [selected]="categories()"
-        (selectedChange)="categories.set($event)"
-      />
-
-      <app-multi-select
-        [allLabel]="'transactions.allAccounts' | translate"
-        [options]="institutionOptions()"
-        [selected]="institutions()"
-        (selectedChange)="institutions.set($event)"
-      />
-
-      <button type="button" (click)="clearFilters()">{{ 'common.clearFilters' | translate }}</button>
-    </div>
-
-    <div class="date-presets">
-      <button
-        type="button"
-        class="date-presets__chip"
-        [class.date-presets__chip--active]="activePreset() === 'all'"
-        (click)="applyPreset('all')"
-      >
-        {{ 'transactions.presetAll' | translate }}
-      </button>
-      <button
-        type="button"
-        class="date-presets__chip"
-        [class.date-presets__chip--active]="activePreset() === '7d'"
-        (click)="applyPreset('7d')"
-      >
-        {{ 'transactions.preset7d' | translate }}
-      </button>
-      <button
-        type="button"
-        class="date-presets__chip"
-        [class.date-presets__chip--active]="activePreset() === '30d'"
-        (click)="applyPreset('30d')"
-      >
-        {{ 'transactions.preset30d' | translate }}
-      </button>
-      <button
-        type="button"
-        class="date-presets__chip"
-        [class.date-presets__chip--active]="activePreset() === 'current-month'"
-        (click)="applyPreset('current-month')"
-      >
-        {{ 'transactions.presetCurrentMonth' | translate }}
-      </button>
-      <button
-        type="button"
-        class="date-presets__chip"
-        [class.date-presets__chip--active]="activePreset() === 'previous-month'"
-        (click)="applyPreset('previous-month')"
-      >
-        {{ 'transactions.presetPreviousMonth' | translate }}
-      </button>
-
-      <input
-        type="date"
-        [value]="dateFrom()"
-        (change)="setDateFrom($any($event.target).value)"
-      />
-      <span class="date-presets__separator">{{ 'transactions.dateTo' | translate }}</span>
-      <input type="date" [value]="dateTo()" (change)="setDateTo($any($event.target).value)" />
-    </div>
-
-    <p class="transactions-page__count">
-      {{ 'transactions.count' | translate: { filtered: filteredTransactions().length, total: transactions().length } }}
-    </p>
-
-    <app-transaction-table [transactions]="filteredTransactions()" [showInstitution]="true" />
+    @if (totalPages() > 1) {
+      <div class="pagination">
+        <button type="button" [disabled]="page() === 1" (click)="goToPage(page() - 1)">
+          {{ 'transactions.prev' | translate }}
+        </button>
+        <span>{{ 'transactions.page' | translate: { page: page(), totalPages: totalPages() } }}</span>
+        <button type="button" [disabled]="page() === totalPages()" (click)="goToPage(page() + 1)">
+          {{ 'transactions.next' | translate }}
+        </button>
+      </div>
+    }
   }
 </section>

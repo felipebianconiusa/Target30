@@ -5,6 +5,7 @@ import { PlaidService } from '../plaid.service';
 import { TranslationService } from '../i18n/translation.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { Lang, LANG_LABELS, SUPPORTED_LANGS } from '../i18n/translations';
+import { Theme, ThemeService } from '../theme/theme.service';
 
 @Component({
   selector: 'app-settings',
@@ -15,6 +16,7 @@ import { Lang, LANG_LABELS, SUPPORTED_LANGS } from '../i18n/translations';
 export class Settings {
   protected readonly langs = SUPPORTED_LANGS;
   protected readonly langLabels = LANG_LABELS;
+  protected readonly themes: Theme[] = ['light', 'dark', 'system'];
   protected readonly deleting = signal(false);
   protected readonly deleteDone = signal(false);
 
@@ -22,10 +24,19 @@ export class Settings {
     protected readonly authService: AuthService,
     private readonly plaidService: PlaidService,
     protected readonly translationService: TranslationService,
+    protected readonly themeService: ThemeService,
   ) {}
 
   protected setLang(lang: Lang): void {
     this.translationService.setLang(lang);
+  }
+
+  protected setTheme(theme: Theme): void {
+    this.themeService.setTheme(theme);
+  }
+
+  protected themeLabelKey(theme: Theme): string {
+    return `settings.theme${theme.charAt(0).toUpperCase()}${theme.slice(1)}`;
   }
 
   protected deleteAllData(): void {

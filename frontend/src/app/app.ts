@@ -4,6 +4,7 @@ import { AuthService } from './auth/auth.service';
 import { GoogleLoginButton } from './auth/google-login-button/google-login-button';
 import { TranslationService } from './i18n/translation.service';
 import { TranslatePipe } from './i18n/translate.pipe';
+import { ThemeService } from './theme/theme.service';
 
 @Component({
   imports: [RouterOutlet, RouterLink, RouterLinkActive, GoogleLoginButton, TranslatePipe],
@@ -15,6 +16,7 @@ export class App implements OnInit {
   constructor(
     protected readonly authService: AuthService,
     protected readonly translationService: TranslationService,
+    private readonly themeService: ThemeService,
   ) {}
 
   ngOnInit(): void {

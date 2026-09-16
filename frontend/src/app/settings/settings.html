@@ -11,7 +11,29 @@
           [class.settings__lang-chip--active]="translationService.lang() === lang"
           (click)="setLang(lang)"
         >
+          @if (translationService.lang() === lang) {
+            <span class="settings__lang-check">✓</span>
+          }
           {{ langLabels[lang] }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="settings__section">
+    <h2>{{ 'settings.theme' | translate }}</h2>
+    <div class="settings__lang-options">
+      @for (theme of themes; track theme) {
+        <button
+          type="button"
+          class="settings__lang-chip"
+          [class.settings__lang-chip--active]="themeService.theme() === theme"
+          (click)="setTheme(theme)"
+        >
+          @if (themeService.theme() === theme) {
+            <span class="settings__lang-check">✓</span>
+          }
+          {{ themeLabelKey(theme) | translate }}
         </button>
       }
     </div>

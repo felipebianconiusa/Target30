@@ -4,9 +4,10 @@
 
 .multi-select__trigger {
   padding: 0.4rem 0.6rem;
-  border: 1px solid #d0d0d0;
+  border: 1px solid var(--color-border-strong);
   border-radius: 6px;
-  background: #fff;
+  background: var(--color-surface);
+  color: var(--color-text);
   font: inherit;
   cursor: pointer;
   display: inline-flex;
@@ -17,7 +18,7 @@
 
 .multi-select__caret {
   font-size: 0.7rem;
-  color: #777;
+  color: var(--color-text-muted);
 }
 
 .multi-select__panel {
@@ -28,10 +29,10 @@
   min-width: 14rem;
   max-height: 16rem;
   overflow-y: auto;
-  background: #fff;
-  border: 1px solid #d0d0d0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
   border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--color-shadow);
   padding: 0.4rem;
   display: flex;
   flex-direction: column;
@@ -44,12 +45,12 @@
   background: none;
   font: inherit;
   font-weight: 600;
-  color: #1a73e8;
+  color: var(--color-primary);
   cursor: pointer;
   border-radius: 4px;
 
   &:hover {
-    background: #f2f6fd;
+    background: var(--color-surface-alt);
   }
 }
 
@@ -59,10 +60,11 @@
   gap: 0.5rem;
   padding: 0.35rem 0.5rem;
   font-size: 0.9rem;
+  color: var(--color-text);
   cursor: pointer;
   border-radius: 4px;
 
   &:hover {
-    background: #f5f5f5;
+    background: var(--color-surface-alt);
   }
 }

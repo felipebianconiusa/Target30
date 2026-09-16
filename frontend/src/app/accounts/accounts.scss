@@ -21,12 +21,12 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  border: 1px solid #e2e2e2;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
 
   a {
     font-size: 0.85rem;
-    color: #1a73e8;
+    color: var(--color-primary);
     text-decoration: none;
 
     &:hover {
@@ -43,10 +43,10 @@
 
 .accounts__remove {
   padding: 0.25rem 0.6rem;
-  border: 1px solid #e2b8b8;
+  border: 1px solid var(--color-danger-border);
   border-radius: 6px;
-  background: #fff;
-  color: #c0392b;
+  background: var(--color-surface);
+  color: var(--color-danger);
   font-size: 0.8rem;
   cursor: pointer;
 

@@ -5,7 +5,7 @@
 
 .settings__section {
   padding: 1.25rem 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-border);
 
   h2 {
     font-size: 1rem;
@@ -19,23 +19,31 @@
 
 .settings__lang-options {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
 .settings__lang-chip {
   padding: 0.4rem 0.9rem;
-  border: 1px solid #d0d0d0;
+  border: 1px solid var(--color-border-strong);
   border-radius: 999px;
-  background: #fff;
+  background: var(--color-surface);
+  color: var(--color-text);
   font: inherit;
   font-size: 0.85rem;
+  font-weight: 500;
   cursor: pointer;
 
   &--active {
-    background: #1a73e8;
-    border-color: #1a73e8;
-    color: #fff;
+    font-weight: 700;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-primary-text);
   }
+}
+
+.settings__lang-check {
+  margin-right: 0.3rem;
 }
 
 .settings__profile {
@@ -53,14 +61,15 @@
 
 .settings__email {
   font-size: 0.85rem;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .settings__section button {
   padding: 0.4rem 0.8rem;
-  border: 1px solid #d0d0d0;
+  border: 1px solid var(--color-border-strong);
   border-radius: 6px;
-  background: #fff;
+  background: var(--color-surface);
+  color: var(--color-text);
   font: inherit;
   font-size: 0.85rem;
   cursor: pointer;
@@ -72,15 +81,15 @@
 }
 
 .settings__section--danger h2 {
-  color: #c0392b;
+  color: var(--color-danger);
 }
 
 .settings__danger-button {
-  border-color: #e2b8b8 !important;
-  color: #c0392b;
+  border-color: var(--color-danger-border) !important;
+  color: var(--color-danger);
 }
 
 .settings__done {
-  color: #1a7f37;
+  color: var(--color-success);
   font-size: 0.9rem;
 }

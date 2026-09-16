@@ -1,8 +1,8 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { PlaidService, Transaction } from '../plaid.service';
+import { PlaidItemSummary, PlaidService, Transaction } from '../plaid.service';
 import { TransactionTable } from '../shared/transaction-table/transaction-table';
-import { CATEGORY_FALLBACK_CODE, translateCategory } from '../shared/category-labels';
+import { ALL_CATEGORY_CODES, translateCategory } from '../shared/category-labels';
 import { MultiSelect, MultiSelectOption } from '../shared/multi-select/multi-select';
 import * as dateRanges from '../shared/date-ranges';
 import { TranslationService } from '../i18n/translation.service';
@@ -10,14 +10,20 @@ import { TranslatePipe } from '../i18n/translate.pipe';
 
 type DatePreset = '7d' | '30d' | 'current-month' | 'previous-month' | 'custom' | 'all';
 
+const PAGE_SIZE = 25;
+const SEARCH_DEBOUNCE_MS = 300;
+
 @Component({
   selector: 'app-transactions',
   imports: [TransactionTable, MultiSelect, TranslatePipe],
   templateUrl: './transactions.html',
   styleUrl: './transactions.scss',
 })
-export class Transactions implements OnInit {
+export class Transactions implements OnInit, OnDestroy {
   protected readonly transactions = signal<Transaction[]>([]);
+  protected readonly total = signal(0);
+  protected readonly page = signal(1);
+  protected readonly pageSize = PAGE_SIZE;
   protected readonly loading = signal(true);
   protected readonly syncing = signal(false);
   protected readonly errorMessage = signal('');
@@ -29,44 +35,18 @@ export class Transactions implements OnInit {
   protected readonly dateTo = signal('');
   protected readonly activePreset = signal<DatePreset>('all');
 
+  protected readonly institutionOptions = signal<MultiSelectOption[]>([]);
+
+  protected readonly totalPages = computed(() => Math.max(1, Math.ceil(this.total() / PAGE_SIZE)));
+
   protected readonly categoryOptions = computed<MultiSelectOption[]>(() => {
     const lang = this.translationService.lang();
-    const codes = new Set(this.transactions().map((t) => t.category ?? CATEGORY_FALLBACK_CODE));
-    return [...codes]
-      .map((value) => ({ value, label: translateCategory(value, lang) }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  });
-
-  protected readonly institutionOptions = computed<MultiSelectOption[]>(() => {
-    const unnamed = this.translationService.t('accounts.unnamedInstitution');
-    const names = new Set(this.transactions().map((t) => t.institutionName ?? unnamed));
-    return [...names].map((value) => ({ value, label: value })).sort((a, b) =>
-      a.label.localeCompare(b.label),
+    return ALL_CATEGORY_CODES.map((value) => ({ value, label: translateCategory(value, lang) })).sort(
+      (a, b) => a.label.localeCompare(b.label),
     );
   });
 
-  protected readonly filteredTransactions = computed(() => {
-    const search = this.search().trim().toLowerCase();
-    const categories = this.categories();
-    const institutions = this.institutions();
-    const dateFrom = this.dateFrom();
-    const dateTo = this.dateTo();
-    const unnamed = this.translationService.t('accounts.unnamedInstitution');
-
-    return this.transactions().filter((t) => {
-      if (search) {
-        const haystack = `${t.name} ${t.merchantName ?? ''}`.toLowerCase();
-        if (!haystack.includes(search)) return false;
-      }
-      if (categories.length > 0 && !categories.includes(t.category ?? CATEGORY_FALLBACK_CODE))
-        return false;
-      if (institutions.length > 0 && !institutions.includes(t.institutionName ?? unnamed))
-        return false;
-      if (dateFrom && t.date < dateFrom) return false;
-      if (dateTo && t.date > dateTo) return false;
-      return true;
-    });
-  });
+  private searchDebounce?: ReturnType<typeof setTimeout>;
 
   constructor(
     private readonly plaidService: PlaidService,
@@ -78,7 +58,12 @@ export class Transactions implements OnInit {
     const institutionFromQuery = this.route.snapshot.queryParamMap.get('institution');
     if (institutionFromQuery) this.institutions.set([institutionFromQuery]);
 
-    this.loadTransactions();
+    this.loadInstitutionOptions();
+    this.loadPage();
+  }
+
+  ngOnDestroy(): void {
+    clearTimeout(this.searchDebounce);
   }
 
   protected refresh(): void {
@@ -86,7 +71,7 @@ export class Transactions implements OnInit {
     this.plaidService.syncTransactions().subscribe({
       next: () => {
         this.syncing.set(false);
-        this.loadTransactions();
+        this.loadPage();
       },
       error: () => {
         this.syncing.set(false);
@@ -95,17 +80,20 @@ export class Transactions implements OnInit {
     });
   }
 
-  private loadTransactions(): void {
-    this.plaidService.getAllTransactions().subscribe({
-      next: (transactions) => {
-        this.transactions.set(transactions);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.errorMessage.set(this.translationService.t('transactions.error'));
-        this.loading.set(false);
-      },
-    });
+  protected onSearchInput(value: string): void {
+    this.search.set(value);
+    clearTimeout(this.searchDebounce);
+    this.searchDebounce = setTimeout(() => this.onFilterChange(), SEARCH_DEBOUNCE_MS);
+  }
+
+  protected onCategoriesChange(values: string[]): void {
+    this.categories.set(values);
+    this.onFilterChange();
+  }
+
+  protected onInstitutionsChange(values: string[]): void {
+    this.institutions.set(values);
+    this.onFilterChange();
   }
 
   protected applyPreset(preset: DatePreset): void {
@@ -128,25 +116,19 @@ export class Transactions implements OnInit {
         this.dateTo.set('');
         break;
     }
-  }
-
-  protected onCustomDateChange(): void {
-    this.activePreset.set('custom');
+    this.onFilterChange();
   }
 
   protected setDateFrom(value: string): void {
     this.dateFrom.set(value);
-    this.onCustomDateChange();
+    this.activePreset.set('custom');
+    this.onFilterChange();
   }
 
   protected setDateTo(value: string): void {
     this.dateTo.set(value);
-    this.onCustomDateChange();
-  }
-
-  private setRange(range: dateRanges.DateRange): void {
-    this.dateFrom.set(range.from);
-    this.dateTo.set(range.to);
+    this.activePreset.set('custom');
+    this.onFilterChange();
   }
 
   protected clearFilters(): void {
@@ -156,5 +138,58 @@ export class Transactions implements OnInit {
     this.dateFrom.set('');
     this.dateTo.set('');
     this.activePreset.set('all');
+    this.onFilterChange();
+  }
+
+  protected goToPage(target: number): void {
+    if (target < 1 || target > this.totalPages() || target === this.page()) return;
+    this.page.set(target);
+    this.loadPage();
+  }
+
+  private setRange(range: dateRanges.DateRange): void {
+    this.dateFrom.set(range.from);
+    this.dateTo.set(range.to);
+  }
+
+  private onFilterChange(): void {
+    this.page.set(1);
+    this.loadPage();
+  }
+
+  private loadInstitutionOptions(): void {
+    this.plaidService.getItems().subscribe({
+      next: (items: PlaidItemSummary[]) => {
+        const names = [...new Set(items.map((i) => i.institutionName).filter((n): n is string => !!n))];
+        this.institutionOptions.set(
+          names.map((value) => ({ value, label: value })).sort((a, b) => a.label.localeCompare(b.label)),
+        );
+      },
+    });
+  }
+
+  private loadPage(): void {
+    this.loading.set(true);
+    this.plaidService
+      .getTransactionsPage({
+        page: this.page(),
+        pageSize: this.pageSize,
+        search: this.search() || undefined,
+        categories: this.categories().length ? this.categories() : undefined,
+        institutions: this.institutions().length ? this.institutions() : undefined,
+        dateFrom: this.dateFrom() || undefined,
+        dateTo: this.dateTo() || undefined,
+      })
+      .subscribe({
+        next: (result) => {
+          this.transactions.set(result.items);
+          this.total.set(result.total);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.errorMessage.set(this.translationService.t('transactions.error'));
+          this.loading.set(false);
+        },
+      });
   }
 }

@@ -2,7 +2,7 @@
   <p>{{ 'common.loading' | translate }}</p>
 } @else if (errorMessage()) {
   <p class="dashboard__error">{{ errorMessage() }}</p>
-} @else if (transactions().length === 0) {
+} @else if (itemCount() === 0) {
   <p>
     {{ 'dashboard.emptyNoAccounts' | translate }}
     <a routerLink="/accounts">{{ 'dashboard.emptyConnectLink' | translate }}</a>
@@ -19,11 +19,11 @@
     <div class="dashboard__cards">
       <div class="card">
         <span class="card__label">{{ 'dashboard.income' | translate }}</span>
-        <span class="card__value card__value--in">{{ formatCurrency(totalIncome()) }}</span>
+        <span class="card__value card__value--in">{{ formatCurrency(summary().totalIncome) }}</span>
       </div>
       <div class="card">
         <span class="card__label">{{ 'dashboard.expenses' | translate }}</span>
-        <span class="card__value">{{ formatCurrency(totalExpenses()) }}</span>
+        <span class="card__value">{{ formatCurrency(summary().totalExpenses) }}</span>
       </div>
       <div class="card">
         <span class="card__label">{{ 'dashboard.netBalance' | translate }}</span>

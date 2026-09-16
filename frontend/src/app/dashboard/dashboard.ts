@@ -1,8 +1,9 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { PlaidService, Transaction } from '../plaid.service';
+import { forkJoin } from 'rxjs';
+import { PlaidService, Transaction, TransactionsSummary } from '../plaid.service';
 import { TransactionTable } from '../shared/transaction-table/transaction-table';
-import { CATEGORY_FALLBACK_CODE, translateCategory } from '../shared/category-labels';
+import { translateCategory } from '../shared/category-labels';
 import { TranslationService } from '../i18n/translation.service';
 import { LOCALE_BY_LANG } from '../i18n/translations';
 import { TranslatePipe } from '../i18n/translate.pipe';
@@ -13,6 +14,13 @@ interface CategoryTotal {
   percentOfMax: number;
 }
 
+const EMPTY_SUMMARY: TransactionsSummary = {
+  totalIncome: 0,
+  totalExpenses: 0,
+  categoryTotals: [],
+  recentTransactions: [],
+};
+
 @Component({
   selector: 'app-dashboard',
   imports: [TransactionTable, RouterLink, TranslatePipe],
@@ -20,41 +28,26 @@ interface CategoryTotal {
   styleUrl: './dashboard.scss',
 })
 export class Dashboard implements OnInit {
-  protected readonly transactions = signal<Transaction[]>([]);
+  protected readonly summary = signal<TransactionsSummary>(EMPTY_SUMMARY);
+  protected readonly itemCount = signal(0);
   protected readonly loading = signal(true);
   protected readonly syncing = signal(false);
   protected readonly errorMessage = signal('');
 
-  protected readonly totalExpenses = computed(() =>
-    this.transactions()
-      .filter((t) => t.amount > 0)
-      .reduce((sum, t) => sum + t.amount, 0),
+  protected readonly net = computed(() => this.summary().totalIncome - this.summary().totalExpenses);
+
+  protected readonly recentTransactions = computed<Transaction[]>(
+    () => this.summary().recentTransactions,
   );
-
-  protected readonly totalIncome = computed(() =>
-    this.transactions()
-      .filter((t) => t.amount < 0)
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0),
-  );
-
-  protected readonly net = computed(() => this.totalIncome() - this.totalExpenses());
-
-  protected readonly recentTransactions = computed(() => this.transactions().slice(0, 8));
 
   protected readonly categoryTotals = computed<CategoryTotal[]>(() => {
-    const totals = new Map<string, number>();
-    for (const t of this.transactions()) {
-      if (t.amount <= 0) continue;
-      const key = t.category ?? CATEGORY_FALLBACK_CODE;
-      totals.set(key, (totals.get(key) ?? 0) + t.amount);
-    }
-    const entries = [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
-    const max = entries.length > 0 ? entries[0][1] : 1;
     const lang = this.translationService.lang();
-    return entries.map(([category, total]) => ({
-      category: translateCategory(category, lang),
-      total,
-      percentOfMax: (total / max) * 100,
+    const totals = this.summary().categoryTotals;
+    const max = totals.length > 0 ? totals[0].total : 1;
+    return totals.map((c) => ({
+      category: translateCategory(c.category, lang),
+      total: c.total,
+      percentOfMax: (c.total / max) * 100,
     }));
   });
 
@@ -64,7 +57,7 @@ export class Dashboard implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadTransactions();
+    this.load();
   }
 
   protected refresh(): void {
@@ -72,7 +65,7 @@ export class Dashboard implements OnInit {
     this.plaidService.syncTransactions().subscribe({
       next: () => {
         this.syncing.set(false);
-        this.loadTransactions();
+        this.load();
       },
       error: () => {
         this.syncing.set(false);
@@ -81,10 +74,14 @@ export class Dashboard implements OnInit {
     });
   }
 
-  private loadTransactions(): void {
-    this.plaidService.getAllTransactions().subscribe({
-      next: (transactions) => {
-        this.transactions.set(transactions);
+  private load(): void {
+    forkJoin({
+      summary: this.plaidService.getSummary(),
+      items: this.plaidService.getItems(),
+    }).subscribe({
+      next: ({ summary, items }) => {
+        this.summary.set(summary);
+        this.itemCount.set(items.length);
         this.loading.set(false);
       },
       error: () => {
