@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Target30.Api.Data;
+using Target30.Api.Models;
 
 namespace Target30.Api.Controllers;
 
@@ -43,11 +44,16 @@ public class CardsController : ControllerBase
                 var targetBalance = limit * (targetPercent / 100m);
                 var amountToPay = Math.Max(0, Math.Round(balance - targetBalance, 2));
                 var nextClosingDate = ComputeNextClosingDate(a.StatementClosingDay, today);
-                var daysUntilClosing = nextClosingDate is not null
-                    ? nextClosingDate.Value.DayNumber - today.DayNumber
+                // Bancos não processam pagamento em fim de semana/feriado — se o fechamento cair
+                // num desses dias, o prazo real pra pagar é o último dia útil anterior.
+                var paymentDeadline = nextClosingDate is not null
+                    ? UsBusinessDays.PreviousOrSameBusinessDay(nextClosingDate.Value)
+                    : (DateOnly?)null;
+                var daysUntilDeadline = paymentDeadline is not null
+                    ? paymentDeadline.Value.DayNumber - today.DayNumber
                     : (int?)null;
-                var needsAlert = daysUntilClosing is not null
-                    && daysUntilClosing <= settings.NotifyDaysBeforeClosing
+                var needsAlert = daysUntilDeadline is not null
+                    && daysUntilDeadline <= settings.NotifyDaysBeforeClosing
                     && amountToPay > 0;
 
                 return new CardDto(
@@ -64,13 +70,14 @@ public class CardsController : ControllerBase
                     amountToPay,
                     a.StatementClosingDay,
                     nextClosingDate,
-                    daysUntilClosing,
+                    paymentDeadline,
+                    daysUntilDeadline,
                     a.NextPaymentDueDate,
                     a.MinimumPaymentAmount,
                     a.IsOverdue,
                     needsAlert);
             })
-            .OrderBy(c => c.DaysUntilClosing ?? int.MaxValue)
+            .OrderBy(c => c.DaysUntilPaymentDeadline ?? int.MaxValue)
             .ToList();
 
         return Ok(cards);
@@ -93,12 +100,12 @@ public class CardsController : ControllerBase
         return NoContent();
     }
 
-    private async Task<Models.UserSettings> GetOrCreateSettingsAsync()
+    private async Task<UserSettings> GetOrCreateSettingsAsync()
     {
         var settings = await _db.UserSettings.FirstOrDefaultAsync(s => s.UserId == CurrentUserId);
         if (settings is null)
         {
-            settings = new Models.UserSettings { UserId = CurrentUserId };
+            settings = new UserSettings { UserId = CurrentUserId };
             _db.UserSettings.Add(settings);
             await _db.SaveChangesAsync();
         }
@@ -137,7 +144,8 @@ public record CardDto(
     decimal AmountToPay,
     int? StatementClosingDay,
     DateOnly? NextClosingDate,
-    int? DaysUntilClosing,
+    DateOnly? PaymentDeadline,
+    int? DaysUntilPaymentDeadline,
     DateOnly? NextPaymentDueDate,
     decimal? MinimumPaymentAmount,
     bool? IsOverdue,

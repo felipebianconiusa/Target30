@@ -22,7 +22,7 @@
         <ul>
           @for (card of cardAlerts(); track card.accountId) {
             <li>
-              {{ 'dashboard.cardAlertLine' | translate: { name: card.name, amount: formatCurrency(card.amountToPay), date: card.nextClosingDate ?? '', days: card.daysUntilClosing ?? 0 } }}
+              {{ 'dashboard.cardAlertLine' | translate: { name: card.name, amount: formatCurrency(card.amountToPay), date: card.paymentDeadline ?? '', days: card.daysUntilPaymentDeadline ?? 0 } }}
             </li>
           }
         </ul>

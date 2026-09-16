@@ -16,7 +16,8 @@ export interface Card {
   amountToPay: number;
   statementClosingDay: number | null;
   nextClosingDate: string | null;
-  daysUntilClosing: number | null;
+  paymentDeadline: string | null;
+  daysUntilPaymentDeadline: number | null;
   nextPaymentDueDate: string | null;
   minimumPaymentAmount: number | null;
   isOverdue: boolean | null;

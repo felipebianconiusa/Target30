@@ -41,9 +41,9 @@
               </span>
             </div>
 
-            @if (card.amountToPay > 0 && card.nextClosingDate) {
+            @if (card.amountToPay > 0 && card.paymentDeadline) {
               <p class="card-item__pay-hint" [class.card-item__pay-hint--alert]="card.needsAlert">
-                {{ 'cards.payToReachTarget' | translate: { amount: formatCurrency(card.amountToPay, card.isoCurrencyCode), date: card.nextClosingDate, target: card.targetPercent } }}
+                {{ 'cards.payToReachTarget' | translate: { amount: formatCurrency(card.amountToPay, card.isoCurrencyCode), date: card.paymentDeadline, target: card.targetPercent } }}
               </p>
             } @else if (card.amountToPay === 0) {
               <p class="card-item__ok">{{ 'cards.underTarget' | translate }}</p>
@@ -54,10 +54,13 @@
             @if (card.nextClosingDate) {
               <span>
                 {{ 'cards.closingDate' | translate }}: {{ card.nextClosingDate }}
-                @if (card.daysUntilClosing !== null) {
-                  ({{ card.daysUntilClosing === 0 ? ('cards.closingToday' | translate) : ('cards.daysUntilClosing' | translate: { days: card.daysUntilClosing }) }})
+                @if (card.daysUntilPaymentDeadline !== null) {
+                  ({{ card.daysUntilPaymentDeadline === 0 ? ('cards.closingToday' | translate) : ('cards.daysUntilClosing' | translate: { days: card.daysUntilPaymentDeadline }) }})
                 }
               </span>
+              @if (card.paymentDeadline && card.paymentDeadline !== card.nextClosingDate) {
+                <span class="card-item__weekend-note">{{ 'cards.weekendAdjusted' | translate: { date: card.paymentDeadline } }}</span>
+              }
             } @else {
               <span class="card-item__muted">{{ 'cards.noClosingDay' | translate }}</span>
             }

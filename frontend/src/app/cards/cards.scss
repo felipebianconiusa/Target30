@@ -116,6 +116,11 @@
   font-style: italic;
 }
 
+.card-item__weekend-note {
+  font-size: 0.78rem;
+  color: var(--color-danger);
+}
+
 .card-item__edit-toggle {
   align-self: flex-start;
   padding: 0.3rem 0.7rem;
