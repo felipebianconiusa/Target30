@@ -112,19 +112,16 @@ public class CardsController : ControllerBase
         return settings;
     }
 
-    private static DateOnly BuildClamped(int year, int month, int day) =>
-        new(year, month, Math.Min(day, DateTime.DaysInMonth(year, month)));
-
     private static DateOnly? ComputeNextClosingDate(int? closingDay, DateOnly today)
     {
         if (closingDay is null)
             return null;
 
-        var candidate = BuildClamped(today.Year, today.Month, closingDay.Value);
+        var candidate = DateMath.BuildClamped(today.Year, today.Month, closingDay.Value);
         if (candidate <= today)
         {
             var next = today.AddMonths(1);
-            candidate = BuildClamped(next.Year, next.Month, closingDay.Value);
+            candidate = DateMath.BuildClamped(next.Year, next.Month, closingDay.Value);
         }
         return candidate;
     }

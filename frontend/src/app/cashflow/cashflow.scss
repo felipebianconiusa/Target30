@@ -1,0 +1,182 @@
+.cashflow-page__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+
+  h1 {
+    font-size: 1.3rem;
+    margin: 0;
+  }
+}
+
+.cashflow-page__balance {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+
+  strong {
+    color: var(--color-text);
+  }
+}
+
+.cashflow-page__bills-toggle {
+  margin-bottom: 1rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.bills-manager {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+
+  h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+  }
+}
+
+.bills-manager__hint {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0 0 0.75rem;
+}
+
+.bills-manager__list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 0.85rem;
+
+    span:first-child {
+      flex: 1;
+      font-weight: 600;
+    }
+  }
+
+  button {
+    padding: 0.25rem 0.6rem;
+    border: 1px solid var(--color-danger-border);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-danger);
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+}
+
+.bills-manager__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  input {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    width: 10rem;
+  }
+
+  button {
+    padding: 0.4rem 0.9rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+  }
+}
+
+.bills-manager__field-hint {
+  font-size: 0.7rem;
+}
+
+.cashflow-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.45rem 0.7rem;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.88rem;
+  }
+}
+
+.cashflow-table__description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cashflow-table__amount-col {
+  text-align: right;
+  width: 8rem;
+}
+
+.cashflow-table__amount--in {
+  color: var(--color-success);
+}
+
+.cashflow-table__amount--out {
+  color: var(--color-danger);
+}
+
+.cashflow-table__row--future {
+  opacity: 0.85;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: var(--color-success-bg);
+  color: var(--color-success);
+
+  &--pending {
+    background: var(--color-surface-alt);
+    color: var(--color-text-muted);
+  }
+}

@@ -9,9 +9,13 @@ public class Target30DbContext(DbContextOptions<Target30DbContext> options) : Db
     public DbSet<PlaidTransaction> PlaidTransactions => Set<PlaidTransaction>();
     public DbSet<PlaidAccount> PlaidAccounts => Set<PlaidAccount>();
     public DbSet<UserSettings> UserSettings => Set<UserSettings>();
+    public DbSet<RecurringBill> RecurringBills => Set<RecurringBill>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<RecurringBill>()
+            .HasIndex(b => b.UserId);
+
         modelBuilder.Entity<PlaidTransaction>()
             .HasIndex(t => t.PlaidTransactionId)
             .IsUnique();

@@ -1,0 +1,107 @@
+<section class="cashflow-page">
+  <div class="cashflow-page__header">
+    <h1>{{ 'cashflow.title' | translate }}</h1>
+    <div class="cashflow-page__balance">
+      {{ 'cashflow.currentBalance' | translate }}: <strong>{{ formatCurrency(currentBalance()) }}</strong>
+    </div>
+  </div>
+
+  <button type="button" class="cashflow-page__bills-toggle" (click)="toggleBillsManager()">
+    {{ 'cashflow.manageBills' | translate }}
+  </button>
+
+  @if (showBillsManager()) {
+    <div class="bills-manager">
+      <h2>{{ 'cashflow.bills' | translate }}</h2>
+      <p class="bills-manager__hint">{{ 'cashflow.billsHint' | translate }}</p>
+
+      @if (bills().length === 0) {
+        <p>{{ 'cashflow.noBills' | translate }}</p>
+      } @else {
+        <ul class="bills-manager__list">
+          @for (bill of bills(); track bill.id) {
+            <li>
+              <span>{{ bill.description }}</span>
+              <span>{{ formatCurrency(bill.amount) }}</span>
+              <span>{{ 'cashflow.billDay' | translate }}: {{ bill.dayOfMonth }}</span>
+              <button type="button" (click)="deleteBill(bill)">{{ 'common.remove' | translate }}</button>
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="bills-manager__form">
+        <label>
+          {{ 'cashflow.billDescription' | translate }}
+          <input
+            type="text"
+            [value]="newBillDescription()"
+            (input)="setNewBillDescription($any($event.target).value)"
+          />
+        </label>
+        <label>
+          {{ 'cashflow.billAmount' | translate }}
+          <input
+            type="number"
+            step="0.01"
+            [value]="newBillAmount()"
+            (input)="setNewBillAmount($any($event.target).value)"
+          />
+          <span class="bills-manager__field-hint">{{ 'cashflow.billAmountHint' | translate }}</span>
+        </label>
+        <label>
+          {{ 'cashflow.billDay' | translate }}
+          <input
+            type="number"
+            min="1"
+            max="31"
+            [value]="newBillDay()"
+            (input)="setNewBillDay($any($event.target).value)"
+          />
+        </label>
+        <button type="button" [disabled]="savingBill()" (click)="addBill()">
+          {{ 'cashflow.addBill' | translate }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <p>{{ 'common.loading' | translate }}</p>
+  } @else if (entries().length === 0) {
+    <p>{{ 'cashflow.empty' | translate }}</p>
+  } @else {
+    <table class="cashflow-table">
+      <thead>
+        <tr>
+          <th>{{ 'table.date' | translate }}</th>
+          <th>{{ 'table.description' | translate }}</th>
+          <th class="cashflow-table__amount-col">{{ 'cashflow.amount' | translate }}</th>
+          <th class="cashflow-table__amount-col">{{ 'cashflow.balance' | translate }}</th>
+          <th>{{ 'cashflow.status' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (entry of entries(); track entry.date + entry.description + $index) {
+          <tr [class.cashflow-table__row--future]="isFuture(entry)">
+            <td>{{ entry.date }}</td>
+            <td class="cashflow-table__description" [title]="entry.description">{{ entry.description }}</td>
+            <td
+              class="cashflow-table__amount-col"
+              [class.cashflow-table__amount--in]="entry.amount > 0"
+              [class.cashflow-table__amount--out]="entry.amount < 0"
+            >
+              {{ entry.amount === 0 ? '—' : formatCurrency(entry.amount) }}
+            </td>
+            <td class="cashflow-table__amount-col">{{ formatCurrency(entry.balance) }}</td>
+            <td>
+              <span class="status-badge" [class.status-badge--pending]="entry.status === 'Pending'">
+                {{ (entry.status === 'Done' ? 'cashflow.statusDone' : 'cashflow.statusPending') | translate }}
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>
