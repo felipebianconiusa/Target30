@@ -37,41 +37,27 @@ public class CardsController : ControllerBase
         var cards = accounts
             .Select(a =>
             {
-                var targetPercent = a.TargetUtilizationPercent ?? settings.GlobalTargetUtilizationPercent;
-                var limit = a.CreditLimit ?? 0m;
-                var balance = a.CurrentBalance ?? 0m;
-                var utilizationPercent = limit > 0 ? Math.Round(balance / limit * 100, 1) : (decimal?)null;
-                var targetBalance = limit * (targetPercent / 100m);
-                var amountToPay = Math.Max(0, Math.Round(balance - targetBalance, 2));
-                var nextClosingDate = ComputeNextClosingDate(a.StatementClosingDay, today);
-                // Bancos não processam pagamento em fim de semana/feriado — se o fechamento cair
-                // num desses dias, o prazo real pra pagar é o último dia útil anterior.
-                var paymentDeadline = nextClosingDate is not null
-                    ? UsBusinessDays.PreviousOrSameBusinessDay(nextClosingDate.Value)
-                    : (DateOnly?)null;
-                var daysUntilDeadline = paymentDeadline is not null
-                    ? paymentDeadline.Value.DayNumber - today.DayNumber
-                    : (int?)null;
-                var needsAlert = daysUntilDeadline is not null
-                    && daysUntilDeadline <= settings.NotifyDaysBeforeClosing
-                    && amountToPay > 0;
+                var p = CardMath.Compute(a, settings.GlobalTargetUtilizationPercent, today);
+                var needsAlert = p.DaysUntilPaymentDeadline is not null
+                    && p.DaysUntilPaymentDeadline <= settings.NotifyDaysBeforeClosing
+                    && p.AmountToPay > 0;
 
                 return new CardDto(
                     a.AccountId,
                     a.Name,
                     a.OfficialName,
                     a.InstitutionName,
-                    balance,
-                    limit,
+                    p.Balance,
+                    p.Limit,
                     a.IsoCurrencyCode,
-                    utilizationPercent,
-                    targetPercent,
+                    p.UtilizationPercent,
+                    p.TargetPercent,
                     a.TargetUtilizationPercent is not null,
-                    amountToPay,
+                    p.AmountToPay,
                     a.StatementClosingDay,
-                    nextClosingDate,
-                    paymentDeadline,
-                    daysUntilDeadline,
+                    p.NextClosingDate,
+                    p.PaymentDeadline,
+                    p.DaysUntilPaymentDeadline,
                     a.NextPaymentDueDate,
                     a.MinimumPaymentAmount,
                     a.IsOverdue,
@@ -110,20 +96,6 @@ public class CardsController : ControllerBase
             await _db.SaveChangesAsync();
         }
         return settings;
-    }
-
-    private static DateOnly? ComputeNextClosingDate(int? closingDay, DateOnly today)
-    {
-        if (closingDay is null)
-            return null;
-
-        var candidate = DateMath.BuildClamped(today.Year, today.Month, closingDay.Value);
-        if (candidate <= today)
-        {
-            var next = today.AddMonths(1);
-            candidate = DateMath.BuildClamped(next.Year, next.Month, closingDay.Value);
-        }
-        return candidate;
     }
 }
 

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Target30.Api.Data;
+using Target30.Api.Models;
 
 namespace Target30.Api.Controllers;
 
@@ -55,21 +56,26 @@ public class CashFlowController : ControllerBase
                 entries.Add((date, bill.Description, -bill.Amount, "Pending", 1));
         }
 
+        var settings = await GetOrCreateSettingsAsync();
         var cards = await _db.PlaidAccounts
             .Where(a => a.UserId == CurrentUserId && a.Type == "Credit")
             .ToListAsync();
         foreach (var card in cards)
         {
-            var closingDate = ComputeNextClosingDate(card.StatementClosingDay, today);
-            if (closingDate is not null)
-            {
-                var deadline = UsBusinessDays.PreviousOrSameBusinessDay(closingDate.Value);
-                if (deadline > today && deadline <= endDate)
-                    entries.Add((deadline, $"{card.Name} - Fechamento", 0m, "Pending", 1));
-            }
+            var p = CardMath.Compute(card, settings.GlobalTargetUtilizationPercent, today);
 
-            if (card.NextPaymentDueDate is { } dueDate && dueDate > today && dueDate <= endDate && card.LastStatementBalance is { } statementBalance)
-                entries.Add((dueDate, $"{card.Name} - Fatura", -statementBalance, "Pending", 1));
+            // Lançamento no fechamento: quanto pagar pra bater a meta de utilização — sempre
+            // aparece (mesmo R$0, se já estiver dentro da meta) pra você saber a data mesmo
+            // que não precise pagar nada. Reflete o saldo ATUAL do cartão, então atualiza a
+            // cada gasto novo. Sem limite cadastrado ainda (p.UtilizationPercent null) não dá
+            // pra calcular "quanto pagar pra bater a meta", então pulamos esse lançamento.
+            if (p.UtilizationPercent is not null && p.PaymentDeadline is { } deadline && deadline > today && deadline <= endDate)
+                entries.Add((deadline, $"{card.Name} - Fechamento", -p.AmountToPay, "Pending", 1));
+
+            // Lançamento no vencimento: o saldo atual do cartão (o que vai virar fatura) —
+            // também sempre aparece, mesmo R$0, pra marcar a data.
+            if (card.NextPaymentDueDate is { } dueDate && dueDate > today && dueDate <= endDate)
+                entries.Add((dueDate, $"{card.Name} - Fatura", -p.Balance, "Pending", 1));
         }
 
         var ordered = entries.OrderBy(e => e.Date).ThenBy(e => e.SortPriority).ToList();
@@ -90,18 +96,16 @@ public class CashFlowController : ControllerBase
         return Ok(new CashFlowResponseDto(startingBalance, currentBalance, rows));
     }
 
-    private static DateOnly? ComputeNextClosingDate(int? closingDay, DateOnly today)
+    private async Task<UserSettings> GetOrCreateSettingsAsync()
     {
-        if (closingDay is null)
-            return null;
-
-        var candidate = DateMath.BuildClamped(today.Year, today.Month, closingDay.Value);
-        if (candidate <= today)
+        var settings = await _db.UserSettings.FirstOrDefaultAsync(s => s.UserId == CurrentUserId);
+        if (settings is null)
         {
-            var next = today.AddMonths(1);
-            candidate = DateMath.BuildClamped(next.Year, next.Month, closingDay.Value);
+            settings = new UserSettings { UserId = CurrentUserId };
+            _db.UserSettings.Add(settings);
+            await _db.SaveChangesAsync();
         }
-        return candidate;
+        return settings;
     }
 }
 
