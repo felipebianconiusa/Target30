@@ -13,112 +13,129 @@
   } @else if (cards().length === 0) {
     <p>{{ 'cards.empty' | translate }}</p>
   } @else {
-    <div class="cards-list">
-      @for (card of cards(); track card.accountId) {
-        <div class="card-item" [class.card-item--alert]="card.needsAlert">
-          <div class="card-item__header">
-            <div>
-              <strong>{{ card.name }}</strong>
-              @if (card.institutionName) {
-                <span class="card-item__institution">— {{ card.institutionName }}</span>
-              }
-            </div>
-            @if (card.isOverdue) {
-              <span class="card-item__overdue">{{ 'cards.overdue' | translate }}</span>
-            }
-          </div>
+    @if (cardsWithDueDate().length > 0) {
+      <h2 class="cards-group__title">{{ 'cards.withDueDate' | translate }}</h2>
+      <div class="cards-list">
+        @for (card of cardsWithDueDate(); track card.accountId) {
+          <ng-container [ngTemplateOutlet]="cardItem" [ngTemplateOutletContext]="{ $implicit: card }" />
+        }
+      </div>
+    }
 
-          <div class="card-item__balances">
-            <span>{{ 'cards.balance' | translate }}: {{ formatCurrency(card.currentBalance, card.isoCurrencyCode) }}</span>
-            <span>{{ 'cards.limit' | translate }}: {{ card.creditLimit > 0 ? formatCurrency(card.creditLimit, card.isoCurrencyCode) : ('cards.noLimit' | translate) }}</span>
-          </div>
-
-          @if (card.utilizationPercent !== null) {
-            <div class="utilization">
-              <div class="utilization__track">
-                <div
-                  class="utilization__fill"
-                  [class.utilization__fill--over]="utilizationState(card) === 'over'"
-                  [style.width.%]="card.utilizationPercent"
-                ></div>
-                <div class="utilization__target-marker" [style.left.%]="card.targetPercent"></div>
-              </div>
-              <span class="utilization__label">
-                {{ 'cards.utilization' | translate }}: {{ card.utilizationPercent }}% ({{ 'cards.target' | translate }}: {{ card.targetPercent }}%)
-              </span>
-            </div>
-
-            @if (card.amountToPay > 0 && card.paymentDeadline) {
-              <p class="card-item__pay-hint" [class.card-item__pay-hint--alert]="card.needsAlert">
-                {{ 'cards.payToReachTarget' | translate: { amount: formatCurrency(card.amountToPay, card.isoCurrencyCode), date: card.paymentDeadline, target: card.targetPercent } }}
-              </p>
-            } @else if (card.amountToPay === 0) {
-              <p class="card-item__ok">{{ 'cards.underTarget' | translate }}</p>
-            }
-          }
-
-          <div class="card-item__dates">
-            @if (card.nextClosingDate) {
-              <span>
-                {{ 'cards.closingDate' | translate }}: {{ card.nextClosingDate }}
-                @if (card.daysUntilPaymentDeadline !== null) {
-                  ({{ card.daysUntilPaymentDeadline === 0 ? ('cards.closingToday' | translate) : ('cards.daysUntilClosing' | translate: { days: card.daysUntilPaymentDeadline }) }})
-                }
-              </span>
-              @if (card.paymentDeadline && card.paymentDeadline !== card.nextClosingDate) {
-                <span class="card-item__weekend-note">{{ 'cards.weekendAdjusted' | translate: { date: card.paymentDeadline } }}</span>
-              }
-            } @else {
-              <span class="card-item__muted">{{ 'cards.noClosingDay' | translate }}</span>
-            }
-            @if (card.nextPaymentDueDate) {
-              <span>{{ 'cards.dueDate' | translate }}: {{ card.nextPaymentDueDate }}</span>
-            }
-            @if (card.minimumPaymentAmount) {
-              <span>{{ 'cards.minimumPayment' | translate }}: {{ formatCurrency(card.minimumPaymentAmount, card.isoCurrencyCode) }}</span>
-            }
-          </div>
-
-          @if (editingId() === card.accountId) {
-            <div class="card-item__edit">
-              <label>
-                {{ 'cards.statementClosingDay' | translate }}
-                <input
-                  type="number"
-                  min="1"
-                  max="31"
-                  [value]="editClosingDay()"
-                  (input)="setEditClosingDay($any($event.target).value)"
-                />
-              </label>
-              <label>
-                {{ 'cards.targetOverride' | translate }}
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  [value]="editTarget()"
-                  (input)="setEditTarget($any($event.target).value)"
-                />
-              </label>
-              <p class="card-item__hint">
-                {{ 'cards.targetOverrideHint' | translate: { percent: settings()?.globalTargetUtilizationPercent ?? 30 } }}
-              </p>
-              <div class="card-item__edit-actions">
-                <button type="button" [disabled]="savingId() === card.accountId" (click)="saveEdit(card)">
-                  {{ 'cards.save' | translate }}
-                </button>
-                <button type="button" (click)="cancelEdit()">{{ 'common.cancel' | translate }}</button>
-              </div>
-            </div>
-          } @else {
-            <button type="button" class="card-item__edit-toggle" (click)="startEdit(card)">
-              {{ 'cards.cardSettings' | translate }}
-            </button>
-          }
-        </div>
-      }
-    </div>
+    @if (cardsWithoutDueDate().length > 0) {
+      <h2 class="cards-group__title">{{ 'cards.withoutDueDate' | translate }}</h2>
+      <p class="cards-group__hint">{{ 'cards.withoutDueDateHint' | translate }}</p>
+      <div class="cards-list">
+        @for (card of cardsWithoutDueDate(); track card.accountId) {
+          <ng-container [ngTemplateOutlet]="cardItem" [ngTemplateOutletContext]="{ $implicit: card }" />
+        }
+      </div>
+    }
   }
 </section>
+
+<ng-template #cardItem let-card>
+  <div class="card-item" [class.card-item--alert]="card.needsAlert">
+    <div class="card-item__header">
+      <div>
+        <strong>{{ card.name }}</strong>
+        @if (card.institutionName) {
+          <span class="card-item__institution">— {{ card.institutionName }}</span>
+        }
+      </div>
+      @if (card.isOverdue) {
+        <span class="card-item__overdue">{{ 'cards.overdue' | translate }}</span>
+      }
+    </div>
+
+    <div class="card-item__balances">
+      <span>{{ 'cards.balance' | translate }}: {{ formatCurrency(card.currentBalance, card.isoCurrencyCode) }}</span>
+      <span>{{ 'cards.limit' | translate }}: {{ card.creditLimit > 0 ? formatCurrency(card.creditLimit, card.isoCurrencyCode) : ('cards.noLimit' | translate) }}</span>
+    </div>
+
+    @if (card.utilizationPercent !== null) {
+      <div class="utilization">
+        <div class="utilization__track">
+          <div
+            class="utilization__fill"
+            [class.utilization__fill--over]="utilizationState(card) === 'over'"
+            [style.width.%]="card.utilizationPercent"
+          ></div>
+          <div class="utilization__target-marker" [style.left.%]="card.targetPercent"></div>
+        </div>
+        <span class="utilization__label">
+          {{ 'cards.utilization' | translate }}: {{ card.utilizationPercent }}% ({{ 'cards.target' | translate }}: {{ card.targetPercent }}%)
+        </span>
+      </div>
+
+      @if (card.amountToPay > 0 && card.paymentDeadline) {
+        <p class="card-item__pay-hint" [class.card-item__pay-hint--alert]="card.needsAlert">
+          {{ 'cards.payToReachTarget' | translate: { amount: formatCurrency(card.amountToPay, card.isoCurrencyCode), date: card.paymentDeadline, target: card.targetPercent } }}
+        </p>
+      } @else if (card.amountToPay === 0) {
+        <p class="card-item__ok">{{ 'cards.underTarget' | translate }}</p>
+      }
+    }
+
+    <div class="card-item__dates">
+      @if (card.nextClosingDate) {
+        <span>
+          {{ 'cards.closingDate' | translate }}: {{ card.nextClosingDate }}
+          @if (card.daysUntilPaymentDeadline !== null) {
+            ({{ card.daysUntilPaymentDeadline === 0 ? ('cards.closingToday' | translate) : ('cards.daysUntilClosing' | translate: { days: card.daysUntilPaymentDeadline }) }})
+          }
+        </span>
+        @if (card.paymentDeadline && card.paymentDeadline !== card.nextClosingDate) {
+          <span class="card-item__weekend-note">{{ 'cards.weekendAdjusted' | translate: { date: card.paymentDeadline } }}</span>
+        }
+      } @else {
+        <span class="card-item__muted">{{ 'cards.noClosingDay' | translate }}</span>
+      }
+      @if (card.nextPaymentDueDate) {
+        <span>{{ 'cards.dueDate' | translate }}: {{ card.nextPaymentDueDate }}</span>
+      }
+      @if (card.minimumPaymentAmount) {
+        <span>{{ 'cards.minimumPayment' | translate }}: {{ formatCurrency(card.minimumPaymentAmount, card.isoCurrencyCode) }}</span>
+      }
+    </div>
+
+    @if (editingId() === card.accountId) {
+      <div class="card-item__edit">
+        <label>
+          {{ 'cards.statementClosingDay' | translate }}
+          <input
+            type="number"
+            min="1"
+            max="31"
+            [value]="editClosingDay()"
+            (input)="setEditClosingDay($any($event.target).value)"
+          />
+        </label>
+        <label>
+          {{ 'cards.targetOverride' | translate }}
+          <input
+            type="number"
+            min="0"
+            max="100"
+            step="1"
+            [value]="editTarget()"
+            (input)="setEditTarget($any($event.target).value)"
+          />
+        </label>
+        <p class="card-item__hint">
+          {{ 'cards.targetOverrideHint' | translate: { percent: settings()?.globalTargetUtilizationPercent ?? 30 } }}
+        </p>
+        <div class="card-item__edit-actions">
+          <button type="button" [disabled]="savingId() === card.accountId" (click)="saveEdit(card)">
+            {{ 'cards.save' | translate }}
+          </button>
+          <button type="button" (click)="cancelEdit()">{{ 'common.cancel' | translate }}</button>
+        </div>
+      </div>
+    } @else {
+      <button type="button" class="card-item__edit-toggle" (click)="startEdit(card)">
+        {{ 'cards.cardSettings' | translate }}
+      </button>
+    }
+  </div>
+</ng-template>

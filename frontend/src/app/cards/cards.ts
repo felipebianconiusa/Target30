@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { AppSettings, Card, CardsService } from './cards.service';
 import { TranslationService } from '../i18n/translation.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
@@ -6,7 +7,7 @@ import { LOCALE_BY_LANG } from '../i18n/translations';
 
 @Component({
   selector: 'app-cards',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, NgTemplateOutlet],
   templateUrl: './cards.html',
   styleUrl: './cards.scss',
 })
@@ -20,6 +21,15 @@ export class Cards implements OnInit {
   protected readonly editTarget = signal<number | null>(null);
   protected readonly savingId = signal<string | null>(null);
   protected readonly downloadingReport = signal(false);
+
+  // Cartões com fatura já vencendo (valor certo, data certa) vs. ciclo ainda aberto (conta
+  // recém-conectada ou sem 1º fechamento processado pelo Plaid ainda — sem valor definido).
+  protected readonly cardsWithDueDate = computed(() =>
+    this.cards().filter((c) => c.nextPaymentDueDate !== null),
+  );
+  protected readonly cardsWithoutDueDate = computed(() =>
+    this.cards().filter((c) => c.nextPaymentDueDate === null),
+  );
 
   constructor(
     private readonly cardsService: CardsService,

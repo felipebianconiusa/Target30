@@ -79,7 +79,10 @@ public class CardsController : ControllerBase
         var settings = await GetOrCreateSettingsAsync();
         var accounts = await _db.PlaidAccounts
             .Where(a => a.UserId == CurrentUserId && a.Type == "Credit")
-            .OrderBy(a => a.InstitutionName)
+            // Cartões com vencimento definido primeiro (são os acionáveis); dentro de cada
+            // grupo, por instituição/nome.
+            .OrderByDescending(a => a.NextPaymentDueDate != null)
+            .ThenBy(a => a.InstitutionName)
             .ThenBy(a => a.Name)
             .ToListAsync();
 
@@ -88,7 +91,7 @@ public class CardsController : ControllerBase
         var csv = new StringBuilder();
         csv.AppendLine(string.Join(",", new[]
         {
-            "Cartao", "Instituicao", "Saldo Atual", "Limite", "Utilizacao %", "Meta %",
+            "Situacao", "Cartao", "Instituicao", "Saldo Atual", "Limite", "Utilizacao %", "Meta %",
             "Valor a Pagar", "Data de Fechamento", "Prazo de Pagamento (dia util)",
             "Data de Vencimento", "Pagamento Minimo", "Em Atraso",
         }.Select(CsvField)));
@@ -98,6 +101,7 @@ public class CardsController : ControllerBase
             var p = CardMath.Compute(a, settings.GlobalTargetUtilizationPercent, today);
             csv.AppendLine(string.Join(",", new[]
             {
+                CsvField(a.NextPaymentDueDate is not null ? "Com vencimento" : "Ciclo em aberto"),
                 CsvField(a.Name),
                 CsvField(a.InstitutionName ?? ""),
                 CsvField(p.Balance.ToString("F2", CultureInfo.InvariantCulture)),

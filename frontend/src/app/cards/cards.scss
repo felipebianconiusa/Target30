@@ -26,6 +26,21 @@
   margin: 0;
 }
 
+.cards-group__title {
+  font-size: 1rem;
+  margin: 1.5rem 0 0.5rem;
+
+  &:first-of-type {
+    margin-top: 0;
+  }
+}
+
+.cards-group__hint {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0 0 0.75rem;
+}
+
 .cards-list {
   display: flex;
   flex-direction: column;
