@@ -53,4 +53,8 @@ export class CardsService {
   updateSettings(settings: AppSettings): Observable<AppSettings> {
     return this.http.put<AppSettings>('/api/settings', settings);
   }
+
+  downloadReport(): Observable<Blob> {
+    return this.http.get('/api/cards/report', { responseType: 'blob' });
+  }
 }

@@ -19,6 +19,7 @@ export class Cards implements OnInit {
   protected readonly editClosingDay = signal<number | null>(null);
   protected readonly editTarget = signal<number | null>(null);
   protected readonly savingId = signal<string | null>(null);
+  protected readonly downloadingReport = signal(false);
 
   constructor(
     private readonly cardsService: CardsService,
@@ -69,6 +70,22 @@ export class Cards implements OnInit {
     return new Intl.NumberFormat(locale, { style: 'currency', currency: currency ?? 'USD' }).format(
       value,
     );
+  }
+
+  protected downloadReport(): void {
+    this.downloadingReport.set(true);
+    this.cardsService.downloadReport().subscribe({
+      next: (blob) => {
+        this.downloadingReport.set(false);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `target30-cartoes-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => this.downloadingReport.set(false),
+    });
   }
 
   protected utilizationState(card: Card): 'over' | 'under' | 'unknown' {

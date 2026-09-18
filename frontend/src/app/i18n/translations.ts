@@ -108,6 +108,8 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'settings.signOut': 'Sair da conta',
 
     'cards.title': 'Cartões de crédito',
+    'cards.downloadReport': 'Baixar relatório',
+    'cards.generatingReport': 'Gerando...',
     'cards.empty': 'Nenhum cartão de crédito conectado ainda.',
     'cards.balance': 'Saldo atual',
     'cards.limit': 'Limite',
@@ -244,6 +246,8 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'settings.signOut': 'Sign out',
 
     'cards.title': 'Credit cards',
+    'cards.downloadReport': 'Download report',
+    'cards.generatingReport': 'Generating...',
     'cards.empty': 'No credit card connected yet.',
     'cards.balance': 'Current balance',
     'cards.limit': 'Limit',
@@ -381,6 +385,8 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'settings.signOut': 'Cerrar sesión',
 
     'cards.title': 'Tarjetas de crédito',
+    'cards.downloadReport': 'Descargar informe',
+    'cards.generatingReport': 'Generando...',
     'cards.empty': 'Todavía no hay ninguna tarjeta de crédito conectada.',
     'cards.balance': 'Saldo actual',
     'cards.limit': 'Límite',

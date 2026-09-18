@@ -1,5 +1,12 @@
 <section class="cards-page">
-  <h1>{{ 'cards.title' | translate }}</h1>
+  <div class="cards-page__header">
+    <h1>{{ 'cards.title' | translate }}</h1>
+    @if (cards().length > 0) {
+      <button type="button" [disabled]="downloadingReport()" (click)="downloadReport()">
+        {{ (downloadingReport() ? 'cards.generatingReport' : 'cards.downloadReport') | translate }}
+      </button>
+    }
+  </div>
 
   @if (loading()) {
     <p>{{ 'common.loading' | translate }}</p>

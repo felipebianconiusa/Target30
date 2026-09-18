@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -67,6 +69,61 @@ public class CardsController : ControllerBase
             .ToList();
 
         return Ok(cards);
+    }
+
+    // Relatório em CSV com o mesmo cálculo da tela de Cartões (saldo, limite, utilização,
+    // quanto pagar, fechamento/vencimento) — pra baixar, guardar ou mandar pra alguém revisar.
+    [HttpGet("report")]
+    public async Task<IActionResult> DownloadReport()
+    {
+        var settings = await GetOrCreateSettingsAsync();
+        var accounts = await _db.PlaidAccounts
+            .Where(a => a.UserId == CurrentUserId && a.Type == "Credit")
+            .OrderBy(a => a.InstitutionName)
+            .ThenBy(a => a.Name)
+            .ToListAsync();
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var csv = new StringBuilder();
+        csv.AppendLine(string.Join(",", new[]
+        {
+            "Cartao", "Instituicao", "Saldo Atual", "Limite", "Utilizacao %", "Meta %",
+            "Valor a Pagar", "Data de Fechamento", "Prazo de Pagamento (dia util)",
+            "Data de Vencimento", "Pagamento Minimo", "Em Atraso",
+        }.Select(CsvField)));
+
+        foreach (var a in accounts)
+        {
+            var p = CardMath.Compute(a, settings.GlobalTargetUtilizationPercent, today);
+            csv.AppendLine(string.Join(",", new[]
+            {
+                CsvField(a.Name),
+                CsvField(a.InstitutionName ?? ""),
+                CsvField(p.Balance.ToString("F2", CultureInfo.InvariantCulture)),
+                CsvField(p.Limit.ToString("F2", CultureInfo.InvariantCulture)),
+                CsvField(p.UtilizationPercent?.ToString("F1", CultureInfo.InvariantCulture) ?? ""),
+                CsvField(p.TargetPercent.ToString("F0", CultureInfo.InvariantCulture)),
+                CsvField(p.AmountToPay.ToString("F2", CultureInfo.InvariantCulture)),
+                CsvField(p.NextClosingDate?.ToString("yyyy-MM-dd") ?? ""),
+                CsvField(p.PaymentDeadline?.ToString("yyyy-MM-dd") ?? ""),
+                CsvField(a.NextPaymentDueDate?.ToString("yyyy-MM-dd") ?? ""),
+                CsvField(a.MinimumPaymentAmount?.ToString("F2", CultureInfo.InvariantCulture) ?? ""),
+                CsvField(a.IsOverdue == true ? "Sim" : "Nao"),
+            }));
+        }
+
+        // BOM UTF-8 pra acentuação abrir certo no Excel.
+        var bytes = new byte[] { 0xEF, 0xBB, 0xBF }.Concat(Encoding.UTF8.GetBytes(csv.ToString())).ToArray();
+        var fileName = $"target30-cartoes-{today:yyyy-MM-dd}.csv";
+        return File(bytes, "text/csv", fileName);
+    }
+
+    private static string CsvField(string value)
+    {
+        if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
+            return $"\"{value.Replace("\"", "\"\"")}\"";
+        return value;
     }
 
     [HttpPut("{accountId}")]
