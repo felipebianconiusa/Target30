@@ -41,7 +41,13 @@ public class PlaidController : ControllerBase
                 ClientUserId = CurrentUserId,
             },
             ClientName = "Target30",
-            Products = [Products.Transactions, Products.Liabilities],
+            // Transactions é obrigatório pra qualquer instituição. Liabilities só faz sentido
+            // pra cartão de crédito — como "required" ele bloqueava a conexão de QUALQUER banco
+            // que não suporte liabilities (ex.: OnePay, uma conta corrente). Com
+            // RequiredIfSupportedProducts, o Plaid ainda pede consentimento de liabilities nos
+            // bancos que suportam, mas não impede conectar os que não suportam.
+            Products = [Products.Transactions],
+            RequiredIfSupportedProducts = [Products.Liabilities],
             CountryCodes = [CountryCode.Us],
             Language = Language.English,
         });
