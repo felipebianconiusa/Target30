@@ -73,6 +73,26 @@ Configuração necessária:
    - `frontend/src/app/auth/google-client-id.ts`
    - `src/Target30.Api/appsettings.Development.json` → `Authentication:Google:ClientId`
 
+## Agent Skills
+
+Skills do [skills.sh](https://skills.sh) instalados pro Claude Code (EF Core, ASP.NET Core, Angular, revisão de segurança) — `.agents/` e `.claude/skills/` são gerados localmente e não ficam no repo (os symlinks de `.claude/skills` são de caminho absoluto, não portáveis entre máquinas). `skills-lock.json` fica versionado como referência de quais skills o projeto usa.
+
+Depois de clonar, reinstale (o `npx skills experimental_install` sozinho não recria a integração com o Claude Code, então é melhor repetir os `add`):
+
+```bash
+npx skills add dotnet/skills --skill optimizing-ef-core-queries -y
+npx skills add dotnet/skills --skill dotnet-webapi -y
+npx skills add dotnet/skills --skill writing-mstest-tests -y
+npx skills add dotnet/skills --skill test-gap-analysis -y
+npx skills add dotnet/skills --skill migrate-nullable-references -y
+npx skills add github/awesome-copilot --skill dotnet-best-practices -y
+npx skills add github/awesome-copilot --skill dotnet-design-pattern-review -y
+npx skills add github/awesome-copilot --skill ef-core -y
+npx skills add angular/angular --skill angular-developer -y
+npx skills add getsentry/skills --skill security-review -y
+npx skills add openai/skills --skill security-best-practices -y
+```
+
 ## Próximos passos
 
 - [ ] Guardar transações localmente (hoje `transactions/sync` busca do Plaid a cada chamada, sem persistir)

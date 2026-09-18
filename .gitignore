@@ -22,3 +22,8 @@ npm-debug.log*
 *.db
 *.db-shm
 *.db-wal
+
+# Agent skills (npx skills) — gerados a partir de skills-lock.json (que fica versionado);
+# .claude/skills usa symlinks de caminho absoluto, não portáveis entre máquinas.
+.agents/
+.claude/skills/
