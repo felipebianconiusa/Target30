@@ -164,6 +164,46 @@ public class PlaidController : ControllerBase
         page = Math.Max(page, 1);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
+        var query = BuildFilteredQuery(search, categories, institutions, dateFrom, dateTo);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(t => t.Date)
+            .ThenByDescending(t => t.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return Ok(new
+        {
+            items = items.Select(ToDto),
+            total,
+            page,
+            pageSize,
+        });
+    }
+
+    // Totais de entrada/saída para o mesmo conjunto de filtros da listagem acima — calculado
+    // no banco sobre todas as linhas que batem com o filtro, não só a página atual.
+    [HttpGet("transactions/totals")]
+    public async Task<IActionResult> GetTransactionTotals(
+        [FromQuery] string? search = null,
+        [FromQuery] string? categories = null,
+        [FromQuery] string? institutions = null,
+        [FromQuery] string? dateFrom = null,
+        [FromQuery] string? dateTo = null)
+    {
+        var query = BuildFilteredQuery(search, categories, institutions, dateFrom, dateTo);
+
+        var totalExpenses = await query.Where(t => t.Amount > 0).SumAsync(t => (decimal?)t.Amount) ?? 0m;
+        var totalIncome = -(await query.Where(t => t.Amount < 0).SumAsync(t => (decimal?)t.Amount) ?? 0m);
+
+        return Ok(new { totalIncome, totalExpenses });
+    }
+
+    private IQueryable<PlaidTransaction> BuildFilteredQuery(
+        string? search, string? categories, string? institutions, string? dateFrom, string? dateTo)
+    {
         var query = _db.PlaidTransactions.Where(t => t.UserId == CurrentUserId);
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -189,21 +229,7 @@ public class PlaidController : ControllerBase
         if (DateOnly.TryParse(dateTo, out var to))
             query = query.Where(t => t.Date <= to);
 
-        var total = await query.CountAsync();
-        var items = await query
-            .OrderByDescending(t => t.Date)
-            .ThenByDescending(t => t.Id)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
-
-        return Ok(new
-        {
-            items = items.Select(ToDto),
-            total,
-            page,
-            pageSize,
-        });
+        return query;
     }
 
     // Resumo agregado (receitas, despesas, gastos por categoria, transações recentes) —

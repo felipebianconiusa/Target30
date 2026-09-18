@@ -1,6 +1,12 @@
 import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { PlaidItemSummary, PlaidService, Transaction } from '../plaid.service';
+import {
+  PlaidItemSummary,
+  PlaidService,
+  Transaction,
+  TransactionsQueryFilter,
+} from '../plaid.service';
+import { LOCALE_BY_LANG } from '../i18n/translations';
 import { TransactionTable } from '../shared/transaction-table/transaction-table';
 import { ALL_CATEGORY_CODES, translateCategory } from '../shared/category-labels';
 import { MultiSelect, MultiSelectOption } from '../shared/multi-select/multi-select';
@@ -27,6 +33,10 @@ export class Transactions implements OnInit, OnDestroy {
   protected readonly loading = signal(true);
   protected readonly syncing = signal(false);
   protected readonly errorMessage = signal('');
+
+  protected readonly totalIncome = signal(0);
+  protected readonly totalExpenses = signal(0);
+  protected readonly net = computed(() => this.totalIncome() - this.totalExpenses());
 
   protected readonly search = signal('');
   protected readonly categories = signal<string[]>([]);
@@ -60,6 +70,7 @@ export class Transactions implements OnInit, OnDestroy {
 
     this.loadInstitutionOptions();
     this.loadPage();
+    this.loadTotals();
   }
 
   ngOnDestroy(): void {
@@ -72,12 +83,18 @@ export class Transactions implements OnInit, OnDestroy {
       next: () => {
         this.syncing.set(false);
         this.loadPage();
+        this.loadTotals();
       },
       error: () => {
         this.syncing.set(false);
         this.errorMessage.set(this.translationService.t('transactions.syncError'));
       },
     });
+  }
+
+  protected formatCurrency(value: number): string {
+    const locale = LOCALE_BY_LANG[this.translationService.lang()];
+    return new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(value);
   }
 
   protected onSearchInput(value: string): void {
@@ -155,6 +172,26 @@ export class Transactions implements OnInit, OnDestroy {
   private onFilterChange(): void {
     this.page.set(1);
     this.loadPage();
+    this.loadTotals();
+  }
+
+  private currentQueryFilter(): TransactionsQueryFilter {
+    return {
+      search: this.search() || undefined,
+      categories: this.categories().length ? this.categories() : undefined,
+      institutions: this.institutions().length ? this.institutions() : undefined,
+      dateFrom: this.dateFrom() || undefined,
+      dateTo: this.dateTo() || undefined,
+    };
+  }
+
+  private loadTotals(): void {
+    this.plaidService.getTransactionTotals(this.currentQueryFilter()).subscribe({
+      next: (totals) => {
+        this.totalIncome.set(totals.totalIncome);
+        this.totalExpenses.set(totals.totalExpenses);
+      },
+    });
   }
 
   private loadInstitutionOptions(): void {
@@ -172,13 +209,9 @@ export class Transactions implements OnInit, OnDestroy {
     this.loading.set(true);
     this.plaidService
       .getTransactionsPage({
+        ...this.currentQueryFilter(),
         page: this.page(),
         pageSize: this.pageSize,
-        search: this.search() || undefined,
-        categories: this.categories().length ? this.categories() : undefined,
-        institutions: this.institutions().length ? this.institutions() : undefined,
-        dateFrom: this.dateFrom() || undefined,
-        dateTo: this.dateTo() || undefined,
       })
       .subscribe({
         next: (result) => {

@@ -30,14 +30,17 @@ export interface Transaction {
   category: string | null;
 }
 
-export interface TransactionsFilter {
-  page: number;
-  pageSize: number;
+export interface TransactionsQueryFilter {
   search?: string;
   categories?: string[];
   institutions?: string[];
   dateFrom?: string;
   dateTo?: string;
+}
+
+export interface TransactionsFilter extends TransactionsQueryFilter {
+  page: number;
+  pageSize: number;
 }
 
 export interface PagedTransactions {
@@ -52,6 +55,22 @@ export interface TransactionsSummary {
   totalExpenses: number;
   categoryTotals: { category: string; total: number }[];
   recentTransactions: Transaction[];
+}
+
+export interface TransactionTotals {
+  totalIncome: number;
+  totalExpenses: number;
+}
+
+function buildFilterParams(filter: TransactionsQueryFilter): HttpParams {
+  let params = new HttpParams();
+  if (filter.search) params = params.set('search', filter.search);
+  if (filter.categories?.length) params = params.set('categories', filter.categories.join(','));
+  if (filter.institutions?.length)
+    params = params.set('institutions', filter.institutions.join(','));
+  if (filter.dateFrom) params = params.set('dateFrom', filter.dateFrom);
+  if (filter.dateTo) params = params.set('dateTo', filter.dateTo);
+  return params;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -87,15 +106,13 @@ export class PlaidService {
   }
 
   getTransactionsPage(filter: TransactionsFilter): Observable<PagedTransactions> {
-    let params = new HttpParams().set('page', filter.page).set('pageSize', filter.pageSize);
-    if (filter.search) params = params.set('search', filter.search);
-    if (filter.categories?.length) params = params.set('categories', filter.categories.join(','));
-    if (filter.institutions?.length)
-      params = params.set('institutions', filter.institutions.join(','));
-    if (filter.dateFrom) params = params.set('dateFrom', filter.dateFrom);
-    if (filter.dateTo) params = params.set('dateTo', filter.dateTo);
-
+    const params = buildFilterParams(filter).set('page', filter.page).set('pageSize', filter.pageSize);
     return this.http.get<PagedTransactions>(`${this.baseUrl}/transactions`, { params });
+  }
+
+  getTransactionTotals(filter: TransactionsQueryFilter): Observable<TransactionTotals> {
+    const params = buildFilterParams(filter);
+    return this.http.get<TransactionTotals>(`${this.baseUrl}/transactions/totals`, { params });
   }
 
   getSummary(): Observable<TransactionsSummary> {

@@ -24,8 +24,10 @@ export class TransactionTable {
   protected formatAmount(transaction: Transaction): string {
     const currency = transaction.isoCurrencyCode ?? 'USD';
     const locale = LOCALE_BY_LANG[this.translationService.lang()];
+    // Convenção do Plaid é o oposto do que se lê naturalmente (negativo = entrada, sem sinal =
+    // saída) — invertemos só na exibição: negativo = saída, sem sinal = entrada.
     return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(
-      transaction.amount,
+      -transaction.amount,
     );
   }
 }

@@ -6,6 +6,23 @@
     </button>
   </div>
 
+  <div class="summary-cards">
+    <div class="summary-card">
+      <span class="summary-card__label">{{ 'dashboard.income' | translate }}</span>
+      <span class="summary-card__value summary-card__value--in">{{ formatCurrency(totalIncome()) }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-card__label">{{ 'dashboard.expenses' | translate }}</span>
+      <span class="summary-card__value">{{ formatCurrency(totalExpenses()) }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-card__label">{{ 'dashboard.netBalance' | translate }}</span>
+      <span class="summary-card__value" [class.summary-card__value--in]="net() >= 0">
+        {{ formatCurrency(net()) }}
+      </span>
+    </div>
+  </div>
+
   <div class="filters">
     <input
       type="text"
