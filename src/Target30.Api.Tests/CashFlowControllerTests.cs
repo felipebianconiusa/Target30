@@ -138,7 +138,73 @@ public class CashFlowControllerTests : IClassFixture<Target30WebApplicationFacto
         Assert.Equal("text/csv", response.Content.Headers.ContentType?.MediaType);
         var csv = System.Text.Encoding.UTF8.GetString(await response.Content.ReadAsByteArrayAsync());
 
-        Assert.Contains("Data,Descricao,Valor,Saldo,Situacao", csv);
-        Assert.Contains("Grocery Store", csv);
+        Assert.Contains("Data,Descricao,SaldoAntes,Valor,SaldoDepois,Situacao", csv);
+        // Saldo atual 1000 já reflete a compra de 50: antes era 1050, depois é 1000.
+        Assert.Contains("Grocery Store,1050.00,-50.00,1000.00,Done", csv);
+    }
+
+    [Fact]
+    public async Task GetCashFlow_chains_balance_before_and_after_line_by_line()
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        await _factory.SeedAsync(db =>
+        {
+            db.PlaidAccounts.Add(new PlaidAccount
+            {
+                UserId = TestAuthHandler.TestUserId, ItemId = "item-1", AccountId = "checking",
+                Name = "Checking", Type = "Depository", CurrentBalance = 1000m,
+            });
+            // Plaid: positivo = saída. Salário (-2000) e compra (100): 1000 hoje => começou em -900.
+            db.PlaidTransactions.Add(new PlaidTransaction
+            {
+                UserId = TestAuthHandler.TestUserId, PlaidTransactionId = "t1", AccountId = "checking",
+                ItemId = "item-1", Amount = -2000m, Date = today.AddDays(-3), Name = "Payroll",
+            });
+            db.PlaidTransactions.Add(new PlaidTransaction
+            {
+                UserId = TestAuthHandler.TestUserId, PlaidTransactionId = "t2", AccountId = "checking",
+                ItemId = "item-1", Amount = 100m, Date = today.AddDays(-1), Name = "Groceries",
+            });
+        });
+
+        var response = await _client.GetFromJsonAsync<CashFlowResponseDto>("/api/cashflow", JsonDefaults.Options);
+
+        var payroll = response!.Entries[0];
+        var groceries = response.Entries[1];
+        Assert.Equal(-900m, response.StartingBalance);
+        Assert.Equal(-900m, payroll.BalanceBefore);
+        Assert.Equal(1100m, payroll.Balance);
+        Assert.Equal(payroll.Balance, groceries.BalanceBefore);
+        Assert.Equal(1000m, groceries.Balance);
+        Assert.All(response.Entries, e => Assert.Equal(e.BalanceBefore + e.Amount, e.Balance));
+    }
+
+    [Fact]
+    public async Task GetCashFlow_ignores_credit_card_purchases_because_they_do_not_touch_the_checking_balance()
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        await _factory.SeedAsync(db =>
+        {
+            db.PlaidAccounts.Add(new PlaidAccount
+            {
+                UserId = TestAuthHandler.TestUserId, ItemId = "item-1", AccountId = "checking",
+                Name = "Checking", Type = "Depository", CurrentBalance = 1000m,
+            });
+            db.PlaidAccounts.Add(new PlaidAccount
+            {
+                UserId = TestAuthHandler.TestUserId, ItemId = "item-2", AccountId = "card",
+                Name = "Card", Type = "Credit", CurrentBalance = 300m,
+            });
+            db.PlaidTransactions.Add(new PlaidTransaction
+            {
+                UserId = TestAuthHandler.TestUserId, PlaidTransactionId = "t-card", AccountId = "card",
+                ItemId = "item-2", Amount = 300m, Date = today.AddDays(-1), Name = "Card purchase",
+            });
+        });
+
+        var response = await _client.GetFromJsonAsync<CashFlowResponseDto>("/api/cashflow", JsonDefaults.Options);
+
+        Assert.DoesNotContain(response!.Entries, e => e.Description == "Card purchase");
+        Assert.Equal(1000m, response.StartingBalance);
     }
 }

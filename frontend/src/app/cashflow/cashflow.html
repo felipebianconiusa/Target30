@@ -113,6 +113,7 @@
         <tr>
           <th>{{ 'table.date' | translate }}</th>
           <th>{{ 'table.description' | translate }}</th>
+          <th class="cashflow-table__amount-col">{{ 'cashflow.balanceBefore' | translate }}</th>
           <th class="cashflow-table__amount-col">{{ 'cashflow.amount' | translate }}</th>
           <th class="cashflow-table__amount-col">{{ 'cashflow.balance' | translate }}</th>
           <th>{{ 'cashflow.status' | translate }}</th>
@@ -123,6 +124,7 @@
           <tr [class.cashflow-table__row--future]="isFuture(entry)">
             <td>{{ entry.date }}</td>
             <td class="cashflow-table__description" [title]="entry.description">{{ entry.description }}</td>
+            <td class="cashflow-table__amount-col cashflow-table__balance-before">{{ formatCurrency(entry.balanceBefore) }}</td>
             <td
               class="cashflow-table__amount-col"
               [class.cashflow-table__amount--in]="entry.amount > 0"

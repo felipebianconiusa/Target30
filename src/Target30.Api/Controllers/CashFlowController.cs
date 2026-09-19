@@ -42,13 +42,14 @@ public class CashFlowController : ControllerBase
         var (_, _, rows) = await BuildRowsAsync(pastDays, futureDays);
 
         var csv = new StringBuilder();
-        csv.AppendLine(string.Join(",", new[] { "Data", "Descricao", "Valor", "Saldo", "Situacao" }.Select(CsvField)));
+        csv.AppendLine(string.Join(",", new[] { "Data", "Descricao", "SaldoAntes", "Valor", "SaldoDepois", "Situacao" }.Select(CsvField)));
         foreach (var r in rows)
         {
             csv.AppendLine(string.Join(",", new[]
             {
                 CsvField(r.Date.ToString("yyyy-MM-dd")),
                 CsvField(r.Description),
+                CsvField(r.BalanceBefore.ToString("F2", CultureInfo.InvariantCulture)),
                 CsvField(r.Amount.ToString("F2", CultureInfo.InvariantCulture)),
                 CsvField(r.Balance.ToString("F2", CultureInfo.InvariantCulture)),
                 CsvField(r.Status),
@@ -83,8 +84,15 @@ public class CashFlowController : ControllerBase
 
         var entries = new List<(DateOnly Date, string Description, decimal Amount, string Status, int SortPriority)>();
 
+        // Só movimentos de contas de depósito: o saldo acima soma apenas elas, então compra no
+        // cartão de crédito não pode descontar daqui (ela só sai da conta quando a fatura é paga,
+        // e isso já aparece como saída na própria conta ou como o lançamento "Fatura" projetado).
+        var depositoryAccountIds = _db.PlaidAccounts
+            .Where(a => a.UserId == CurrentUserId && a.Type == "Depository")
+            .Select(a => a.AccountId);
         var transactions = await _db.PlaidTransactions
-            .Where(t => t.UserId == CurrentUserId && t.Date >= startDate && t.Date <= today)
+            .Where(t => t.UserId == CurrentUserId && t.Date >= startDate && t.Date <= today
+                && depositoryAccountIds.Contains(t.AccountId))
             .ToListAsync();
         foreach (var t in transactions)
             entries.Add((t.Date, t.MerchantName ?? t.Name, -t.Amount, t.Pending ? "Pending" : "Done", 0));
@@ -131,8 +139,9 @@ public class CashFlowController : ControllerBase
         var rows = new List<CashFlowEntryDto>();
         foreach (var e in ordered)
         {
+            var before = runningBalance;
             runningBalance += e.Amount;
-            rows.Add(new CashFlowEntryDto(e.Date, e.Description, e.Amount, runningBalance, e.Status));
+            rows.Add(new CashFlowEntryDto(e.Date, e.Description, e.Amount, runningBalance, e.Status, before));
         }
 
         return (startingBalance, currentBalance, rows);
@@ -151,6 +160,6 @@ public class CashFlowController : ControllerBase
     }
 }
 
-public record CashFlowEntryDto(DateOnly Date, string Description, decimal Amount, decimal Balance, string Status);
+public record CashFlowEntryDto(DateOnly Date, string Description, decimal Amount, decimal Balance, string Status, decimal BalanceBefore);
 
 public record CashFlowResponseDto(decimal StartingBalance, decimal CurrentBalance, IReadOnlyList<CashFlowEntryDto> Entries);

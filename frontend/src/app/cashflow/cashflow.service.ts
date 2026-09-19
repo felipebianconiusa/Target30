@@ -7,6 +7,7 @@ export interface CashFlowEntry {
   description: string;
   amount: number;
   balance: number;
+  balanceBefore: number;
   status: 'Done' | 'Pending';
 }
 
