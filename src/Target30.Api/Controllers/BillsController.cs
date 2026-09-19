@@ -74,15 +74,14 @@ public class BillsController : ControllerBase
         return NoContent();
     }
 
-    // Heurística simples pra sugerir assinaturas/cobranças recorrentes ainda não cadastradas:
-    // mesmo estabelecimento, valor consistente (±15%, mín. ±$2) e intervalo entre compras
-    // sempre parecido com um mês (21-40 dias). Não é perfeito — é só um ponto de partida.
+    // Sugere assinaturas/cobranças recorrentes ainda não cadastradas (via SubscriptionDetector)
+    // e também resurge as já cadastradas cujo valor observado no histórico mudou — nesse caso
+    // com IsPriceChange=true, pra oferecer "Atualizar" em vez de "Adicionar".
     [HttpGet("detected-subscriptions")]
     public async Task<IActionResult> GetDetectedSubscriptions()
     {
-        var existingDescriptions = await _db.RecurringBills
+        var existingBills = await _db.RecurringBills
             .Where(b => b.UserId == CurrentUserId && b.IsActive)
-            .Select(b => b.Description.ToLower())
             .ToListAsync();
 
         var transactions = await _db.PlaidTransactions
@@ -91,34 +90,34 @@ public class BillsController : ControllerBase
 
         var candidates = transactions
             .GroupBy(t => (t.MerchantName ?? t.Name).Trim().ToLowerInvariant())
-            .Select(g => DetectSubscription(g.OrderBy(t => t.Date).ToList()))
-            .Where(c => c is not null && !existingDescriptions.Contains(c!.MerchantName.ToLower()))
-            .OrderByDescending(c => c!.LastDate)
+            .Select(g => SubscriptionDetector.Detect(g.ToList()))
+            .Where(c => c is not null)
+            .Select(c => ToSuggestion(c!, existingBills))
+            .Where(dto => dto is not null)
+            .OrderByDescending(dto => dto!.LastDate)
             .ToList();
 
         return Ok(candidates);
     }
 
-    private static DetectedSubscriptionDto? DetectSubscription(List<PlaidTransaction> txs)
+    private static DetectedSubscriptionDto? ToSuggestion(DetectedCharge charge, List<RecurringBill> existingBills)
     {
-        if (txs.Count < 2)
-            return null;
+        var existing = existingBills.FirstOrDefault(
+            b => b.Description.Equals(charge.MerchantName, StringComparison.OrdinalIgnoreCase));
 
-        var avgAmount = txs.Average(t => t.Amount);
-        var tolerance = Math.Max(2m, avgAmount * 0.15m);
-        if (txs.Any(t => Math.Abs(t.Amount - avgAmount) > tolerance))
-            return null;
+        if (existing is null)
+            return new DetectedSubscriptionDto(
+                charge.MerchantName, charge.AverageAmount, charge.SuggestedDayOfMonth, charge.Occurrences,
+                charge.LastDate, false, null, null);
 
-        var gaps = new List<int>();
-        for (var i = 1; i < txs.Count; i++)
-            gaps.Add(txs[i].Date.DayNumber - txs[i - 1].Date.DayNumber);
+        var tolerance = Math.Max(1m, existing.Amount * 0.05m);
+        var priceChanged = Math.Abs(existing.Amount - charge.AverageAmount) > tolerance;
+        if (!priceChanged)
+            return null; // já cadastrada com o valor certo — nada a sugerir
 
-        if (gaps.Any(g => g is < 21 or > 40))
-            return null;
-
-        var last = txs[^1];
-        var displayName = last.MerchantName ?? last.Name;
-        return new DetectedSubscriptionDto(displayName, Math.Round(avgAmount, 2), last.Date.Day, txs.Count, last.Date);
+        return new DetectedSubscriptionDto(
+            charge.MerchantName, charge.AverageAmount, charge.SuggestedDayOfMonth, charge.Occurrences,
+            charge.LastDate, true, existing.Amount, existing.Id);
     }
 
     private static BillDto ToDto(RecurringBill b) => new(b.Id, b.Description, b.Amount, b.DayOfMonth);
@@ -133,4 +132,7 @@ public record DetectedSubscriptionDto(
     decimal AverageAmount,
     int SuggestedDayOfMonth,
     int Occurrences,
-    DateOnly LastDate);
+    DateOnly LastDate,
+    bool IsPriceChange,
+    decimal? PreviousAmount,
+    int? ExistingBillId);

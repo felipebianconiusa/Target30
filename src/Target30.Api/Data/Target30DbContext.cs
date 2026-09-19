@@ -11,6 +11,7 @@ public class Target30DbContext(DbContextOptions<Target30DbContext> options) : Db
     public DbSet<UserSettings> UserSettings => Set<UserSettings>();
     public DbSet<RecurringBill> RecurringBills => Set<RecurringBill>();
     public DbSet<CardBalanceSnapshot> CardBalanceSnapshots => Set<CardBalanceSnapshot>();
+    public DbSet<CategoryBudget> CategoryBudgets => Set<CategoryBudget>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -36,6 +37,10 @@ public class Target30DbContext(DbContextOptions<Target30DbContext> options) : Db
 
         modelBuilder.Entity<CardBalanceSnapshot>()
             .HasIndex(s => new { s.AccountId, s.Date })
+            .IsUnique();
+
+        modelBuilder.Entity<CategoryBudget>()
+            .HasIndex(b => new { b.UserId, b.Category })
             .IsUnique();
     }
 }

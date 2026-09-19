@@ -10,4 +10,8 @@ public class RecurringBill
     public decimal Amount { get; set; }
     public int DayOfMonth { get; set; }
     public bool IsActive { get; set; } = true;
+
+    // Último valor detectado no histórico de transações que já gerou um alerta de "o valor
+    // dessa assinatura mudou" — evita mandar o mesmo aviso de novo enquanto não mudar de novo.
+    public decimal? LastPriceAlertAmount { get; set; }
 }

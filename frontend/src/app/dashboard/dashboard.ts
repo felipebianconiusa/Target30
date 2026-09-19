@@ -3,8 +3,9 @@ import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { PlaidService, Transaction, TransactionsSummary } from '../plaid.service';
 import { Card, CardsService } from '../cards/cards.service';
+import { Budget, BudgetsService } from './budgets.service';
 import { TransactionTable } from '../shared/transaction-table/transaction-table';
-import { translateCategory } from '../shared/category-labels';
+import { ALL_CATEGORY_CODES, translateCategory } from '../shared/category-labels';
 import { TranslationService } from '../i18n/translation.service';
 import { LOCALE_BY_LANG } from '../i18n/translations';
 import { TranslatePipe } from '../i18n/translate.pipe';
@@ -38,6 +39,20 @@ export class Dashboard implements OnInit {
 
   protected readonly net = computed(() => this.summary().totalIncome - this.summary().totalExpenses);
 
+  protected readonly budgets = signal<Budget[]>([]);
+  protected readonly showAddBudget = signal(false);
+  protected readonly newBudgetCategory = signal('');
+  protected readonly newBudgetLimit = signal<number | null>(null);
+  protected readonly savingBudget = signal(false);
+
+  protected readonly categoryOptions = computed(() => {
+    const lang = this.translationService.lang();
+    const used = new Set(this.budgets().map((b) => b.category));
+    return ALL_CATEGORY_CODES.filter((code) => !used.has(code))
+      .map((value) => ({ value, label: translateCategory(value, lang) }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  });
+
   protected readonly recentTransactions = computed<Transaction[]>(
     () => this.summary().recentTransactions,
   );
@@ -56,6 +71,7 @@ export class Dashboard implements OnInit {
   constructor(
     private readonly plaidService: PlaidService,
     private readonly cardsService: CardsService,
+    private readonly budgetsService: BudgetsService,
     protected readonly translationService: TranslationService,
   ) {}
 
@@ -77,7 +93,49 @@ export class Dashboard implements OnInit {
     });
   }
 
+  protected categoryLabel(code: string): string {
+    return translateCategory(code, this.translationService.lang());
+  }
+
+  protected toggleAddBudget(): void {
+    this.showAddBudget.update((v) => !v);
+  }
+
+  protected setNewBudgetCategory(value: string): void {
+    this.newBudgetCategory.set(value);
+  }
+
+  protected setNewBudgetLimit(value: string): void {
+    this.newBudgetLimit.set(value ? Number(value) : null);
+  }
+
+  protected addBudget(): void {
+    const category = this.newBudgetCategory();
+    const monthlyLimit = this.newBudgetLimit();
+    if (!category || monthlyLimit === null || monthlyLimit <= 0) return;
+
+    this.savingBudget.set(true);
+    this.budgetsService.createBudget({ category, monthlyLimit }).subscribe({
+      next: () => {
+        this.savingBudget.set(false);
+        this.newBudgetCategory.set('');
+        this.newBudgetLimit.set(null);
+        this.loadBudgets();
+      },
+      error: () => this.savingBudget.set(false),
+    });
+  }
+
+  protected deleteBudget(budget: Budget): void {
+    this.budgetsService.deleteBudget(budget.id).subscribe(() => this.loadBudgets());
+  }
+
+  private loadBudgets(): void {
+    this.budgetsService.getBudgets().subscribe((budgets) => this.budgets.set(budgets));
+  }
+
   private load(): void {
+    this.loadBudgets();
     forkJoin({
       summary: this.plaidService.getSummary(),
       items: this.plaidService.getItems(),

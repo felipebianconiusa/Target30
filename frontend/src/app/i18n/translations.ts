@@ -43,6 +43,10 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'dashboard.expenses': 'Despesas',
     'dashboard.netBalance': 'Saldo do período',
     'dashboard.spendingByCategory': 'Gastos por categoria',
+    'dashboard.budgets': 'Orçamentos por categoria',
+    'dashboard.addBudget': 'Criar orçamento',
+    'dashboard.monthlyLimit': 'Limite mensal',
+    'dashboard.noBudgets': 'Nenhum orçamento definido ainda.',
     'dashboard.recentTransactions': 'Transações recentes',
     'dashboard.viewAll': 'Ver todas as transações →',
 
@@ -195,6 +199,8 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'cashflow.detectedSubscriptionsHint': 'Cobranças parecidas com um padrão mensal no seu histórico, ainda não cadastradas como conta recorrente.',
     'cashflow.detectedOccurrences': '{count}x nos últimos meses',
     'cashflow.addDetected': 'Adicionar',
+    'cashflow.updateDetected': 'Atualizar valor',
+    'cashflow.priceChanged': '{previous} → {current}',
   },
   en: {
     'nav.dashboard': 'Dashboard',
@@ -222,6 +228,10 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'dashboard.expenses': 'Expenses',
     'dashboard.netBalance': 'Period balance',
     'dashboard.spendingByCategory': 'Spending by category',
+    'dashboard.budgets': 'Budgets by category',
+    'dashboard.addBudget': 'Create budget',
+    'dashboard.monthlyLimit': 'Monthly limit',
+    'dashboard.noBudgets': 'No budget set yet.',
     'dashboard.recentTransactions': 'Recent transactions',
     'dashboard.viewAll': 'View all transactions →',
 
@@ -374,6 +384,8 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'cashflow.detectedSubscriptionsHint': 'Charges in your history that look like a monthly pattern, not yet added as a recurring bill.',
     'cashflow.detectedOccurrences': '{count}x in recent months',
     'cashflow.addDetected': 'Add',
+    'cashflow.updateDetected': 'Update amount',
+    'cashflow.priceChanged': '{previous} → {current}',
   },
   es: {
     'nav.dashboard': 'Dashboard',
@@ -401,6 +413,10 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'dashboard.expenses': 'Gastos',
     'dashboard.netBalance': 'Saldo del período',
     'dashboard.spendingByCategory': 'Gastos por categoría',
+    'dashboard.budgets': 'Presupuestos por categoría',
+    'dashboard.addBudget': 'Crear presupuesto',
+    'dashboard.monthlyLimit': 'Límite mensual',
+    'dashboard.noBudgets': 'Todavía no hay ningún presupuesto definido.',
     'dashboard.recentTransactions': 'Transacciones recientes',
     'dashboard.viewAll': 'Ver todas las transacciones →',
 
@@ -554,5 +570,7 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'cashflow.detectedSubscriptionsHint': 'Cobros parecidos a un patrón mensual en tu historial, todavía no registrados como cuenta recurrente.',
     'cashflow.detectedOccurrences': '{count}x en los últimos meses',
     'cashflow.addDetected': 'Agregar',
+    'cashflow.updateDetected': 'Actualizar monto',
+    'cashflow.priceChanged': '{previous} → {current}',
   },
 };

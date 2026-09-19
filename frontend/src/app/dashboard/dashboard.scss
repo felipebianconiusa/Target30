@@ -68,7 +68,7 @@
 
 .category-bar {
   display: grid;
-  grid-template-columns: 8rem 1fr 6rem;
+  grid-template-columns: 8rem 1fr 6rem auto;
   align-items: center;
   gap: 0.75rem;
 }
@@ -91,6 +91,10 @@
   height: 100%;
   background: var(--color-primary);
   border-radius: 999px;
+
+  &--over {
+    background: var(--color-danger);
+  }
 }
 
 .category-bar__value {
@@ -100,6 +104,86 @@
 
 .dashboard__error {
   color: var(--color-danger);
+}
+
+.dashboard__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+
+  h2 {
+    margin: 0;
+  }
+
+  button {
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+}
+
+.dashboard__hint {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.budget-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  select,
+  input {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    width: 10rem;
+  }
+
+  button {
+    padding: 0.4rem 0.9rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+  }
+}
+
+.budget-remove {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--color-danger-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-danger);
+  font-size: 0.75rem;
+  cursor: pointer;
 }
 
 .dashboard__alert {

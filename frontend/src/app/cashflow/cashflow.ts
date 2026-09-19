@@ -55,21 +55,24 @@ export class CashFlow implements OnInit {
 
   protected addDetectedSubscription(subscription: DetectedSubscription): void {
     this.addingSubscription.set(subscription.merchantName);
-    this.cashFlowService
-      .createBill({
-        description: subscription.merchantName,
-        amount: subscription.averageAmount,
-        dayOfMonth: subscription.suggestedDayOfMonth,
-      })
-      .subscribe({
-        next: () => {
-          this.addingSubscription.set(null);
-          this.loadBills();
-          this.loadCashFlow();
-          this.loadDetectedSubscriptions();
-        },
-        error: () => this.addingSubscription.set(null),
-      });
+    const request = {
+      description: subscription.merchantName,
+      amount: subscription.averageAmount,
+      dayOfMonth: subscription.suggestedDayOfMonth,
+    };
+    const save = subscription.isPriceChange && subscription.existingBillId
+      ? this.cashFlowService.updateBill(subscription.existingBillId, request)
+      : this.cashFlowService.createBill(request);
+
+    save.subscribe({
+      next: () => {
+        this.addingSubscription.set(null);
+        this.loadBills();
+        this.loadCashFlow();
+        this.loadDetectedSubscriptions();
+      },
+      error: () => this.addingSubscription.set(null),
+    });
   }
 
   protected setNewBillDescription(value: string): void {

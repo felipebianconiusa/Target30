@@ -63,6 +63,66 @@
     </div>
 
     <div class="dashboard__section">
+      <div class="dashboard__section-header">
+        <h2>{{ 'dashboard.budgets' | translate }}</h2>
+        <button type="button" (click)="toggleAddBudget()">{{ 'dashboard.addBudget' | translate }}</button>
+      </div>
+
+      @if (showAddBudget()) {
+        <div class="budget-form">
+          <label>
+            {{ 'table.category' | translate }}
+            <select [value]="newBudgetCategory()" (change)="setNewBudgetCategory($any($event.target).value)">
+              <option value="">—</option>
+              @for (option of categoryOptions(); track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            {{ 'dashboard.monthlyLimit' | translate }}
+            <input
+              type="number"
+              min="0"
+              step="1"
+              [value]="newBudgetLimit()"
+              (input)="setNewBudgetLimit($any($event.target).value)"
+            />
+          </label>
+          <button type="button" [disabled]="savingBudget()" (click)="addBudget()">
+            {{ 'cashflow.addBill' | translate }}
+          </button>
+        </div>
+      }
+
+      @if (budgets().length === 0) {
+        <p class="dashboard__hint">{{ 'dashboard.noBudgets' | translate }}</p>
+      } @else {
+        <div class="category-bars">
+          @for (b of budgets(); track b.id) {
+            <div class="category-bar">
+              <span class="category-bar__label">{{ categoryLabel(b.category) }}</span>
+              <div class="category-bar__track">
+                <div
+                  class="category-bar__fill"
+                  [class.category-bar__fill--over]="(b.percentUsed ?? 0) > 100"
+                  [style.width.%]="b.percentUsed ? (b.percentUsed > 100 ? 100 : b.percentUsed) : 0"
+                ></div>
+              </div>
+              <span class="category-bar__value">
+                {{ formatCurrency(b.currentSpend) }} / {{ formatCurrency(b.monthlyLimit) }}
+                @if (b.percentUsed !== null) {
+                  ({{ b.percentUsed }}%)
+                }
+              </span>
+              <button type="button" class="budget-remove" (click)="deleteBudget(b)">{{ 'common.remove' | translate }}</button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="dashboard__section">
       <h2>{{ 'dashboard.recentTransactions' | translate }}</h2>
       <app-transaction-table [transactions]="recentTransactions()" [showInstitution]="true" />
       <a routerLink="/transactions">{{ 'dashboard.viewAll' | translate }}</a>

@@ -75,9 +75,15 @@
           <p class="bills-manager__field-hint">{{ 'cashflow.detectedSubscriptionsHint' | translate }}</p>
           <ul class="bills-manager__list">
             @for (sub of detectedSubscriptions(); track sub.merchantName) {
-              <li>
+              <li [class.bills-manager__detected-item--changed]="sub.isPriceChange">
                 <span>{{ sub.merchantName }}</span>
-                <span>{{ formatCurrency(sub.averageAmount) }}</span>
+                @if (sub.isPriceChange) {
+                  <span class="bills-manager__price-change">
+                    {{ 'cashflow.priceChanged' | translate: { previous: formatCurrency(sub.previousAmount ?? 0), current: formatCurrency(sub.averageAmount) } }}
+                  </span>
+                } @else {
+                  <span>{{ formatCurrency(sub.averageAmount) }}</span>
+                }
                 <span>{{ 'cashflow.billDay' | translate }}: {{ sub.suggestedDayOfMonth }}</span>
                 <span class="bills-manager__field-hint">
                   {{ 'cashflow.detectedOccurrences' | translate: { count: sub.occurrences } }}
@@ -87,7 +93,7 @@
                   [disabled]="addingSubscription() === sub.merchantName"
                   (click)="addDetectedSubscription(sub)"
                 >
-                  {{ 'cashflow.addDetected' | translate }}
+                  {{ (sub.isPriceChange ? 'cashflow.updateDetected' : 'cashflow.addDetected') | translate }}
                 </button>
               </li>
             }

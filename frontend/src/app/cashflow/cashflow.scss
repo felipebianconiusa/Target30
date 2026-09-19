@@ -141,6 +141,15 @@
   font-size: 0.7rem;
 }
 
+.bills-manager__price-change {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.bills-manager__detected-item--changed {
+  border-color: var(--color-danger-border) !important;
+}
+
 .bills-manager__detected {
   margin-top: 1.25rem;
   padding-top: 1rem;

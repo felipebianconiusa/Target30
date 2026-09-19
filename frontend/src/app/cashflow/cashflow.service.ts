@@ -35,6 +35,9 @@ export interface DetectedSubscription {
   suggestedDayOfMonth: number;
   occurrences: number;
   lastDate: string;
+  isPriceChange: boolean;
+  previousAmount: number | null;
+  existingBillId: number | null;
 }
 
 @Injectable({ providedIn: 'root' })
