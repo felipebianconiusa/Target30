@@ -231,4 +231,107 @@ public class CardsControllerTests : IClassFixture<Target30WebApplicationFactory>
         Assert.Equal(2, points!.Count);
         Assert.True(points[0].Date < points[1].Date);
     }
+
+    [Fact]
+    public async Task PayoffPlan_prioritizes_the_card_closing_soonest()
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        // Escolhe os dois dias de fechamento de forma que ambos "caiam do mesmo lado" da
+        // lógica de rollover de CardMath (os dois ainda não passaram esse mês, ou os dois já
+        // passaram e viram mês que vem) — assim a ordem soonDay < laterDay sempre vira
+        // soonDate < laterDate, não importa em que dia do mês o teste rodar.
+        int soonDay, laterDay;
+        if (today.Day <= 20)
+        {
+            soonDay = today.Day + 2;
+            laterDay = today.Day + 9;
+        }
+        else
+        {
+            laterDay = Math.Min(today.Day, 28);
+            soonDay = Math.Max(1, laterDay - 5);
+        }
+
+        await _factory.SeedAsync(db =>
+        {
+            db.UserSettings.Add(new UserSettings
+            {
+                UserId = TestAuthHandler.TestUserId, GlobalTargetUtilizationPercent = 30m, NotifyDaysBeforeClosing = 3,
+            });
+            // Fecha depois, mas precisa de mais dinheiro.
+            db.PlaidAccounts.Add(new PlaidAccount
+            {
+                UserId = TestAuthHandler.TestUserId, ItemId = "item-1", AccountId = "later",
+                Name = "Closes later", Type = "Credit", CurrentBalance = 900m, CreditLimit = 1000m,
+                StatementClosingDay = laterDay,
+            });
+            // Fecha antes, precisa de menos dinheiro — deve vir primeiro na lista.
+            db.PlaidAccounts.Add(new PlaidAccount
+            {
+                UserId = TestAuthHandler.TestUserId, ItemId = "item-1", AccountId = "sooner",
+                Name = "Closes sooner", Type = "Credit", CurrentBalance = 400m, CreditLimit = 1000m,
+                StatementClosingDay = soonDay,
+            });
+        });
+
+        var response = await _client.PostAsJsonAsync("/api/cards/payoff-plan", new { availableAmount = 1000m }, JsonDefaults.Options);
+        response.EnsureSuccessStatusCode();
+        var plan = await response.Content.ReadFromJsonAsync<PayoffPlanResponseDto>(JsonDefaults.Options);
+
+        Assert.Equal("sooner", plan!.Allocations[0].AccountId);
+        Assert.Equal("later", plan.Allocations[1].AccountId);
+    }
+
+    [Fact]
+    public async Task PayoffPlan_caps_each_allocation_to_what_the_card_needs_and_reports_the_leftover()
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        await _factory.SeedAsync(db =>
+        {
+            db.UserSettings.Add(new UserSettings
+            {
+                UserId = TestAuthHandler.TestUserId, GlobalTargetUtilizationPercent = 30m, NotifyDaysBeforeClosing = 3,
+            });
+            // Precisa de 100 (400 - 30% de 1000) pra bater a meta.
+            db.PlaidAccounts.Add(new PlaidAccount
+            {
+                UserId = TestAuthHandler.TestUserId, ItemId = "item-1", AccountId = "card-1",
+                Name = "Only card", Type = "Credit", CurrentBalance = 400m, CreditLimit = 1000m,
+                StatementClosingDay = today.AddDays(10).Day,
+            });
+        });
+
+        var response = await _client.PostAsJsonAsync("/api/cards/payoff-plan", new { availableAmount = 1000m }, JsonDefaults.Options);
+        var plan = await response.Content.ReadFromJsonAsync<PayoffPlanResponseDto>(JsonDefaults.Options);
+
+        var allocation = Assert.Single(plan!.Allocations);
+        Assert.Equal(100m, allocation.AmountToPay);
+        Assert.Equal(900m, plan.RemainingUnallocated);
+    }
+
+    [Fact]
+    public async Task PayoffPlan_skips_cards_already_within_target()
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        await _factory.SeedAsync(db =>
+        {
+            db.UserSettings.Add(new UserSettings
+            {
+                UserId = TestAuthHandler.TestUserId, GlobalTargetUtilizationPercent = 30m, NotifyDaysBeforeClosing = 3,
+            });
+            db.PlaidAccounts.Add(new PlaidAccount
+            {
+                UserId = TestAuthHandler.TestUserId, ItemId = "item-1", AccountId = "card-1",
+                Name = "Already fine", Type = "Credit", CurrentBalance = 200m, CreditLimit = 1000m,
+                StatementClosingDay = today.AddDays(10).Day,
+            });
+        });
+
+        var response = await _client.PostAsJsonAsync("/api/cards/payoff-plan", new { availableAmount = 500m }, JsonDefaults.Options);
+        var plan = await response.Content.ReadFromJsonAsync<PayoffPlanResponseDto>(JsonDefaults.Options);
+
+        Assert.Empty(plan!.Allocations);
+        Assert.Equal(500m, plan.RemainingUnallocated);
+    }
 }
