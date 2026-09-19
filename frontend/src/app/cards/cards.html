@@ -13,6 +13,54 @@
   } @else if (cards().length === 0) {
     <p>{{ 'cards.empty' | translate }}</p>
   } @else {
+    @if (bestCard(); as best) {
+      <div class="best-card">
+        <h2 class="cards-group__title">{{ 'cards.bestToday' | translate }}</h2>
+        @if (best.recommended; as top) {
+          <div class="best-card__top">
+            <strong>{{ top.name }}</strong>
+            @if (top.institutionName) {
+              <span class="card-item__institution">— {{ top.institutionName }}</span>
+            }
+            <p class="best-card__reason">
+              {{ 'cards.bestTodayReason' | translate: { days: top.daysUntilClosing ?? 0, date: top.nextClosingDate ?? '' } }}
+            </p>
+            @if (top.availableCredit !== null) {
+              <p class="card-item__muted">
+                {{ 'cards.bestTodayAvailable' | translate: { amount: formatCurrency(top.availableCredit, null) } }}
+              </p>
+            } @else {
+              <p class="card-item__muted">{{ 'cards.bestTodayNoLimit' | translate }}</p>
+            }
+          </div>
+        } @else {
+          <p class="card-item__muted">{{ 'cards.bestTodayNone' | translate }}</p>
+        }
+
+        @if (best.ranking.length > 1 || best.excluded.length > 0) {
+          <button type="button" class="card-item__edit-toggle" (click)="toggleBestRanking()">
+            {{ (showBestRanking() ? 'common.hide' : 'cards.bestTodayRanking') | translate }}
+          </button>
+        }
+
+        @if (showBestRanking()) {
+          <ol class="best-card__list">
+            @for (c of best.ranking; track c.accountId) {
+              <li>
+                {{ c.name }} — {{ 'cards.bestTodayDays' | translate: { days: c.daysUntilClosing ?? 0, date: c.nextClosingDate ?? '' } }}
+              </li>
+            }
+          </ol>
+          @for (c of best.excluded; track c.accountId) {
+            <p class="card-item__muted">
+              {{ c.name }} —
+              {{ (c.exclusionReason === 'limit_reached' ? 'cards.bestTodayLimitReached' : 'cards.bestTodayNoClosingDay') | translate }}
+            </p>
+          }
+        }
+      </div>
+    }
+
     <div class="payoff-planner">
       <h2 class="cards-group__title">{{ 'cards.payoffPlanner' | translate }}</h2>
       <p class="cards-group__hint">{{ 'cards.payoffPlannerHint' | translate }}</p>

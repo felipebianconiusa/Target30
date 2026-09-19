@@ -2,7 +2,7 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { PlaidService, Transaction, TransactionsSummary } from '../plaid.service';
-import { Card, CardsService } from '../cards/cards.service';
+import { BestCard, Card, CardsService } from '../cards/cards.service';
 import { Budget, BudgetsService } from './budgets.service';
 import { DashboardService, HealthScore, MonthlyComparisonRow } from './dashboard.service';
 import { TransactionTable } from '../shared/transaction-table/transaction-table';
@@ -46,6 +46,7 @@ export class Dashboard implements OnInit {
   protected readonly newBudgetLimit = signal<number | null>(null);
   protected readonly savingBudget = signal(false);
 
+  protected readonly bestCard = signal<BestCard | null>(null);
   protected readonly healthScore = signal<HealthScore | null>(null);
   protected readonly monthlyComparison = signal<MonthlyComparisonRow[]>([]);
   protected readonly showComparison = signal(false);
@@ -150,6 +151,7 @@ export class Dashboard implements OnInit {
 
   private load(): void {
     this.loadBudgets();
+    this.cardsService.getBestCardToday().subscribe((best) => this.bestCard.set(best.recommended));
     this.dashboardService.getHealthScore().subscribe((score) => this.healthScore.set(score));
     this.dashboardService.getMonthlyComparison().subscribe((rows) => this.monthlyComparison.set(rows));
     forkJoin({

@@ -22,6 +22,17 @@
       </button>
     </div>
 
+    @if (bestCard(); as best) {
+      <div class="dashboard__best-card">
+        <span>{{ 'cards.bestToday' | translate }}:</span>
+        <strong>{{ best.name }}</strong>
+        <span class="dashboard__hint">
+          {{ 'cards.bestTodayDays' | translate: { days: best.daysUntilClosing ?? 0, date: best.nextClosingDate ?? '' } }}
+        </span>
+        <a routerLink="/cards">{{ 'dashboard.viewCards' | translate }}</a>
+      </div>
+    }
+
     @if (cardAlerts().length > 0) {
       <div class="dashboard__alert">
         <h2>{{ 'dashboard.cardAlerts' | translate }}</h2>

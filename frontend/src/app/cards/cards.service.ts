@@ -50,6 +50,25 @@ export interface CardHistoryPoint {
   utilizationPercent: number | null;
 }
 
+export interface BestCard {
+  accountId: string;
+  name: string;
+  institutionName: string | null;
+  nextClosingDate: string | null;
+  daysUntilClosing: number | null;
+  currentBalance: number;
+  creditLimit: number;
+  availableCredit: number | null;
+  utilizationPercent: number | null;
+  exclusionReason: 'limit_reached' | 'no_closing_day' | null;
+}
+
+export interface BestCardResponse {
+  recommended: BestCard | null;
+  ranking: BestCard[];
+  excluded: BestCard[];
+}
+
 export interface PayoffAllocation {
   accountId: string;
   name: string;
@@ -97,6 +116,10 @@ export class CardsService {
 
   getHistory(accountId: string): Observable<CardHistoryPoint[]> {
     return this.http.get<CardHistoryPoint[]>(`/api/cards/${accountId}/history`);
+  }
+
+  getBestCardToday(): Observable<BestCardResponse> {
+    return this.http.get<BestCardResponse>('/api/cards/best-today');
   }
 
   getPayoffPlan(availableAmount: number): Observable<PayoffPlan> {

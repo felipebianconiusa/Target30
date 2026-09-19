@@ -172,6 +172,45 @@ public class CardsController : ControllerBase
         return Ok(snapshots);
     }
 
+    // Melhor cartão pra usar hoje: o que demora mais pra fechar a fatura, ignorando os que
+    // estouraram o limite (ver BestCardPicker).
+    [HttpGet("best-today")]
+    public async Task<IActionResult> GetBestCardToday()
+    {
+        var settings = await GetOrCreateSettingsAsync();
+        var accounts = await _db.PlaidAccounts
+            .Where(a => a.UserId == CurrentUserId && a.Type == "Credit")
+            .ToListAsync();
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var withProjections = accounts
+            .Select(a => (Account: a, Projection: CardMath.Compute(a, settings.GlobalTargetUtilizationPercent, today)));
+
+        var (eligible, excluded) = BestCardPicker.Rank(withProjections, today);
+
+        return Ok(new BestCardResponseDto(
+            eligible.FirstOrDefault() is { } best ? ToBestCardDto(best) : null,
+            eligible.Select(ToBestCardDto).ToList(),
+            excluded.Select(ToBestCardDto).ToList()));
+    }
+
+    private static BestCardDto ToBestCardDto(CardRanking r) => new(
+        r.Account.AccountId,
+        r.Account.Name,
+        r.Account.InstitutionName,
+        r.Projection.NextClosingDate,
+        r.DaysUntilClosing,
+        r.Projection.Balance,
+        r.Projection.Limit,
+        r.AvailableCredit,
+        r.Projection.UtilizationPercent,
+        r.ExclusionReason switch
+        {
+            CardExclusionReason.LimitReached => "limit_reached",
+            CardExclusionReason.NoClosingDay => "no_closing_day",
+            _ => null,
+        });
+
     // Dado um valor disponível pra pagar hoje, distribui entre os cartões que precisam de
     // pagamento pra bater a meta — priorizando primeiro quem fecha mais cedo, depois quem
     // está mais acima da meta. Não considera juros/APR: o objetivo aqui é credit score
@@ -275,6 +314,23 @@ public record UpdateCardRequest(
     DateOnly? ManualNextPaymentDueDate);
 
 public record CardHistoryPointDto(DateOnly Date, decimal Balance, decimal? Limit, decimal? UtilizationPercent);
+
+public record BestCardDto(
+    string AccountId,
+    string Name,
+    string? InstitutionName,
+    DateOnly? NextClosingDate,
+    int? DaysUntilClosing,
+    decimal CurrentBalance,
+    decimal CreditLimit,
+    decimal? AvailableCredit,
+    decimal? UtilizationPercent,
+    string? ExclusionReason);
+
+public record BestCardResponseDto(
+    BestCardDto? Recommended,
+    IReadOnlyList<BestCardDto> Ranking,
+    IReadOnlyList<BestCardDto> Excluded);
 
 public record PayoffPlanRequest(decimal AvailableAmount);
 

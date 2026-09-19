@@ -1,6 +1,13 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
-import { AppSettings, Card, CardHistoryPoint, CardsService, PayoffPlan } from './cards.service';
+import {
+  AppSettings,
+  BestCardResponse,
+  Card,
+  CardHistoryPoint,
+  CardsService,
+  PayoffPlan,
+} from './cards.service';
 import { TranslationService } from '../i18n/translation.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { LOCALE_BY_LANG } from '../i18n/translations';
@@ -32,6 +39,9 @@ export class Cards implements OnInit {
   protected readonly payoffAmount = signal<number | null>(null);
   protected readonly payoffPlan = signal<PayoffPlan | null>(null);
   protected readonly payoffLoading = signal(false);
+
+  protected readonly bestCard = signal<BestCardResponse | null>(null);
+  protected readonly showBestRanking = signal(false);
 
   protected readonly simulateId = signal<string | null>(null);
   protected readonly simulateAmount = signal<number | null>(null);
@@ -216,8 +226,13 @@ export class Cards implements OnInit {
     return card.utilizationPercent > card.targetPercent ? 'over' : 'under';
   }
 
+  protected toggleBestRanking(): void {
+    this.showBestRanking.update((v) => !v);
+  }
+
   private load(): void {
     this.loading.set(true);
+    this.cardsService.getBestCardToday().subscribe((best) => this.bestCard.set(best));
     this.cardsService.getSettings().subscribe((settings) => this.settings.set(settings));
     this.cardsService.getCards().subscribe({
       next: (cards) => {
