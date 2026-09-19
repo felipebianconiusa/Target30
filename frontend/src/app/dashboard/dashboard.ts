@@ -4,6 +4,7 @@ import { forkJoin } from 'rxjs';
 import { PlaidService, Transaction, TransactionsSummary } from '../plaid.service';
 import { Card, CardsService } from '../cards/cards.service';
 import { Budget, BudgetsService } from './budgets.service';
+import { DashboardService, HealthScore, MonthlyComparisonRow } from './dashboard.service';
 import { TransactionTable } from '../shared/transaction-table/transaction-table';
 import { ALL_CATEGORY_CODES, translateCategory } from '../shared/category-labels';
 import { TranslationService } from '../i18n/translation.service';
@@ -45,6 +46,10 @@ export class Dashboard implements OnInit {
   protected readonly newBudgetLimit = signal<number | null>(null);
   protected readonly savingBudget = signal(false);
 
+  protected readonly healthScore = signal<HealthScore | null>(null);
+  protected readonly monthlyComparison = signal<MonthlyComparisonRow[]>([]);
+  protected readonly showComparison = signal(false);
+
   protected readonly categoryOptions = computed(() => {
     const lang = this.translationService.lang();
     const used = new Set(this.budgets().map((b) => b.category));
@@ -72,6 +77,7 @@ export class Dashboard implements OnInit {
     private readonly plaidService: PlaidService,
     private readonly cardsService: CardsService,
     private readonly budgetsService: BudgetsService,
+    private readonly dashboardService: DashboardService,
     protected readonly translationService: TranslationService,
   ) {}
 
@@ -130,12 +136,22 @@ export class Dashboard implements OnInit {
     this.budgetsService.deleteBudget(budget.id).subscribe(() => this.loadBudgets());
   }
 
+  protected toggleComparison(): void {
+    this.showComparison.update((v) => !v);
+  }
+
+  protected comparisonLabel(row: MonthlyComparisonRow): string {
+    return translateCategory(row.category, this.translationService.lang());
+  }
+
   private loadBudgets(): void {
     this.budgetsService.getBudgets().subscribe((budgets) => this.budgets.set(budgets));
   }
 
   private load(): void {
     this.loadBudgets();
+    this.dashboardService.getHealthScore().subscribe((score) => this.healthScore.set(score));
+    this.dashboardService.getMonthlyComparison().subscribe((rows) => this.monthlyComparison.set(rows));
     forkJoin({
       summary: this.plaidService.getSummary(),
       items: this.plaidService.getItems(),

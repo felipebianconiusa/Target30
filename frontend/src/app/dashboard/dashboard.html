@@ -11,6 +11,12 @@
 } @else {
   <div class="dashboard">
     <div class="dashboard__toolbar">
+      @if (healthScore()) {
+        <div class="health-score" [class]="'health-score--' + healthScore()!.label">
+          <span class="health-score__value">{{ healthScore()!.score }}</span>
+          <span class="health-score__label">{{ ('dashboard.healthScoreLabel.' + healthScore()!.label) | translate }}</span>
+        </div>
+      }
       <button type="button" [disabled]="syncing()" (click)="refresh()">
         {{ (syncing() ? 'common.syncing' : 'common.refresh') | translate }}
       </button>
@@ -60,6 +66,36 @@
           </div>
         }
       </div>
+    </div>
+
+    <div class="dashboard__section">
+      <div class="dashboard__section-header">
+        <h2>{{ 'dashboard.monthlyComparison' | translate }}</h2>
+        <button type="button" (click)="toggleComparison()">
+          {{ (showComparison() ? 'common.hide' : 'common.show') | translate }}
+        </button>
+      </div>
+
+      @if (showComparison()) {
+        @if (monthlyComparison().length === 0) {
+          <p class="dashboard__hint">{{ 'dashboard.noComparison' | translate }}</p>
+        } @else {
+          <div class="category-bars">
+            @for (row of monthlyComparison(); track row.category) {
+              <div class="comparison-row">
+                <span class="category-bar__label">{{ comparisonLabel(row) }}</span>
+                <span>{{ formatCurrency(row.currentMonthTotal) }}</span>
+                <span class="dashboard__hint">{{ 'dashboard.vsLastMonth' | translate: { amount: formatCurrency(row.previousMonthTotal) } }}</span>
+                @if (row.changePercent !== null) {
+                  <span [class.comparison-row__up]="row.changePercent > 0" [class.comparison-row__down]="row.changePercent < 0">
+                    {{ row.changePercent > 0 ? '+' : '' }}{{ row.changePercent }}%
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        }
+      }
     </div>
 
     <div class="dashboard__section">

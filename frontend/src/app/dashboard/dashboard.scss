@@ -6,7 +6,8 @@
 
 .dashboard__toolbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
 
   button {
     padding: 0.4rem 0.8rem;
@@ -104,6 +105,72 @@
 
 .dashboard__error {
   color: var(--color-danger);
+}
+
+.health-score {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-strong);
+
+  &__value {
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  &__label {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
+
+  &--great {
+    border-color: var(--color-success);
+    .health-score__value {
+      color: var(--color-success);
+    }
+  }
+
+  &--good {
+    border-color: var(--color-primary);
+    .health-score__value {
+      color: var(--color-primary);
+    }
+  }
+
+  &--fair {
+    border-color: orange;
+    .health-score__value {
+      color: orange;
+    }
+  }
+
+  &--poor {
+    border-color: var(--color-danger);
+    .health-score__value {
+      color: var(--color-danger);
+    }
+  }
+}
+
+.comparison-row {
+  display: grid;
+  grid-template-columns: 8rem 6rem 1fr 4rem;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.comparison-row__up {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.comparison-row__down {
+  color: var(--color-success);
+  font-weight: 600;
 }
 
 .dashboard__section-header {
