@@ -112,12 +112,12 @@ public class CashFlowController : ControllerBase
             // cada gasto novo. Sem limite cadastrado ainda (p.UtilizationPercent null) não dá
             // pra calcular "quanto pagar pra bater a meta", então pulamos esse lançamento.
             if (p.UtilizationPercent is not null && p.PaymentDeadline is { } deadline && deadline > today && deadline <= endDate)
-                entries.Add((deadline, $"{card.Name} - Fechamento", -p.AmountToPay, "Pending", 1));
+                entries.Add((deadline, $"{card.DisplayName} - Fechamento", -p.AmountToPay, "Pending", 1));
 
             // Lançamento no vencimento: o saldo atual do cartão (o que vai virar fatura) —
             // também sempre aparece, mesmo R$0, pra marcar a data.
             if (card.EffectiveNextPaymentDueDate is { } dueDate && dueDate > today && dueDate <= endDate)
-                entries.Add((dueDate, $"{card.Name} - Fatura", -p.Balance, "Pending", 1));
+                entries.Add((dueDate, $"{card.DisplayName} - Fatura", -p.Balance, "Pending", 1));
         }
 
         var ordered = entries.OrderBy(e => e.Date).ThenBy(e => e.SortPriority).ToList();

@@ -97,7 +97,7 @@ public class PlaidBackgroundService : BackgroundService
                 if (!needsAlert)
                     continue;
 
-                alerts.Add($"{card.Name}: pague {p.AmountToPay:C} até {p.PaymentDeadline:yyyy-MM-dd} pra fechar em {p.TargetPercent}%.");
+                alerts.Add($"{card.DisplayName}: pague {p.AmountToPay:C} até {p.PaymentDeadline:yyyy-MM-dd} pra fechar em {p.TargetPercent}%.");
                 card.LastAlertSentDate = today;
             }
 

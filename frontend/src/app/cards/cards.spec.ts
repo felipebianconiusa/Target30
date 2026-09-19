@@ -1,5 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslationService } from '../i18n/translation.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, beforeEach, expect, it } from 'vitest';
 import { Cards } from './cards';
@@ -29,6 +30,7 @@ function makeCard(overrides: Partial<Card> = {}): Card {
     manualCreditLimit: null,
     manualNextPaymentDueDate: null,
     lastAlertSentDate: null,
+    nickname: null,
     ...overrides,
   };
 }
@@ -97,6 +99,56 @@ describe('Cards', () => {
       const link = component.googleCalendarLink('Test Card', 150, '2026-02-10', 'USD');
       expect(link).toContain('calendar.google.com');
       expect(link).toContain('dates=20260210%2F20260211');
+    });
+  });
+
+  describe('rendering', () => {
+    function renderWith(cards: Card[]): HTMLElement {
+      TestBed.inject(TranslationService).setLang('pt');
+      fixture.detectChanges();
+      const http = TestBed.inject(HttpTestingController);
+      http.match('/api/settings').forEach((r) =>
+        r.flush({ globalTargetUtilizationPercent: 30, notifyDaysBeforeClosing: 3 }),
+      );
+      http.match('/api/cards/best-today').forEach((r) =>
+        r.flush({ recommended: null, ranking: [], excluded: [] }),
+      );
+      http.match('/api/cards').forEach((r) => r.flush(cards));
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('shows the nickname as the title and always keeps the original name visible', () => {
+      const el = renderWith([makeCard({ name: 'Savor', nickname: 'Mercado' })]);
+
+      expect(el.querySelector('.card-item strong')?.textContent).toContain('Mercado');
+      expect(el.querySelector('.card-item__original')?.textContent).toContain('Savor');
+    });
+
+    it('shows only the original name when there is no nickname', () => {
+      const el = renderWith([makeCard({ name: 'Savor', nickname: null })]);
+
+      expect(el.querySelector('.card-item strong')?.textContent).toContain('Savor');
+      expect(el.querySelector('.card-item__original')).toBeNull();
+    });
+
+    it('offers a shortcut to set the limit when the bank did not report one', () => {
+      const el = renderWith([makeCard({ creditLimit: 0, utilizationPercent: null })]);
+
+      const button = el.querySelector('.card-item__link-button') as HTMLButtonElement;
+      expect(button).not.toBeNull();
+      button.click();
+      fixture.detectChanges();
+
+      // O atalho abre o painel de edição, onde fica o campo de limite manual.
+      expect(el.querySelector('.card-item__edit')).not.toBeNull();
+    });
+
+    it('shows the limit (no shortcut) when the bank reported one', () => {
+      const el = renderWith([makeCard({ creditLimit: 1000 })]);
+
+      expect(el.textContent).toContain('1.000');
+      expect(el.querySelector('.card-item__link-button')).toBeNull();
     });
   });
 });

@@ -39,6 +39,7 @@ public class BackupController : ControllerBase
             {
                 a.AccountId,
                 a.Name,
+                a.Nickname,
                 a.OfficialName,
                 a.InstitutionName,
                 a.Type,

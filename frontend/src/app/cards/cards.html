@@ -18,7 +18,7 @@
         <h2 class="cards-group__title">{{ 'cards.bestToday' | translate }}</h2>
         @if (best.recommended; as top) {
           <div class="best-card__top">
-            <strong>{{ top.name }}</strong>
+            <strong>{{ cardLabel(top.nickname, top.name) }}</strong>
             @if (top.institutionName) {
               <span class="card-item__institution">— {{ top.institutionName }}</span>
             }
@@ -47,13 +47,13 @@
           <ol class="best-card__list">
             @for (c of best.ranking; track c.accountId) {
               <li>
-                {{ c.name }} — {{ 'cards.bestTodayDays' | translate: { days: c.daysUntilClosing ?? 0, date: c.nextClosingDate ?? '' } }}
+                {{ cardLabel(c.nickname, c.name) }} — {{ 'cards.bestTodayDays' | translate: { days: c.daysUntilClosing ?? 0, date: c.nextClosingDate ?? '' } }}
               </li>
             }
           </ol>
           @for (c of best.excluded; track c.accountId) {
             <p class="card-item__muted">
-              {{ c.name }} —
+              {{ cardLabel(c.nickname, c.name) }} —
               {{ (c.exclusionReason === 'limit_reached' ? 'cards.bestTodayLimitReached' : 'cards.bestTodayNoClosingDay') | translate }}
             </p>
           }
@@ -88,7 +88,7 @@
             @for (allocation of payoffPlan()!.allocations; track allocation.accountId) {
               <li>
                 <div>
-                  <strong>{{ allocation.name }}</strong>
+                  <strong>{{ cardLabel(allocation.nickname, allocation.name) }}</strong>
                   @if (allocation.institutionName) {
                     <span class="card-item__institution">— {{ allocation.institutionName }}</span>
                   }
@@ -103,7 +103,7 @@
                 @if (allocation.paymentDeadline) {
                   <a
                     class="card-item__calendar-link"
-                    [href]="googleCalendarLink(allocation.name, allocation.amountToPay, allocation.paymentDeadline, null)"
+                    [href]="googleCalendarLink(cardLabel(allocation.nickname, allocation.name), allocation.amountToPay, allocation.paymentDeadline, null)"
                     target="_blank"
                     rel="noopener"
                   >
@@ -147,7 +147,10 @@
   <div class="card-item" [class.card-item--alert]="card.needsAlert">
     <div class="card-item__header">
       <div>
-        <strong>{{ card.name }}</strong>
+        <strong>{{ card.nickname || card.name }}</strong>
+        @if (card.nickname) {
+          <span class="card-item__original">({{ card.name }})</span>
+        }
         @if (card.institutionName) {
           <span class="card-item__institution">— {{ card.institutionName }}</span>
         }
@@ -159,7 +162,14 @@
 
     <div class="card-item__balances">
       <span>{{ 'cards.balance' | translate }}: {{ formatCurrency(card.currentBalance, card.isoCurrencyCode) }}</span>
-      <span>{{ 'cards.limit' | translate }}: {{ card.creditLimit > 0 ? formatCurrency(card.creditLimit, card.isoCurrencyCode) : ('cards.noLimit' | translate) }}</span>
+      @if (card.creditLimit > 0) {
+        <span>{{ 'cards.limit' | translate }}: {{ formatCurrency(card.creditLimit, card.isoCurrencyCode) }}</span>
+      } @else {
+        <span class="card-item__no-limit">
+          {{ 'cards.limit' | translate }}: {{ 'cards.noLimit' | translate }}
+          <button type="button" class="card-item__link-button" (click)="startEdit(card)">{{ 'cards.setLimit' | translate }}</button>
+        </span>
+      }
     </div>
 
     @if (card.utilizationPercent !== null) {
@@ -239,7 +249,7 @@
       @if (card.paymentDeadline) {
         <a
           class="card-item__calendar-link"
-          [href]="googleCalendarLink(card.name, card.amountToPay, card.paymentDeadline, card.isoCurrencyCode)"
+          [href]="googleCalendarLink(cardLabel(card.nickname, card.name), card.amountToPay, card.paymentDeadline, card.isoCurrencyCode)"
           target="_blank"
           rel="noopener"
         >
@@ -271,6 +281,16 @@
 
     @if (editingId() === card.accountId) {
       <div class="card-item__edit">
+        <label>
+          {{ 'cards.nickname' | translate }}
+          <input
+            type="text"
+            maxlength="60"
+            [value]="editNickname()"
+            (input)="setEditNickname($any($event.target).value)"
+          />
+        </label>
+        <p class="card-item__hint">{{ 'cards.nicknameHint' | translate: { name: card.name } }}</p>
         <label>
           {{ 'cards.statementClosingDay' | translate }}
           <input

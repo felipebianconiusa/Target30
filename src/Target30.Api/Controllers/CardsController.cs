@@ -66,7 +66,8 @@ public class CardsController : ControllerBase
                     needsAlert,
                     a.ManualCreditLimit,
                     a.ManualNextPaymentDueDate,
-                    a.LastAlertSentDate);
+                    a.LastAlertSentDate,
+                    a.Nickname);
             })
             .OrderBy(c => c.DaysUntilPaymentDeadline ?? int.MaxValue)
             .ToList();
@@ -106,7 +107,7 @@ public class CardsController : ControllerBase
             csv.AppendLine(string.Join(",", new[]
             {
                 CsvField(a.EffectiveNextPaymentDueDate is not null ? "Com vencimento" : "Ciclo em aberto"),
-                CsvField(a.Name),
+                CsvField(a.DisplayName),
                 CsvField(a.InstitutionName ?? ""),
                 CsvField(p.Balance.ToString("F2", CultureInfo.InvariantCulture)),
                 CsvField(p.Limit.ToString("F2", CultureInfo.InvariantCulture)),
@@ -148,6 +149,9 @@ public class CardsController : ControllerBase
         account.TargetUtilizationPercent = request.TargetUtilizationPercent;
         account.ManualCreditLimit = request.ManualCreditLimit;
         account.ManualNextPaymentDueDate = request.ManualNextPaymentDueDate;
+
+        var nickname = request.Nickname?.Trim();
+        account.Nickname = string.IsNullOrEmpty(nickname) ? null : nickname[..Math.Min(nickname.Length, 60)];
 
         await _db.SaveChangesAsync();
         return NoContent();
@@ -197,6 +201,7 @@ public class CardsController : ControllerBase
     private static BestCardDto ToBestCardDto(CardRanking r) => new(
         r.Account.AccountId,
         r.Account.Name,
+        r.Account.Nickname,
         r.Account.InstitutionName,
         r.Projection.NextClosingDate,
         r.DaysUntilClosing,
@@ -255,6 +260,7 @@ public class CardsController : ControllerBase
             allocations.Add(new PayoffAllocationDto(
                 account.AccountId,
                 account.Name,
+                account.Nickname,
                 account.InstitutionName,
                 allocate,
                 projection.Balance,
@@ -304,20 +310,23 @@ public record CardDto(
     bool NeedsAlert,
     decimal? ManualCreditLimit,
     DateOnly? ManualNextPaymentDueDate,
-    DateOnly? LastAlertSentDate
+    DateOnly? LastAlertSentDate,
+    string? Nickname
 );
 
 public record UpdateCardRequest(
     int? StatementClosingDay,
     decimal? TargetUtilizationPercent,
     decimal? ManualCreditLimit,
-    DateOnly? ManualNextPaymentDueDate);
+    DateOnly? ManualNextPaymentDueDate,
+    string? Nickname = null);
 
 public record CardHistoryPointDto(DateOnly Date, decimal Balance, decimal? Limit, decimal? UtilizationPercent);
 
 public record BestCardDto(
     string AccountId,
     string Name,
+    string? Nickname,
     string? InstitutionName,
     DateOnly? NextClosingDate,
     int? DaysUntilClosing,
@@ -337,6 +346,7 @@ public record PayoffPlanRequest(decimal AvailableAmount);
 public record PayoffAllocationDto(
     string AccountId,
     string Name,
+    string? Nickname,
     string? InstitutionName,
     decimal AmountToPay,
     decimal CurrentBalance,

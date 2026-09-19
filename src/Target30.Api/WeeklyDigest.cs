@@ -37,7 +37,7 @@ public static class WeeklyDigest
                 ? $"pagar {projection.AmountToPay:C} pra ficar em {projection.TargetPercent}%"
                 : "dentro da meta";
 
-            lines.Add($"- {account.Name}: {utilization}% de utilização, {status} ({deadline})");
+            lines.Add($"- {account.DisplayName}: {utilization}% de utilização, {status} ({deadline})");
         }
 
         lines.Add("");

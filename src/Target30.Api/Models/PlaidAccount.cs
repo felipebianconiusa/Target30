@@ -35,6 +35,12 @@ public class PlaidAccount
     public decimal? ManualCreditLimit { get; set; }
     public DateOnly? ManualNextPaymentDueDate { get; set; }
 
+    // Apelido escolhido pelo usuário — o Name (original do banco) continua sendo mostrado sempre.
+    // O sync nunca toca neste campo, só em Name.
+    public string? Nickname { get; set; }
+
+    public string DisplayName => string.IsNullOrWhiteSpace(Nickname) ? Name : $"{Nickname} ({Name})";
+
     public decimal? EffectiveCreditLimit => ManualCreditLimit ?? CreditLimit;
     public DateOnly? EffectiveNextPaymentDueDate => ManualNextPaymentDueDate ?? NextPaymentDueDate;
 

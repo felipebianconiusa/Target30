@@ -12,6 +12,7 @@ import { TranslationService } from '../i18n/translation.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { LOCALE_BY_LANG } from '../i18n/translations';
 import { buildGoogleCalendarLink } from '../shared/google-calendar-link';
+import { cardLabel } from '../shared/card-label';
 
 @Component({
   selector: 'app-cards',
@@ -29,6 +30,7 @@ export class Cards implements OnInit {
   protected readonly editTarget = signal<number | null>(null);
   protected readonly editManualLimit = signal<number | null>(null);
   protected readonly editManualDueDate = signal<string | null>(null);
+  protected readonly editNickname = signal('');
   protected readonly savingId = signal<string | null>(null);
   protected readonly downloadingReport = signal(false);
 
@@ -70,6 +72,7 @@ export class Cards implements OnInit {
     this.editTarget.set(card.targetIsCustom ? card.targetPercent : null);
     this.editManualLimit.set(card.manualCreditLimit);
     this.editManualDueDate.set(card.manualNextPaymentDueDate);
+    this.editNickname.set(card.nickname ?? '');
   }
 
   protected cancelEdit(): void {
@@ -88,6 +91,12 @@ export class Cards implements OnInit {
     this.editManualLimit.set(value ? Number(value) : null);
   }
 
+  protected setEditNickname(value: string): void {
+    this.editNickname.set(value);
+  }
+
+  protected cardLabel = cardLabel;
+
   protected setEditManualDueDate(value: string): void {
     this.editManualDueDate.set(value || null);
   }
@@ -100,6 +109,7 @@ export class Cards implements OnInit {
         targetUtilizationPercent: this.editTarget(),
         manualCreditLimit: this.editManualLimit(),
         manualNextPaymentDueDate: this.editManualDueDate(),
+        nickname: this.editNickname().trim() || null,
       })
       .subscribe({
         next: () => {

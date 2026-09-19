@@ -25,7 +25,7 @@
     @if (bestCard(); as best) {
       <div class="dashboard__best-card">
         <span>{{ 'cards.bestToday' | translate }}:</span>
-        <strong>{{ best.name }}</strong>
+        <strong>{{ cardLabel(best.nickname, best.name) }}</strong>
         <span class="dashboard__hint">
           {{ 'cards.bestTodayDays' | translate: { days: best.daysUntilClosing ?? 0, date: best.nextClosingDate ?? '' } }}
         </span>
@@ -39,7 +39,7 @@
         <ul>
           @for (card of cardAlerts(); track card.accountId) {
             <li>
-              {{ 'dashboard.cardAlertLine' | translate: { name: card.name, amount: formatCurrency(card.amountToPay), date: card.paymentDeadline ?? '', days: card.daysUntilPaymentDeadline ?? 0 } }}
+              {{ 'dashboard.cardAlertLine' | translate: { name: cardLabel(card.nickname, card.name), amount: formatCurrency(card.amountToPay), date: card.paymentDeadline ?? '', days: card.daysUntilPaymentDeadline ?? 0 } }}
             </li>
           }
         </ul>

@@ -25,6 +25,7 @@ export interface Card {
   manualCreditLimit: number | null;
   manualNextPaymentDueDate: string | null;
   lastAlertSentDate: string | null;
+  nickname: string | null;
 }
 
 export interface UpdateCardRequest {
@@ -32,6 +33,7 @@ export interface UpdateCardRequest {
   targetUtilizationPercent: number | null;
   manualCreditLimit: number | null;
   manualNextPaymentDueDate: string | null;
+  nickname: string | null;
 }
 
 export interface AppSettings {
@@ -53,6 +55,7 @@ export interface CardHistoryPoint {
 export interface BestCard {
   accountId: string;
   name: string;
+  nickname: string | null;
   institutionName: string | null;
   nextClosingDate: string | null;
   daysUntilClosing: number | null;
@@ -72,6 +75,7 @@ export interface BestCardResponse {
 export interface PayoffAllocation {
   accountId: string;
   name: string;
+  nickname: string | null;
   institutionName: string | null;
   amountToPay: number;
   currentBalance: number;

@@ -5,6 +5,7 @@ import { PlaidService, Transaction, TransactionsSummary } from '../plaid.service
 import { BestCard, Card, CardsService } from '../cards/cards.service';
 import { Budget, BudgetsService } from './budgets.service';
 import { DashboardService, HealthScore, MonthlyComparisonRow } from './dashboard.service';
+import { cardLabel } from '../shared/card-label';
 import { TransactionTable } from '../shared/transaction-table/transaction-table';
 import { ALL_CATEGORY_CODES, translateCategory } from '../shared/category-labels';
 import { TranslationService } from '../i18n/translation.service';
@@ -46,6 +47,7 @@ export class Dashboard implements OnInit {
   protected readonly newBudgetLimit = signal<number | null>(null);
   protected readonly savingBudget = signal(false);
 
+  protected readonly cardLabel = cardLabel;
   protected readonly bestCard = signal<BestCard | null>(null);
   protected readonly healthScore = signal<HealthScore | null>(null);
   protected readonly monthlyComparison = signal<MonthlyComparisonRow[]>([]);
