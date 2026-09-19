@@ -60,10 +60,12 @@ public class CardsController : ControllerBase
                     p.NextClosingDate,
                     p.PaymentDeadline,
                     p.DaysUntilPaymentDeadline,
-                    a.NextPaymentDueDate,
+                    a.EffectiveNextPaymentDueDate,
                     a.MinimumPaymentAmount,
                     a.IsOverdue,
-                    needsAlert);
+                    needsAlert,
+                    a.ManualCreditLimit,
+                    a.ManualNextPaymentDueDate);
             })
             .OrderBy(c => c.DaysUntilPaymentDeadline ?? int.MaxValue)
             .ToList();
@@ -77,14 +79,15 @@ public class CardsController : ControllerBase
     public async Task<IActionResult> DownloadReport()
     {
         var settings = await GetOrCreateSettingsAsync();
-        var accounts = await _db.PlaidAccounts
+        var accounts = (await _db.PlaidAccounts
             .Where(a => a.UserId == CurrentUserId && a.Type == "Credit")
+            .ToListAsync())
             // Cartões com vencimento definido primeiro (são os acionáveis); dentro de cada
             // grupo, por instituição/nome.
-            .OrderByDescending(a => a.NextPaymentDueDate != null)
+            .OrderByDescending(a => a.EffectiveNextPaymentDueDate != null)
             .ThenBy(a => a.InstitutionName)
             .ThenBy(a => a.Name)
-            .ToListAsync();
+            .ToList();
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -101,7 +104,7 @@ public class CardsController : ControllerBase
             var p = CardMath.Compute(a, settings.GlobalTargetUtilizationPercent, today);
             csv.AppendLine(string.Join(",", new[]
             {
-                CsvField(a.NextPaymentDueDate is not null ? "Com vencimento" : "Ciclo em aberto"),
+                CsvField(a.EffectiveNextPaymentDueDate is not null ? "Com vencimento" : "Ciclo em aberto"),
                 CsvField(a.Name),
                 CsvField(a.InstitutionName ?? ""),
                 CsvField(p.Balance.ToString("F2", CultureInfo.InvariantCulture)),
@@ -111,7 +114,7 @@ public class CardsController : ControllerBase
                 CsvField(p.AmountToPay.ToString("F2", CultureInfo.InvariantCulture)),
                 CsvField(p.NextClosingDate?.ToString("yyyy-MM-dd") ?? ""),
                 CsvField(p.PaymentDeadline?.ToString("yyyy-MM-dd") ?? ""),
-                CsvField(a.NextPaymentDueDate?.ToString("yyyy-MM-dd") ?? ""),
+                CsvField(a.EffectiveNextPaymentDueDate?.ToString("yyyy-MM-dd") ?? ""),
                 CsvField(a.MinimumPaymentAmount?.ToString("F2", CultureInfo.InvariantCulture) ?? ""),
                 CsvField(a.IsOverdue == true ? "Sim" : "Nao"),
             }));
@@ -142,9 +145,30 @@ public class CardsController : ControllerBase
             account.StatementClosingDay = Math.Clamp(request.StatementClosingDay.Value, 1, 31);
 
         account.TargetUtilizationPercent = request.TargetUtilizationPercent;
+        account.ManualCreditLimit = request.ManualCreditLimit;
+        account.ManualNextPaymentDueDate = request.ManualNextPaymentDueDate;
 
         await _db.SaveChangesAsync();
         return NoContent();
+    }
+
+    // Histórico de saldo/utilização do cartão (um ponto por dia, capturado a cada sync) —
+    // alimenta o gráfico de evolução na tela de Cartões.
+    [HttpGet("{accountId}/history")]
+    public async Task<IActionResult> GetHistory(string accountId, [FromQuery] int days = 180)
+    {
+        var ownsAccount = await _db.PlaidAccounts.AnyAsync(a => a.AccountId == accountId && a.UserId == CurrentUserId);
+        if (!ownsAccount)
+            return NotFound();
+
+        var since = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-Math.Clamp(days, 1, 730));
+        var snapshots = await _db.CardBalanceSnapshots
+            .Where(s => s.AccountId == accountId && s.UserId == CurrentUserId && s.Date >= since)
+            .OrderBy(s => s.Date)
+            .Select(s => new CardHistoryPointDto(s.Date, s.Balance, s.Limit, s.UtilizationPercent))
+            .ToListAsync();
+
+        return Ok(snapshots);
     }
 
     private async Task<UserSettings> GetOrCreateSettingsAsync()
@@ -179,7 +203,15 @@ public record CardDto(
     DateOnly? NextPaymentDueDate,
     decimal? MinimumPaymentAmount,
     bool? IsOverdue,
-    bool NeedsAlert
+    bool NeedsAlert,
+    decimal? ManualCreditLimit,
+    DateOnly? ManualNextPaymentDueDate
 );
 
-public record UpdateCardRequest(int? StatementClosingDay, decimal? TargetUtilizationPercent);
+public record UpdateCardRequest(
+    int? StatementClosingDay,
+    decimal? TargetUtilizationPercent,
+    decimal? ManualCreditLimit,
+    DateOnly? ManualNextPaymentDueDate);
+
+public record CardHistoryPointDto(DateOnly Date, decimal Balance, decimal? Limit, decimal? UtilizationPercent);

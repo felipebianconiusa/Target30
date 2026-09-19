@@ -29,4 +29,16 @@ public class PlaidAccount
     // próxima data de fechamento, só a do último extrato).
     public int? StatementClosingDay { get; set; }
     public decimal? TargetUtilizationPercent { get; set; }
+
+    // Override manual para instituições que não retornam limite/vencimento via Plaid (ex.:
+    // contas sem o produto Liabilities, como a OnePay). Tem prioridade sobre o valor do Plaid.
+    public decimal? ManualCreditLimit { get; set; }
+    public DateOnly? ManualNextPaymentDueDate { get; set; }
+
+    public decimal? EffectiveCreditLimit => ManualCreditLimit ?? CreditLimit;
+    public DateOnly? EffectiveNextPaymentDueDate => ManualNextPaymentDueDate ?? NextPaymentDueDate;
+
+    // Marca o último dia em que um alerta de "pagar antes do fechamento" foi enviado por email
+    // pra esse cartão, pra não mandar o mesmo aviso de novo no mesmo dia.
+    public DateOnly? LastAlertSentDate { get; set; }
 }

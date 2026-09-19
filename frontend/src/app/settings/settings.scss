@@ -17,6 +17,14 @@
   }
 }
 
+.settings__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  max-width: none;
+}
+
 .settings__lang-options {
   display: flex;
   flex-wrap: wrap;

@@ -21,7 +21,7 @@ public static class CardMath
     public static CardProjection Compute(PlaidAccount account, decimal globalTargetPercent, DateOnly today)
     {
         var targetPercent = account.TargetUtilizationPercent ?? globalTargetPercent;
-        var limit = account.CreditLimit ?? 0m;
+        var limit = account.EffectiveCreditLimit ?? 0m;
         var balance = account.CurrentBalance ?? 0m;
         var utilizationPercent = limit > 0 ? Math.Round(balance / limit * 100, 1) : (decimal?)null;
         var targetBalance = limit * (targetPercent / 100m);

@@ -6,9 +6,14 @@
     </div>
   </div>
 
-  <button type="button" class="cashflow-page__bills-toggle" (click)="toggleBillsManager()">
-    {{ 'cashflow.manageBills' | translate }}
-  </button>
+  <div class="cashflow-page__actions">
+    <button type="button" class="cashflow-page__bills-toggle" (click)="toggleBillsManager()">
+      {{ 'cashflow.manageBills' | translate }}
+    </button>
+    <button type="button" [disabled]="downloadingReport()" (click)="downloadReport()">
+      {{ (downloadingReport() ? 'cards.generatingReport' : 'cashflow.downloadReport') | translate }}
+    </button>
+  </div>
 
   @if (showBillsManager()) {
     <div class="bills-manager">

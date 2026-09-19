@@ -23,6 +23,7 @@ export class Settings implements OnInit {
 
   protected readonly globalTargetUtilizationPercent = signal(30);
   protected readonly notifyDaysBeforeClosing = signal(3);
+  protected readonly notificationsEnabled = signal(true);
   protected readonly savingSettings = signal(false);
   protected readonly settingsSaved = signal(false);
 
@@ -38,6 +39,7 @@ export class Settings implements OnInit {
     this.cardsService.getSettings().subscribe((settings) => {
       this.globalTargetUtilizationPercent.set(settings.globalTargetUtilizationPercent);
       this.notifyDaysBeforeClosing.set(settings.notifyDaysBeforeClosing);
+      this.notificationsEnabled.set(settings.notificationsEnabled);
     });
   }
 
@@ -49,12 +51,18 @@ export class Settings implements OnInit {
     this.notifyDaysBeforeClosing.set(Number(value));
   }
 
+  protected setNotificationsEnabled(value: boolean): void {
+    this.notificationsEnabled.set(value);
+  }
+
   protected saveSettings(): void {
     this.savingSettings.set(true);
     this.settingsSaved.set(false);
     const payload: AppSettings = {
       globalTargetUtilizationPercent: this.globalTargetUtilizationPercent(),
       notifyDaysBeforeClosing: this.notifyDaysBeforeClosing(),
+      notificationsEnabled: this.notificationsEnabled(),
+      email: null,
     };
     this.cardsService.updateSettings(payload).subscribe({
       next: () => {

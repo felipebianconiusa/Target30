@@ -40,6 +40,13 @@ export class CashFlowService {
     return this.http.get<CashFlowResponse>('/api/cashflow', { params });
   }
 
+  downloadReport(pastDays = 30, futureDays = 45): Observable<Blob> {
+    const params = new HttpParams()
+      .set('pastDays', pastDays)
+      .set('futureDays', futureDays);
+    return this.http.get('/api/cashflow/report', { params, responseType: 'blob' });
+  }
+
   getBills(): Observable<Bill[]> {
     return this.http.get<Bill[]>('/api/bills');
   }

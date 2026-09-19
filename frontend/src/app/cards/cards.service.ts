@@ -22,16 +22,29 @@ export interface Card {
   minimumPaymentAmount: number | null;
   isOverdue: boolean | null;
   needsAlert: boolean;
+  manualCreditLimit: number | null;
+  manualNextPaymentDueDate: string | null;
 }
 
 export interface UpdateCardRequest {
   statementClosingDay: number | null;
   targetUtilizationPercent: number | null;
+  manualCreditLimit: number | null;
+  manualNextPaymentDueDate: string | null;
 }
 
 export interface AppSettings {
   globalTargetUtilizationPercent: number;
   notifyDaysBeforeClosing: number;
+  notificationsEnabled: boolean;
+  email: string | null;
+}
+
+export interface CardHistoryPoint {
+  date: string;
+  balance: number;
+  limit: number | null;
+  utilizationPercent: number | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -56,5 +69,9 @@ export class CardsService {
 
   downloadReport(): Observable<Blob> {
     return this.http.get('/api/cards/report', { responseType: 'blob' });
+  }
+
+  getHistory(accountId: string): Observable<CardHistoryPoint[]> {
+    return this.http.get<CardHistoryPoint[]>(`/api/cards/${accountId}/history`);
   }
 }

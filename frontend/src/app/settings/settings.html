@@ -77,6 +77,15 @@
           (input)="setNotifyDays($any($event.target).value)"
         />
       </label>
+      <label class="settings__checkbox">
+        <input
+          type="checkbox"
+          [checked]="notificationsEnabled()"
+          (change)="setNotificationsEnabled($any($event.target).checked)"
+        />
+        {{ 'settings.notificationsEnabled' | translate }}
+      </label>
+      <p class="settings__hint">{{ 'settings.notificationsEnabledHint' | translate }}</p>
     </div>
     <button type="button" [disabled]="savingSettings()" (click)="saveSettings()">
       {{ 'settings.saveSettings' | translate }}

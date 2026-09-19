@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Target30.Api.Data;
+using Target30.Api.Models;
 
 namespace Target30.Api.Controllers;
 
@@ -12,10 +15,12 @@ namespace Target30.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IConfiguration _configuration;
+    private readonly Target30DbContext _db;
 
-    public AuthController(IConfiguration configuration)
+    public AuthController(IConfiguration configuration, Target30DbContext db)
     {
         _configuration = configuration;
+        _db = db;
     }
 
     // O frontend manda o ID token que o Google Identity Services devolveu depois do login
@@ -49,6 +54,19 @@ public class AuthController : ControllerBase
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+
+        // Guarda o email do usuário pra poder mandar os alertas de fechamento por email.
+        var settings = await _db.UserSettings.FirstOrDefaultAsync(s => s.UserId == payload.Subject);
+        if (settings is null)
+        {
+            settings = new UserSettings { UserId = payload.Subject, Email = payload.Email };
+            _db.UserSettings.Add(settings);
+        }
+        else
+        {
+            settings.Email = payload.Email;
+        }
+        await _db.SaveChangesAsync();
 
         return Ok(new UserDto(payload.Subject, payload.Email, payload.Name, payload.Picture));
     }

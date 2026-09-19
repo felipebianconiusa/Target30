@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +29,46 @@ public class CashFlowController : ControllerBase
     // (assim bate com a leitura natural de uma planilha de fluxo de caixa).
     [HttpGet]
     public async Task<IActionResult> GetCashFlow([FromQuery] int pastDays = 30, [FromQuery] int futureDays = 45)
+    {
+        var (startingBalance, currentBalance, rows) = await BuildRowsAsync(pastDays, futureDays);
+        return Ok(new CashFlowResponseDto(startingBalance, currentBalance, rows));
+    }
+
+    // Mesmo cálculo da tela de Cash Flow, em CSV — pra baixar, guardar ou comparar com a
+    // planilha antiga.
+    [HttpGet("report")]
+    public async Task<IActionResult> DownloadReport([FromQuery] int pastDays = 30, [FromQuery] int futureDays = 45)
+    {
+        var (_, _, rows) = await BuildRowsAsync(pastDays, futureDays);
+
+        var csv = new StringBuilder();
+        csv.AppendLine(string.Join(",", new[] { "Data", "Descricao", "Valor", "Saldo", "Situacao" }.Select(CsvField)));
+        foreach (var r in rows)
+        {
+            csv.AppendLine(string.Join(",", new[]
+            {
+                CsvField(r.Date.ToString("yyyy-MM-dd")),
+                CsvField(r.Description),
+                CsvField(r.Amount.ToString("F2", CultureInfo.InvariantCulture)),
+                CsvField(r.Balance.ToString("F2", CultureInfo.InvariantCulture)),
+                CsvField(r.Status),
+            }));
+        }
+
+        var bytes = new byte[] { 0xEF, 0xBB, 0xBF }.Concat(Encoding.UTF8.GetBytes(csv.ToString())).ToArray();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        return File(bytes, "text/csv", $"target30-fluxo-caixa-{today:yyyy-MM-dd}.csv");
+    }
+
+    private static string CsvField(string value)
+    {
+        if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
+            return $"\"{value.Replace("\"", "\"\"")}\"";
+        return value;
+    }
+
+    private async Task<(decimal StartingBalance, decimal CurrentBalance, List<CashFlowEntryDto> Rows)> BuildRowsAsync(
+        int pastDays, int futureDays)
     {
         pastDays = Math.Clamp(pastDays, 0, 365);
         futureDays = Math.Clamp(futureDays, 0, 365);
@@ -74,7 +116,7 @@ public class CashFlowController : ControllerBase
 
             // Lançamento no vencimento: o saldo atual do cartão (o que vai virar fatura) —
             // também sempre aparece, mesmo R$0, pra marcar a data.
-            if (card.NextPaymentDueDate is { } dueDate && dueDate > today && dueDate <= endDate)
+            if (card.EffectiveNextPaymentDueDate is { } dueDate && dueDate > today && dueDate <= endDate)
                 entries.Add((dueDate, $"{card.Name} - Fatura", -p.Balance, "Pending", 1));
         }
 
@@ -93,7 +135,7 @@ public class CashFlowController : ControllerBase
             rows.Add(new CashFlowEntryDto(e.Date, e.Description, e.Amount, runningBalance, e.Status));
         }
 
-        return Ok(new CashFlowResponseDto(startingBalance, currentBalance, rows));
+        return (startingBalance, currentBalance, rows);
     }
 
     private async Task<UserSettings> GetOrCreateSettingsAsync()

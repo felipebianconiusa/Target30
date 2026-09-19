@@ -99,6 +99,27 @@
       }
     </div>
 
+    @if (card.utilizationPercent !== null) {
+      <button type="button" class="card-item__edit-toggle" (click)="toggleHistory(card)">
+        {{ (historyId() === card.accountId ? 'cards.hideHistory' : 'cards.showHistory') | translate }}
+      </button>
+    }
+
+    @if (historyId() === card.accountId) {
+      <div class="card-item__history">
+        @if (historyLoading()) {
+          <p>{{ 'common.loading' | translate }}</p>
+        } @else if (historyPoints().length < 2) {
+          <p class="card-item__muted">{{ 'cards.historyEmpty' | translate }}</p>
+        } @else {
+          <svg viewBox="0 0 600 160" class="card-item__history-chart" preserveAspectRatio="none">
+            <line x1="0" y1="160" x2="600" y2="160" class="card-item__history-axis" />
+            <path [attr.d]="historyPath()" class="card-item__history-line" fill="none" />
+          </svg>
+        }
+      </div>
+    }
+
     @if (editingId() === card.accountId) {
       <div class="card-item__edit">
         <label>
@@ -125,6 +146,25 @@
         <p class="card-item__hint">
           {{ 'cards.targetOverrideHint' | translate: { percent: settings()?.globalTargetUtilizationPercent ?? 30 } }}
         </p>
+        <label>
+          {{ 'cards.manualLimit' | translate }}
+          <input
+            type="number"
+            min="0"
+            step="1"
+            [value]="editManualLimit()"
+            (input)="setEditManualLimit($any($event.target).value)"
+          />
+        </label>
+        <label>
+          {{ 'cards.manualDueDate' | translate }}
+          <input
+            type="date"
+            [value]="editManualDueDate()"
+            (input)="setEditManualDueDate($any($event.target).value)"
+          />
+        </label>
+        <p class="card-item__hint">{{ 'cards.manualOverrideHint' | translate }}</p>
         <div class="card-item__edit-actions">
           <button type="button" [disabled]="savingId() === card.accountId" (click)="saveEdit(card)">
             {{ 'cards.save' | translate }}

@@ -10,6 +10,7 @@ public class Target30DbContext(DbContextOptions<Target30DbContext> options) : Db
     public DbSet<PlaidAccount> PlaidAccounts => Set<PlaidAccount>();
     public DbSet<UserSettings> UserSettings => Set<UserSettings>();
     public DbSet<RecurringBill> RecurringBills => Set<RecurringBill>();
+    public DbSet<CardBalanceSnapshot> CardBalanceSnapshots => Set<CardBalanceSnapshot>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -32,5 +33,9 @@ public class Target30DbContext(DbContextOptions<Target30DbContext> options) : Db
 
         modelBuilder.Entity<UserSettings>()
             .HasKey(s => s.UserId);
+
+        modelBuilder.Entity<CardBalanceSnapshot>()
+            .HasIndex(s => new { s.AccountId, s.Date })
+            .IsUnique();
     }
 }

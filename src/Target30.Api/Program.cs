@@ -2,6 +2,7 @@ using Going.Plaid;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Target30.Api.Data;
+using Target30.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,10 @@ builder.Services.AddPlaid(builder.Configuration.GetSection("Plaid"));
 
 builder.Services.AddDbContext<Target30DbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.AddScoped<PlaidSyncService>();
+builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+builder.Services.AddHostedService<PlaidBackgroundService>();
 
 builder.Services.AddCors(options =>
 {

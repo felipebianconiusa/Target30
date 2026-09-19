@@ -25,7 +25,7 @@ public class SettingsController : ControllerBase
     public async Task<IActionResult> GetSettings()
     {
         var settings = await GetOrCreateSettingsAsync();
-        return Ok(new SettingsDto(settings.GlobalTargetUtilizationPercent, settings.NotifyDaysBeforeClosing));
+        return Ok(ToDto(settings));
     }
 
     [HttpPut]
@@ -34,9 +34,16 @@ public class SettingsController : ControllerBase
         var settings = await GetOrCreateSettingsAsync();
         settings.GlobalTargetUtilizationPercent = Math.Clamp(request.GlobalTargetUtilizationPercent, 0, 100);
         settings.NotifyDaysBeforeClosing = Math.Clamp(request.NotifyDaysBeforeClosing, 0, 30);
+        settings.NotificationsEnabled = request.NotificationsEnabled;
         await _db.SaveChangesAsync();
-        return Ok(new SettingsDto(settings.GlobalTargetUtilizationPercent, settings.NotifyDaysBeforeClosing));
+        return Ok(ToDto(settings));
     }
+
+    private static SettingsDto ToDto(UserSettings settings) => new(
+        settings.GlobalTargetUtilizationPercent,
+        settings.NotifyDaysBeforeClosing,
+        settings.NotificationsEnabled,
+        settings.Email);
 
     private async Task<UserSettings> GetOrCreateSettingsAsync()
     {
@@ -51,4 +58,8 @@ public class SettingsController : ControllerBase
     }
 }
 
-public record SettingsDto(decimal GlobalTargetUtilizationPercent, int NotifyDaysBeforeClosing);
+public record SettingsDto(
+    decimal GlobalTargetUtilizationPercent,
+    int NotifyDaysBeforeClosing,
+    bool NotificationsEnabled,
+    string? Email);

@@ -202,6 +202,25 @@
   color: var(--color-text-muted);
 }
 
+.card-item__history {
+  padding: 0.5rem 0;
+}
+
+.card-item__history-chart {
+  width: 100%;
+  height: 120px;
+}
+
+.card-item__history-axis {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.card-item__history-line {
+  stroke: var(--color-success);
+  stroke-width: 2;
+}
+
 .card-item__edit-actions {
   display: flex;
   gap: 0.5rem;

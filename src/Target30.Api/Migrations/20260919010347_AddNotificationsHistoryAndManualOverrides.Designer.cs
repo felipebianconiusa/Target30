@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Target30.Api.Data;
 
@@ -10,9 +11,11 @@ using Target30.Api.Data;
 namespace Target30.Api.Migrations
 {
     [DbContext(typeof(Target30DbContext))]
-    partial class Target30DbContextModelSnapshot : ModelSnapshot
+    [Migration("20260919010347_AddNotificationsHistoryAndManualOverrides")]
+    partial class AddNotificationsHistoryAndManualOverrides
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");

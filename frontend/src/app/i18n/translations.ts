@@ -106,6 +106,9 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
       'Isso remove todas as contas conectadas e transações salvas. Não pode ser desfeito. Continuar?',
     'settings.deleteAllDataDone': 'Todos os dados foram removidos.',
     'settings.signOut': 'Sair da conta',
+    'settings.notificationsEnabled': 'Receber alertas por email',
+    'settings.notificationsEnabledHint':
+      'Manda um email quando um cartão precisa de pagamento antes do fechamento (checado automaticamente em background).',
 
     'cards.title': 'Cartões de crédito',
     'cards.downloadReport': 'Baixar relatório',
@@ -134,12 +137,19 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'cards.targetOverride': 'Meta personalizada (%)',
     'cards.targetOverrideHint': 'Deixe em branco pra usar a meta global ({percent}%)',
     'cards.save': 'Salvar',
+    'cards.manualLimit': 'Limite manual (se o Plaid não informar)',
+    'cards.manualDueDate': 'Data de vencimento manual (se o Plaid não informar)',
+    'cards.manualOverrideHint': 'Usado só quando o Plaid não retorna esse dado (ex.: contas sem o produto Liabilities).',
+    'cards.showHistory': 'Ver histórico',
+    'cards.hideHistory': 'Ocultar histórico',
+    'cards.historyEmpty': 'Ainda não há histórico suficiente — volte depois de alguns dias de sync.',
 
     'dashboard.cardAlerts': 'Cartões próximos do fechamento',
     'dashboard.cardAlertLine': '{name}: pague {amount} até {date} ({days} dias)',
     'dashboard.viewCards': 'Ver cartões →',
 
     'cashflow.title': 'Fluxo de Caixa',
+    'cashflow.downloadReport': 'Baixar CSV',
     'cashflow.currentBalance': 'Saldo atual',
     'cashflow.amount': 'Valor',
     'cashflow.balance': 'Saldo',
@@ -247,6 +257,9 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
       'This removes every connected account and saved transaction. This cannot be undone. Continue?',
     'settings.deleteAllDataDone': 'All data has been removed.',
     'settings.signOut': 'Sign out',
+    'settings.notificationsEnabled': 'Receive email alerts',
+    'settings.notificationsEnabledHint':
+      'Sends an email when a card needs payment before closing (checked automatically in the background).',
 
     'cards.title': 'Credit cards',
     'cards.downloadReport': 'Download report',
@@ -275,12 +288,19 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'cards.targetOverride': 'Custom target (%)',
     'cards.targetOverrideHint': 'Leave blank to use the global target ({percent}%)',
     'cards.save': 'Save',
+    'cards.manualLimit': 'Manual limit (if Plaid doesn\'t report it)',
+    'cards.manualDueDate': 'Manual due date (if Plaid doesn\'t report it)',
+    'cards.manualOverrideHint': 'Only used when Plaid doesn\'t return this data (e.g. accounts without the Liabilities product).',
+    'cards.showHistory': 'Show history',
+    'cards.hideHistory': 'Hide history',
+    'cards.historyEmpty': 'Not enough history yet — check back after a few days of syncing.',
 
     'dashboard.cardAlerts': 'Cards nearing statement closing',
     'dashboard.cardAlertLine': '{name}: pay {amount} by {date} ({days} days)',
     'dashboard.viewCards': 'View cards →',
 
     'cashflow.title': 'Cash Flow',
+    'cashflow.downloadReport': 'Download CSV',
     'cashflow.currentBalance': 'Current balance',
     'cashflow.amount': 'Amount',
     'cashflow.balance': 'Balance',
@@ -389,6 +409,9 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
       'Esto elimina todas las cuentas conectadas y transacciones guardadas. No se puede deshacer. ¿Continuar?',
     'settings.deleteAllDataDone': 'Todos los datos fueron eliminados.',
     'settings.signOut': 'Cerrar sesión',
+    'settings.notificationsEnabled': 'Recibir alertas por email',
+    'settings.notificationsEnabledHint':
+      'Envía un email cuando una tarjeta necesita un pago antes del cierre (revisado automáticamente en segundo plano).',
 
     'cards.title': 'Tarjetas de crédito',
     'cards.downloadReport': 'Descargar informe',
@@ -417,12 +440,19 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'cards.targetOverride': 'Meta personalizada (%)',
     'cards.targetOverrideHint': 'Deja en blanco para usar la meta global ({percent}%)',
     'cards.save': 'Guardar',
+    'cards.manualLimit': 'Límite manual (si Plaid no lo informa)',
+    'cards.manualDueDate': 'Fecha de vencimiento manual (si Plaid no la informa)',
+    'cards.manualOverrideHint': 'Se usa solo cuando Plaid no devuelve este dato (ej.: cuentas sin el producto Liabilities).',
+    'cards.showHistory': 'Ver historial',
+    'cards.hideHistory': 'Ocultar historial',
+    'cards.historyEmpty': 'Todavía no hay suficiente historial — vuelve después de algunos días de sincronización.',
 
     'dashboard.cardAlerts': 'Tarjetas cerca del cierre',
     'dashboard.cardAlertLine': '{name}: paga {amount} antes del {date} ({days} días)',
     'dashboard.viewCards': 'Ver tarjetas →',
 
     'cashflow.title': 'Flujo de Caja',
+    'cashflow.downloadReport': 'Descargar CSV',
     'cashflow.currentBalance': 'Saldo actual',
     'cashflow.amount': 'Monto',
     'cashflow.balance': 'Saldo',

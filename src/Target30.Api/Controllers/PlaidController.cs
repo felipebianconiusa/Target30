@@ -1,16 +1,14 @@
 using System.Security.Claims;
 using Going.Plaid;
-using Going.Plaid.Accounts;
 using Going.Plaid.Entity;
 using Going.Plaid.Item;
-using Going.Plaid.Liabilities;
 using Going.Plaid.Link;
-using Going.Plaid.Transactions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Target30.Api.Data;
 using Target30.Api.Models;
+using Target30.Api.Services;
 
 namespace Target30.Api.Controllers;
 
@@ -21,11 +19,13 @@ public class PlaidController : ControllerBase
 {
     private readonly PlaidClient _client;
     private readonly Target30DbContext _db;
+    private readonly PlaidSyncService _sync;
 
-    public PlaidController(PlaidClient client, Target30DbContext db)
+    public PlaidController(PlaidClient client, Target30DbContext db, PlaidSyncService sync)
     {
         _client = client;
         _db = db;
+        _sync = sync;
     }
 
     private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -82,7 +82,7 @@ public class PlaidController : ControllerBase
         await _db.SaveChangesAsync();
 
         // Primeira carga: já traz o histórico de transações pro banco local.
-        await SyncItemAsync(item);
+        await _sync.SyncItemAsync(item);
 
         return Ok(new { itemId = item.ItemId });
     }
@@ -134,7 +134,7 @@ public class PlaidController : ControllerBase
     {
         var items = await _db.PlaidItems.Where(i => i.UserId == CurrentUserId).ToListAsync();
         foreach (var item in items)
-            await SyncItemAsync(item);
+            await _sync.SyncItemAsync(item);
 
         return Ok();
     }
@@ -277,140 +277,6 @@ public class PlaidController : ControllerBase
         string.IsNullOrWhiteSpace(value)
             ? []
             : value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-    private async Task SyncItemAsync(PlaidItem item)
-    {
-        var cursor = item.NextCursor;
-        var hasMore = true;
-
-        while (hasMore)
-        {
-            var response = await _client.TransactionsSyncAsync(new TransactionsSyncRequest
-            {
-                AccessToken = item.AccessToken,
-                Cursor = cursor,
-            });
-
-            if (response.Error is not null)
-                return; // item com erro (ex.: precisa reconectar) — não trava o sync dos outros
-
-            await UpsertAsync(item, response.Added);
-            await UpsertAsync(item, response.Modified);
-            await RemoveAsync(response.Removed);
-
-            cursor = response.NextCursor;
-            hasMore = response.HasMore;
-        }
-
-        item.NextCursor = cursor;
-        await _db.SaveChangesAsync();
-
-        await SyncAccountsAsync(item);
-    }
-
-    private async Task SyncAccountsAsync(PlaidItem item)
-    {
-        var accountsResponse = await _client.AccountsGetAsync(new AccountsGetRequest
-        {
-            AccessToken = item.AccessToken,
-        });
-        if (accountsResponse.Error is not null)
-            return;
-
-        // /liabilities/get só funciona se o Item tiver o produto Liabilities habilitado (itens
-        // conectados antes desse produto existir vão falhar aqui — não deve travar o resto).
-        var creditByAccountId = new Dictionary<string, CreditCardLiability>();
-        var liabilitiesResponse = await _client.LiabilitiesGetAsync(new LiabilitiesGetRequest
-        {
-            AccessToken = item.AccessToken,
-        });
-        if (liabilitiesResponse.Error is null && liabilitiesResponse.Liabilities?.Credit is not null)
-        {
-            foreach (var credit in liabilitiesResponse.Liabilities.Credit)
-                if (credit.AccountId is not null)
-                    creditByAccountId[credit.AccountId] = credit;
-        }
-
-        foreach (var acc in accountsResponse.Accounts)
-        {
-            var existing = await _db.PlaidAccounts.FirstOrDefaultAsync(a => a.AccountId == acc.AccountId);
-            if (existing is null)
-            {
-                existing = new PlaidAccount { AccountId = acc.AccountId };
-                _db.PlaidAccounts.Add(existing);
-            }
-
-            existing.UserId = item.UserId;
-            existing.ItemId = item.ItemId;
-            existing.Name = acc.Name;
-            existing.OfficialName = acc.OfficialName;
-            existing.InstitutionName = item.InstitutionName;
-            existing.Type = acc.Type.ToString();
-            existing.Subtype = acc.Subtype?.ToString();
-            existing.CurrentBalance = acc.Balances.Current;
-            existing.AvailableBalance = acc.Balances.Available;
-            existing.CreditLimit = acc.Balances.Limit;
-            existing.IsoCurrencyCode = acc.Balances.IsoCurrencyCode;
-
-            if (creditByAccountId.TryGetValue(acc.AccountId, out var credit))
-            {
-                existing.LastStatementBalance = credit.LastStatementBalance;
-                existing.LastStatementIssueDate = credit.LastStatementIssueDate;
-                existing.NextPaymentDueDate = credit.NextPaymentDueDate;
-                existing.MinimumPaymentAmount = credit.MinimumPaymentAmount;
-                existing.IsOverdue = credit.IsOverdue;
-
-                // Sugere o dia de fechamento a partir do último extrato (só na 1ª vez — o
-                // Plaid não informa a próxima data, então isso é só um ponto de partida
-                // editável pelo usuário).
-                if (existing.StatementClosingDay is null && credit.LastStatementIssueDate is not null)
-                    existing.StatementClosingDay = credit.LastStatementIssueDate.Value.Day;
-            }
-        }
-
-        await _db.SaveChangesAsync();
-    }
-
-#pragma warning disable CS0612 // Category/Name legados usados como fallback
-    private async Task UpsertAsync(PlaidItem item, IReadOnlyList<Transaction> transactions)
-    {
-        foreach (var t in transactions)
-        {
-            var transactionId = t.TransactionId ?? "";
-            var existing = await _db.PlaidTransactions
-                .FirstOrDefaultAsync(x => x.PlaidTransactionId == transactionId);
-
-            if (existing is null)
-            {
-                existing = new PlaidTransaction { PlaidTransactionId = transactionId };
-                _db.PlaidTransactions.Add(existing);
-            }
-
-            existing.UserId = item.UserId;
-            existing.AccountId = t.AccountId ?? "";
-            existing.ItemId = item.ItemId;
-            existing.InstitutionName = item.InstitutionName;
-            existing.Amount = t.Amount ?? 0m;
-            existing.IsoCurrencyCode = t.IsoCurrencyCode;
-            existing.Date = t.Date ?? DateOnly.FromDateTime(DateTime.UtcNow);
-            existing.Name = t.MerchantName ?? t.Name ?? "Transação sem descrição";
-            existing.MerchantName = t.MerchantName;
-            existing.Pending = t.Pending ?? false;
-            existing.Category = t.PersonalFinanceCategory?.Primary ?? t.Category?.FirstOrDefault();
-        }
-    }
-#pragma warning restore CS0612
-
-    private async Task RemoveAsync(IReadOnlyList<RemovedTransaction> removed)
-    {
-        foreach (var r in removed)
-        {
-            var existing = await _db.PlaidTransactions
-                .FirstOrDefaultAsync(x => x.PlaidTransactionId == r.TransactionId);
-            if (existing is not null)
-                _db.PlaidTransactions.Remove(existing);
-        }
-    }
 
     private static TransactionDto ToDto(PlaidTransaction t) => new(
         t.PlaidTransactionId,

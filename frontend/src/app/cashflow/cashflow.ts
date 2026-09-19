@@ -21,6 +21,7 @@ export class CashFlow implements OnInit {
   protected readonly newBillAmount = signal<number | null>(null);
   protected readonly newBillDay = signal<number | null>(null);
   protected readonly savingBill = signal(false);
+  protected readonly downloadingReport = signal(false);
 
   private readonly today = new Date().toISOString().slice(0, 10);
 
@@ -83,6 +84,22 @@ export class CashFlow implements OnInit {
     this.cashFlowService.deleteBill(bill.id).subscribe(() => {
       this.loadBills();
       this.loadCashFlow();
+    });
+  }
+
+  protected downloadReport(): void {
+    this.downloadingReport.set(true);
+    this.cashFlowService.downloadReport().subscribe({
+      next: (blob) => {
+        this.downloadingReport.set(false);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `target30-fluxo-caixa-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => this.downloadingReport.set(false),
     });
   }
 
