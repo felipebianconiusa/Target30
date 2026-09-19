@@ -141,6 +141,27 @@
   font-size: 0.7rem;
 }
 
+.bills-manager__detected {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+
+  h3 {
+    margin: 0 0 0.25rem;
+    font-size: 0.9rem;
+  }
+
+  .bills-manager__list button {
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-text);
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+  }
+}
+
 .cashflow-table {
   width: 100%;
   border-collapse: collapse;

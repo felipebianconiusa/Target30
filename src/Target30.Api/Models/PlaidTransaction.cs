@@ -18,4 +18,10 @@ public class PlaidTransaction
     public string? MerchantName { get; set; }
     public bool Pending { get; set; }
     public string? Category { get; set; }
+
+    // Categoria escolhida manualmente pelo usuário — tem prioridade sobre a do Plaid e não é
+    // sobrescrita nos syncs seguintes (só o UpsertAsync toca em Category, nunca neste campo).
+    public string? UserCategory { get; set; }
+
+    public string? EffectiveCategory => UserCategory ?? Category;
 }

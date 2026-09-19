@@ -1,5 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { Bill, CashFlowEntry, CashFlowService } from './cashflow.service';
+import { Bill, CashFlowEntry, CashFlowService, DetectedSubscription } from './cashflow.service';
 import { TranslationService } from '../i18n/translation.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { LOCALE_BY_LANG } from '../i18n/translations';
@@ -23,6 +23,9 @@ export class CashFlow implements OnInit {
   protected readonly savingBill = signal(false);
   protected readonly downloadingReport = signal(false);
 
+  protected readonly detectedSubscriptions = signal<DetectedSubscription[]>([]);
+  protected readonly addingSubscription = signal<string | null>(null);
+
   private readonly today = new Date().toISOString().slice(0, 10);
 
   constructor(
@@ -45,7 +48,28 @@ export class CashFlow implements OnInit {
   }
 
   protected toggleBillsManager(): void {
-    this.showBillsManager.update((v) => !v);
+    const opening = !this.showBillsManager();
+    this.showBillsManager.set(opening);
+    if (opening) this.loadDetectedSubscriptions();
+  }
+
+  protected addDetectedSubscription(subscription: DetectedSubscription): void {
+    this.addingSubscription.set(subscription.merchantName);
+    this.cashFlowService
+      .createBill({
+        description: subscription.merchantName,
+        amount: subscription.averageAmount,
+        dayOfMonth: subscription.suggestedDayOfMonth,
+      })
+      .subscribe({
+        next: () => {
+          this.addingSubscription.set(null);
+          this.loadBills();
+          this.loadCashFlow();
+          this.loadDetectedSubscriptions();
+        },
+        error: () => this.addingSubscription.set(null),
+      });
   }
 
   protected setNewBillDescription(value: string): void {
@@ -117,5 +141,11 @@ export class CashFlow implements OnInit {
 
   private loadBills(): void {
     this.cashFlowService.getBills().subscribe((bills) => this.bills.set(bills));
+  }
+
+  private loadDetectedSubscriptions(): void {
+    this.cashFlowService
+      .getDetectedSubscriptions()
+      .subscribe((subscriptions) => this.detectedSubscriptions.set(subscriptions));
   }
 }

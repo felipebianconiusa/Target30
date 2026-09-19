@@ -158,6 +158,16 @@ export class Transactions implements OnInit, OnDestroy {
     this.onFilterChange();
   }
 
+  protected onCategoryChange(event: { transaction: Transaction; category: string | null }): void {
+    this.plaidService.updateTransactionCategory(event.transaction.transactionId, event.category).subscribe({
+      next: (updated) => {
+        this.transactions.update((list) =>
+          list.map((t) => (t.transactionId === updated.transactionId ? updated : t)),
+        );
+      },
+    });
+  }
+
   protected goToPage(target: number): void {
     if (target < 1 || target > this.totalPages() || target === this.page()) return;
     this.page.set(target);

@@ -1,0 +1,28 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace Target30.Api.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddUserCategoryOverride : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AddColumn<string>(
+                name: "UserCategory",
+                table: "PlaidTransactions",
+                type: "TEXT",
+                nullable: true);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropColumn(
+                name: "UserCategory",
+                table: "PlaidTransactions");
+        }
+    }
+}

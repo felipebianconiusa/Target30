@@ -11,5 +11,6 @@ public record TransactionDto(
     string Name,
     string? MerchantName,
     bool Pending,
-    string? Category
+    string? Category,
+    bool IsCategoryCustom
 );

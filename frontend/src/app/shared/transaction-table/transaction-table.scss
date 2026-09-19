@@ -42,3 +42,36 @@
 .transaction-table__empty {
   color: var(--color-text-muted);
 }
+
+.transaction-table__category-button {
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover:not(:disabled) {
+    background: var(--color-surface-alt);
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+
+  &--custom {
+    text-decoration: underline dotted;
+  }
+}
+
+.transaction-table__category-select {
+  padding: 0.15rem 0.35rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 4px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  max-width: 100%;
+}

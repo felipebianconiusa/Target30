@@ -104,7 +104,12 @@
   @if (loading()) {
     <p>{{ 'common.loading' | translate }}</p>
   } @else {
-    <app-transaction-table [transactions]="transactions()" [showInstitution]="true" />
+    <app-transaction-table
+      [transactions]="transactions()"
+      [showInstitution]="true"
+      [editableCategory]="true"
+      (categoryChange)="onCategoryChange($event)"
+    />
 
     @if (totalPages() > 1) {
       <div class="pagination">

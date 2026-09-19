@@ -224,7 +224,7 @@ public class PlaidController : ControllerBase
 
         var categoryList = SplitParam(categories);
         if (categoryList.Length > 0)
-            query = query.Where(t => categoryList.Contains(t.Category ?? CategoryFallback));
+            query = query.Where(t => categoryList.Contains((t.UserCategory ?? t.Category) ?? CategoryFallback));
 
         var institutionList = SplitParam(institutions);
         if (institutionList.Length > 0)
@@ -250,7 +250,7 @@ public class PlaidController : ControllerBase
 
         var categoryTotals = await query
             .Where(t => t.Amount > 0)
-            .GroupBy(t => t.Category)
+            .GroupBy(t => t.UserCategory ?? t.Category)
             .Select(g => new { Category = g.Key, Total = g.Sum(t => t.Amount) })
             .OrderByDescending(g => g.Total)
             .Take(6)
@@ -278,6 +278,22 @@ public class PlaidController : ControllerBase
             ? []
             : value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
+    // Recategoriza uma transação manualmente — fica valendo pra sempre (sync nunca sobrescreve
+    // UserCategory, só Category). Mandar category=null volta a usar a categoria do Plaid.
+    [HttpPut("transactions/{transactionId}/category")]
+    public async Task<IActionResult> UpdateTransactionCategory(string transactionId, [FromBody] UpdateCategoryRequest request)
+    {
+        var transaction = await _db.PlaidTransactions
+            .FirstOrDefaultAsync(t => t.PlaidTransactionId == transactionId && t.UserId == CurrentUserId);
+        if (transaction is null)
+            return NotFound();
+
+        transaction.UserCategory = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category;
+        await _db.SaveChangesAsync();
+
+        return Ok(ToDto(transaction));
+    }
+
     private static TransactionDto ToDto(PlaidTransaction t) => new(
         t.PlaidTransactionId,
         t.AccountId,
@@ -289,8 +305,11 @@ public class PlaidController : ControllerBase
         t.Name,
         t.MerchantName,
         t.Pending,
-        t.Category
+        t.UserCategory ?? t.Category,
+        t.UserCategory is not null
     );
 }
 
 public record ExchangeTokenRequest(string PublicToken, string? InstitutionName);
+
+public record UpdateCategoryRequest(string? Category);

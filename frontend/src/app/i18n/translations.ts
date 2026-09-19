@@ -191,6 +191,10 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'cashflow.billAmountHint': 'Positivo = despesa, negativo = receita',
     'cashflow.billDay': 'Dia do mês',
     'cashflow.manageBills': 'Gerenciar contas recorrentes',
+    'cashflow.detectedSubscriptions': 'Assinaturas detectadas',
+    'cashflow.detectedSubscriptionsHint': 'Cobranças parecidas com um padrão mensal no seu histórico, ainda não cadastradas como conta recorrente.',
+    'cashflow.detectedOccurrences': '{count}x nos últimos meses',
+    'cashflow.addDetected': 'Adicionar',
   },
   en: {
     'nav.dashboard': 'Dashboard',
@@ -366,6 +370,10 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'cashflow.billAmountHint': 'Positive = expense, negative = income',
     'cashflow.billDay': 'Day of month',
     'cashflow.manageBills': 'Manage recurring bills',
+    'cashflow.detectedSubscriptions': 'Detected subscriptions',
+    'cashflow.detectedSubscriptionsHint': 'Charges in your history that look like a monthly pattern, not yet added as a recurring bill.',
+    'cashflow.detectedOccurrences': '{count}x in recent months',
+    'cashflow.addDetected': 'Add',
   },
   es: {
     'nav.dashboard': 'Dashboard',
@@ -542,5 +550,9 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'cashflow.billAmountHint': 'Positivo = gasto, negativo = ingreso',
     'cashflow.billDay': 'Día del mes',
     'cashflow.manageBills': 'Gestionar cuentas recurrentes',
+    'cashflow.detectedSubscriptions': 'Suscripciones detectadas',
+    'cashflow.detectedSubscriptionsHint': 'Cobros parecidos a un patrón mensual en tu historial, todavía no registrados como cuenta recurrente.',
+    'cashflow.detectedOccurrences': '{count}x en los últimos meses',
+    'cashflow.addDetected': 'Agregar',
   },
 };

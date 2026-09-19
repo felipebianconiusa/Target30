@@ -29,6 +29,14 @@ export interface BillRequest {
   dayOfMonth: number;
 }
 
+export interface DetectedSubscription {
+  merchantName: string;
+  averageAmount: number;
+  suggestedDayOfMonth: number;
+  occurrences: number;
+  lastDate: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CashFlowService {
   constructor(private readonly http: HttpClient) {}
@@ -61,5 +69,9 @@ export class CashFlowService {
 
   deleteBill(id: number): Observable<void> {
     return this.http.delete<void>(`/api/bills/${id}`);
+  }
+
+  getDetectedSubscriptions(): Observable<DetectedSubscription[]> {
+    return this.http.get<DetectedSubscription[]>('/api/bills/detected-subscriptions');
   }
 }

@@ -29,6 +29,7 @@ export interface Transaction {
   merchantName: string | null;
   pending: boolean;
   category: string | null;
+  isCategoryCustom: boolean;
 }
 
 export interface TransactionsQueryFilter {
@@ -122,5 +123,11 @@ export class PlaidService {
 
   downloadBackup(): Observable<Blob> {
     return this.http.get('/api/backup/export', { responseType: 'blob' });
+  }
+
+  updateTransactionCategory(transactionId: string, category: string | null): Observable<Transaction> {
+    return this.http.put<Transaction>(`${this.baseUrl}/transactions/${transactionId}/category`, {
+      category,
+    });
   }
 }

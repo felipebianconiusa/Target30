@@ -23,7 +23,29 @@
           @if (showInstitution) {
             <td>{{ tx.institutionName ?? '—' }}</td>
           }
-          <td>{{ categoryLabel(tx.category) }}</td>
+          <td class="transaction-table__category">
+            @if (editableCategory && editingId.value === tx.transactionId) {
+              <select
+                class="transaction-table__category-select"
+                (change)="onCategorySelected(tx, $any($event.target).value)"
+                (blur)="editingId.value = null"
+              >
+                @for (code of categoryOptions; track code) {
+                  <option [value]="code" [selected]="code === (tx.category ?? '')">{{ categoryLabel(code) }}</option>
+                }
+              </select>
+            } @else {
+              <button
+                type="button"
+                class="transaction-table__category-button"
+                [class.transaction-table__category-button--custom]="tx.isCategoryCustom"
+                [disabled]="!editableCategory"
+                (click)="startEditCategory(tx)"
+              >
+                {{ categoryLabel(tx.category) }}
+              </button>
+            }
+          </td>
           <td
             class="transaction-table__amount-col"
             [class.transaction-table__amount--in]="tx.amount < 0"

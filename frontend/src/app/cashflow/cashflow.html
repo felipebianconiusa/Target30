@@ -68,6 +68,32 @@
           {{ 'cashflow.addBill' | translate }}
         </button>
       </div>
+
+      @if (detectedSubscriptions().length > 0) {
+        <div class="bills-manager__detected">
+          <h3>{{ 'cashflow.detectedSubscriptions' | translate }}</h3>
+          <p class="bills-manager__field-hint">{{ 'cashflow.detectedSubscriptionsHint' | translate }}</p>
+          <ul class="bills-manager__list">
+            @for (sub of detectedSubscriptions(); track sub.merchantName) {
+              <li>
+                <span>{{ sub.merchantName }}</span>
+                <span>{{ formatCurrency(sub.averageAmount) }}</span>
+                <span>{{ 'cashflow.billDay' | translate }}: {{ sub.suggestedDayOfMonth }}</span>
+                <span class="bills-manager__field-hint">
+                  {{ 'cashflow.detectedOccurrences' | translate: { count: sub.occurrences } }}
+                </span>
+                <button
+                  type="button"
+                  [disabled]="addingSubscription() === sub.merchantName"
+                  (click)="addDetectedSubscription(sub)"
+                >
+                  {{ 'cashflow.addDetected' | translate }}
+                </button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
     </div>
   }
 
