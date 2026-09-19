@@ -119,4 +119,31 @@ public class BillsControllerTests : IClassFixture<Target30WebApplicationFactory>
 
         Assert.Empty(subscriptions!);
     }
+
+    [Fact]
+    public async Task DetectedSubscriptions_surfaces_a_price_change_for_an_existing_bill()
+    {
+        int billId = 0;
+        await _factory.SeedAsync(db =>
+        {
+            AddMonthlyCharges(db, "Netflix", 17.99m, new DateOnly(2026, 1, 14), 3);
+            var bill = new RecurringBill
+            {
+                UserId = TestAuthHandler.TestUserId, Description = "Netflix", Amount = 15.99m,
+                DayOfMonth = 14, IsActive = true,
+            };
+            db.RecurringBills.Add(bill);
+            db.SaveChanges();
+            billId = bill.Id;
+        });
+
+        var subscriptions = await _client.GetFromJsonAsync<List<DetectedSubscriptionDto>>(
+            "/api/bills/detected-subscriptions", JsonDefaults.Options);
+
+        var sub = Assert.Single(subscriptions!);
+        Assert.True(sub.IsPriceChange);
+        Assert.Equal(15.99m, sub.PreviousAmount);
+        Assert.Equal(17.99m, sub.AverageAmount);
+        Assert.Equal(billId, sub.ExistingBillId);
+    }
 }
