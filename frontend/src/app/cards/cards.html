@@ -13,6 +13,57 @@
   } @else if (cards().length === 0) {
     <p>{{ 'cards.empty' | translate }}</p>
   } @else {
+    <div class="payoff-planner">
+      <h2 class="cards-group__title">{{ 'cards.payoffPlanner' | translate }}</h2>
+      <p class="cards-group__hint">{{ 'cards.payoffPlannerHint' | translate }}</p>
+      <div class="payoff-planner__form">
+        <label>
+          {{ 'cards.payoffAmount' | translate }}
+          <input
+            type="number"
+            min="0"
+            step="1"
+            [value]="payoffAmount()"
+            (input)="setPayoffAmount($any($event.target).value)"
+          />
+        </label>
+        <button type="button" [disabled]="payoffLoading() || !payoffAmount()" (click)="calculatePayoffPlan()">
+          {{ (payoffLoading() ? 'cards.payoffCalculating' : 'cards.payoffCalculate') | translate }}
+        </button>
+      </div>
+
+      @if (payoffPlan()) {
+        @if (payoffPlan()!.allocations.length === 0) {
+          <p class="card-item__muted">{{ 'cards.payoffNoneNeeded' | translate }}</p>
+        } @else {
+          <ul class="payoff-planner__list">
+            @for (allocation of payoffPlan()!.allocations; track allocation.accountId) {
+              <li>
+                <div>
+                  <strong>{{ allocation.name }}</strong>
+                  @if (allocation.institutionName) {
+                    <span class="card-item__institution">— {{ allocation.institutionName }}</span>
+                  }
+                </div>
+                <div class="payoff-planner__amount">{{ formatCurrency(allocation.amountToPay, null) }}</div>
+                <div class="card-item__muted">{{ allocation.reason }}</div>
+                @if (allocation.utilizationBefore !== null) {
+                  <div class="card-item__muted">
+                    {{ 'cards.utilization' | translate }}: {{ allocation.utilizationBefore }}% → {{ allocation.utilizationAfter }}%
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+          @if (payoffPlan()!.remainingUnallocated > 0) {
+            <p class="card-item__ok">
+              {{ 'cards.payoffLeftover' | translate: { amount: formatCurrency(payoffPlan()!.remainingUnallocated, null) } }}
+            </p>
+          }
+        }
+      }
+    </div>
+
     @if (cardsWithDueDate().length > 0) {
       <h2 class="cards-group__title">{{ 'cards.withDueDate' | translate }}</h2>
       <div class="cards-list">

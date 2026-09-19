@@ -85,6 +85,14 @@
         />
         {{ 'settings.notificationsEnabled' | translate }}
       </label>
+      <label class="settings__checkbox">
+        <input
+          type="checkbox"
+          [checked]="weeklyDigestEnabled()"
+          (change)="setWeeklyDigestEnabled($any($event.target).checked)"
+        />
+        {{ 'settings.weeklyDigestEnabled' | translate }}
+      </label>
       <p class="settings__hint">{{ 'settings.notificationsEnabledHint' | translate }}</p>
     </div>
     <button type="button" [disabled]="savingSettings()" (click)="saveSettings()">

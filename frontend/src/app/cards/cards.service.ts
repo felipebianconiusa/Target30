@@ -37,6 +37,7 @@ export interface AppSettings {
   globalTargetUtilizationPercent: number;
   notifyDaysBeforeClosing: number;
   notificationsEnabled: boolean;
+  weeklyDigestEnabled: boolean;
   email: string | null;
 }
 
@@ -45,6 +46,27 @@ export interface CardHistoryPoint {
   balance: number;
   limit: number | null;
   utilizationPercent: number | null;
+}
+
+export interface PayoffAllocation {
+  accountId: string;
+  name: string;
+  institutionName: string | null;
+  amountToPay: number;
+  currentBalance: number;
+  utilizationBefore: number | null;
+  utilizationAfter: number | null;
+  targetPercent: number;
+  paymentDeadline: string | null;
+  daysUntilPaymentDeadline: number | null;
+  reason: string;
+}
+
+export interface PayoffPlan {
+  availableAmount: number;
+  allocatedTotal: number;
+  remainingUnallocated: number;
+  allocations: PayoffAllocation[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -73,5 +95,9 @@ export class CardsService {
 
   getHistory(accountId: string): Observable<CardHistoryPoint[]> {
     return this.http.get<CardHistoryPoint[]>(`/api/cards/${accountId}/history`);
+  }
+
+  getPayoffPlan(availableAmount: number): Observable<PayoffPlan> {
+    return this.http.post<PayoffPlan>('/api/cards/payoff-plan', { availableAmount });
   }
 }

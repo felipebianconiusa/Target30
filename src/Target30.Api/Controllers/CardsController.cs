@@ -171,6 +171,64 @@ public class CardsController : ControllerBase
         return Ok(snapshots);
     }
 
+    // Dado um valor disponível pra pagar hoje, distribui entre os cartões que precisam de
+    // pagamento pra bater a meta — priorizando primeiro quem fecha mais cedo, depois quem
+    // está mais acima da meta. Não considera juros/APR: o objetivo aqui é credit score
+    // (utilização), não economia de juros.
+    [HttpPost("payoff-plan")]
+    public async Task<IActionResult> GetPayoffPlan([FromBody] PayoffPlanRequest request)
+    {
+        var availableAmount = Math.Max(0, request.AvailableAmount);
+        var settings = await GetOrCreateSettingsAsync();
+        var accounts = await _db.PlaidAccounts
+            .Where(a => a.UserId == CurrentUserId && a.Type == "Credit")
+            .ToListAsync();
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var candidates = accounts
+            .Select(a => (Account: a, Projection: CardMath.Compute(a, settings.GlobalTargetUtilizationPercent, today)))
+            .Where(x => x.Projection.AmountToPay > 0)
+            .OrderBy(x => x.Projection.DaysUntilPaymentDeadline ?? int.MaxValue)
+            .ThenByDescending(x => x.Projection.UtilizationPercent ?? 0)
+            .ToList();
+
+        var remaining = availableAmount;
+        var allocations = new List<PayoffAllocationDto>();
+        foreach (var (account, projection) in candidates)
+        {
+            if (remaining <= 0)
+                break;
+
+            var allocate = Math.Min(remaining, projection.AmountToPay);
+            remaining -= allocate;
+
+            var newBalance = projection.Balance - allocate;
+            var utilizationAfter = projection.Limit > 0
+                ? Math.Round(newBalance / projection.Limit * 100, 1)
+                : (decimal?)null;
+
+            var reason = projection.DaysUntilPaymentDeadline is { } days
+                ? (days <= 0 ? "Fecha hoje" : $"Fecha em {days} dia(s)")
+                : "Sem prazo definido ainda";
+
+            allocations.Add(new PayoffAllocationDto(
+                account.AccountId,
+                account.Name,
+                account.InstitutionName,
+                allocate,
+                projection.Balance,
+                projection.UtilizationPercent,
+                utilizationAfter,
+                projection.TargetPercent,
+                projection.PaymentDeadline,
+                projection.DaysUntilPaymentDeadline,
+                reason));
+        }
+
+        return Ok(new PayoffPlanResponseDto(availableAmount, availableAmount - remaining, remaining, allocations));
+    }
+
     private async Task<UserSettings> GetOrCreateSettingsAsync()
     {
         var settings = await _db.UserSettings.FirstOrDefaultAsync(s => s.UserId == CurrentUserId);
@@ -215,3 +273,24 @@ public record UpdateCardRequest(
     DateOnly? ManualNextPaymentDueDate);
 
 public record CardHistoryPointDto(DateOnly Date, decimal Balance, decimal? Limit, decimal? UtilizationPercent);
+
+public record PayoffPlanRequest(decimal AvailableAmount);
+
+public record PayoffAllocationDto(
+    string AccountId,
+    string Name,
+    string? InstitutionName,
+    decimal AmountToPay,
+    decimal CurrentBalance,
+    decimal? UtilizationBefore,
+    decimal? UtilizationAfter,
+    decimal TargetPercent,
+    DateOnly? PaymentDeadline,
+    int? DaysUntilPaymentDeadline,
+    string Reason);
+
+public record PayoffPlanResponseDto(
+    decimal AvailableAmount,
+    decimal AllocatedTotal,
+    decimal RemainingUnallocated,
+    IReadOnlyList<PayoffAllocationDto> Allocations);

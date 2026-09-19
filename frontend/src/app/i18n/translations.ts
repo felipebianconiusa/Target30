@@ -109,6 +109,7 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'settings.notificationsEnabled': 'Receber alertas por email',
     'settings.notificationsEnabledHint':
       'Manda um email quando um cartão precisa de pagamento antes do fechamento (checado automaticamente em background).',
+    'settings.weeklyDigestEnabled': 'Receber resumo semanal por email',
 
     'cards.title': 'Cartões de crédito',
     'cards.downloadReport': 'Baixar relatório',
@@ -143,6 +144,14 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'cards.showHistory': 'Ver histórico',
     'cards.hideHistory': 'Ocultar histórico',
     'cards.historyEmpty': 'Ainda não há histórico suficiente — volte depois de alguns dias de sync.',
+    'cards.payoffPlanner': 'Planejador de pagamento',
+    'cards.payoffPlannerHint':
+      'Informe quanto você tem disponível pra pagar hoje — o app distribui entre os cartões priorizando quem fecha mais cedo e está mais acima da meta.',
+    'cards.payoffAmount': 'Valor disponível',
+    'cards.payoffCalculate': 'Calcular plano',
+    'cards.payoffCalculating': 'Calculando...',
+    'cards.payoffNoneNeeded': 'Nenhum cartão precisa de pagamento pra bater a meta agora.',
+    'cards.payoffLeftover': 'Sobrou {amount} depois de cobrir todas as metas.',
 
     'dashboard.cardAlerts': 'Cartões próximos do fechamento',
     'dashboard.cardAlertLine': '{name}: pague {amount} até {date} ({days} dias)',
@@ -260,6 +269,7 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'settings.notificationsEnabled': 'Receive email alerts',
     'settings.notificationsEnabledHint':
       'Sends an email when a card needs payment before closing (checked automatically in the background).',
+    'settings.weeklyDigestEnabled': 'Receive a weekly email summary',
 
     'cards.title': 'Credit cards',
     'cards.downloadReport': 'Download report',
@@ -294,6 +304,14 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'cards.showHistory': 'Show history',
     'cards.hideHistory': 'Hide history',
     'cards.historyEmpty': 'Not enough history yet — check back after a few days of syncing.',
+    'cards.payoffPlanner': 'Payment planner',
+    'cards.payoffPlannerHint':
+      'Enter how much you have available to pay today — the app spreads it across cards, prioritizing whoever closes soonest and is furthest above target.',
+    'cards.payoffAmount': 'Available amount',
+    'cards.payoffCalculate': 'Calculate plan',
+    'cards.payoffCalculating': 'Calculating...',
+    'cards.payoffNoneNeeded': 'No card needs payment to hit its target right now.',
+    'cards.payoffLeftover': '{amount} left over after covering every target.',
 
     'dashboard.cardAlerts': 'Cards nearing statement closing',
     'dashboard.cardAlertLine': '{name}: pay {amount} by {date} ({days} days)',
@@ -412,6 +430,7 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'settings.notificationsEnabled': 'Recibir alertas por email',
     'settings.notificationsEnabledHint':
       'Envía un email cuando una tarjeta necesita un pago antes del cierre (revisado automáticamente en segundo plano).',
+    'settings.weeklyDigestEnabled': 'Recibir un resumen semanal por email',
 
     'cards.title': 'Tarjetas de crédito',
     'cards.downloadReport': 'Descargar informe',
@@ -446,6 +465,14 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'cards.showHistory': 'Ver historial',
     'cards.hideHistory': 'Ocultar historial',
     'cards.historyEmpty': 'Todavía no hay suficiente historial — vuelve después de algunos días de sincronización.',
+    'cards.payoffPlanner': 'Planificador de pago',
+    'cards.payoffPlannerHint':
+      'Indica cuánto tienes disponible para pagar hoy — la app lo distribuye entre las tarjetas priorizando la que cierra antes y está más arriba de la meta.',
+    'cards.payoffAmount': 'Monto disponible',
+    'cards.payoffCalculate': 'Calcular plan',
+    'cards.payoffCalculating': 'Calculando...',
+    'cards.payoffNoneNeeded': 'Ninguna tarjeta necesita pago para alcanzar la meta ahora.',
+    'cards.payoffLeftover': 'Sobraron {amount} después de cubrir todas las metas.',
 
     'dashboard.cardAlerts': 'Tarjetas cerca del cierre',
     'dashboard.cardAlertLine': '{name}: paga {amount} antes del {date} ({days} días)',

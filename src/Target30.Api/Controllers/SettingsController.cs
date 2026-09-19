@@ -35,6 +35,7 @@ public class SettingsController : ControllerBase
         settings.GlobalTargetUtilizationPercent = Math.Clamp(request.GlobalTargetUtilizationPercent, 0, 100);
         settings.NotifyDaysBeforeClosing = Math.Clamp(request.NotifyDaysBeforeClosing, 0, 30);
         settings.NotificationsEnabled = request.NotificationsEnabled;
+        settings.WeeklyDigestEnabled = request.WeeklyDigestEnabled;
         await _db.SaveChangesAsync();
         return Ok(ToDto(settings));
     }
@@ -43,6 +44,7 @@ public class SettingsController : ControllerBase
         settings.GlobalTargetUtilizationPercent,
         settings.NotifyDaysBeforeClosing,
         settings.NotificationsEnabled,
+        settings.WeeklyDigestEnabled,
         settings.Email);
 
     private async Task<UserSettings> GetOrCreateSettingsAsync()
@@ -62,4 +64,5 @@ public record SettingsDto(
     decimal GlobalTargetUtilizationPercent,
     int NotifyDaysBeforeClosing,
     bool NotificationsEnabled,
+    bool WeeklyDigestEnabled,
     string? Email);

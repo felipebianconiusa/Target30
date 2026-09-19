@@ -64,6 +64,7 @@ public class PlaidBackgroundService : BackgroundService
         }
 
         await SendAlertsAsync(db, emailSender);
+        await SendWeeklyDigestsAsync(db, emailSender);
     }
 
     private static async Task SendAlertsAsync(Target30DbContext db, IEmailSender emailSender)
@@ -102,6 +103,36 @@ public class PlaidBackgroundService : BackgroundService
                 var body = "Target30 — cartões precisando de pagamento antes do fechamento:\n\n" + string.Join("\n", alerts);
                 await emailSender.SendAsync(settings.Email!, "Target30: pagamento necessário antes do fechamento", body);
             }
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task SendWeeklyDigestsAsync(Target30DbContext db, IEmailSender emailSender)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var userIds = await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync();
+
+        foreach (var userId in userIds)
+        {
+            var settings = await db.UserSettings.FirstOrDefaultAsync(s => s.UserId == userId);
+            if (settings is null || !settings.WeeklyDigestEnabled || string.IsNullOrWhiteSpace(settings.Email))
+                continue;
+
+            if (!WeeklyDigest.ShouldSend(settings.LastDigestSentDate, today))
+                continue;
+
+            var cards = await db.PlaidAccounts.Where(a => a.UserId == userId && a.Type == "Credit").ToListAsync();
+            if (cards.Count == 0)
+                continue;
+
+            var withProjections = cards
+                .Select(c => (Account: c, Projection: CardMath.Compute(c, settings.GlobalTargetUtilizationPercent, today)))
+                .ToList();
+
+            var body = WeeklyDigest.BuildBody(withProjections, today);
+            await emailSender.SendAsync(settings.Email!, "Target30: resumo semanal dos seus cartões", body);
+            settings.LastDigestSentDate = today;
         }
 
         await db.SaveChangesAsync();

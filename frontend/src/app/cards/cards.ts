@@ -1,6 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
-import { AppSettings, Card, CardHistoryPoint, CardsService } from './cards.service';
+import { AppSettings, Card, CardHistoryPoint, CardsService, PayoffPlan } from './cards.service';
 import { TranslationService } from '../i18n/translation.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { LOCALE_BY_LANG } from '../i18n/translations';
@@ -27,6 +27,10 @@ export class Cards implements OnInit {
   protected readonly historyId = signal<string | null>(null);
   protected readonly historyPoints = signal<CardHistoryPoint[]>([]);
   protected readonly historyLoading = signal(false);
+
+  protected readonly payoffAmount = signal<number | null>(null);
+  protected readonly payoffPlan = signal<PayoffPlan | null>(null);
+  protected readonly payoffLoading = signal(false);
 
   // Cartões com fatura já vencendo (valor certo, data certa) vs. ciclo ainda aberto (conta
   // recém-conectada ou sem 1º fechamento processado pelo Plaid ainda — sem valor definido).
@@ -125,6 +129,24 @@ export class Cards implements OnInit {
         return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
       })
       .join(' ');
+  }
+
+  protected setPayoffAmount(value: string): void {
+    this.payoffAmount.set(value ? Number(value) : null);
+  }
+
+  protected calculatePayoffPlan(): void {
+    const amount = this.payoffAmount();
+    if (amount === null || amount <= 0) return;
+
+    this.payoffLoading.set(true);
+    this.cardsService.getPayoffPlan(amount).subscribe({
+      next: (plan) => {
+        this.payoffPlan.set(plan);
+        this.payoffLoading.set(false);
+      },
+      error: () => this.payoffLoading.set(false),
+    });
   }
 
   protected formatCurrency(value: number, currency: string | null): string {

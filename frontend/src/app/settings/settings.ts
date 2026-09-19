@@ -24,6 +24,7 @@ export class Settings implements OnInit {
   protected readonly globalTargetUtilizationPercent = signal(30);
   protected readonly notifyDaysBeforeClosing = signal(3);
   protected readonly notificationsEnabled = signal(true);
+  protected readonly weeklyDigestEnabled = signal(true);
   protected readonly savingSettings = signal(false);
   protected readonly settingsSaved = signal(false);
 
@@ -40,6 +41,7 @@ export class Settings implements OnInit {
       this.globalTargetUtilizationPercent.set(settings.globalTargetUtilizationPercent);
       this.notifyDaysBeforeClosing.set(settings.notifyDaysBeforeClosing);
       this.notificationsEnabled.set(settings.notificationsEnabled);
+      this.weeklyDigestEnabled.set(settings.weeklyDigestEnabled);
     });
   }
 
@@ -55,6 +57,10 @@ export class Settings implements OnInit {
     this.notificationsEnabled.set(value);
   }
 
+  protected setWeeklyDigestEnabled(value: boolean): void {
+    this.weeklyDigestEnabled.set(value);
+  }
+
   protected saveSettings(): void {
     this.savingSettings.set(true);
     this.settingsSaved.set(false);
@@ -62,6 +68,7 @@ export class Settings implements OnInit {
       globalTargetUtilizationPercent: this.globalTargetUtilizationPercent(),
       notifyDaysBeforeClosing: this.notifyDaysBeforeClosing(),
       notificationsEnabled: this.notificationsEnabled(),
+      weeklyDigestEnabled: this.weeklyDigestEnabled(),
       email: null,
     };
     this.cardsService.updateSettings(payload).subscribe({
