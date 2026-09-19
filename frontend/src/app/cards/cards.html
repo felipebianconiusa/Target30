@@ -133,6 +133,9 @@
         <p class="card-item__pay-hint" [class.card-item__pay-hint--alert]="card.needsAlert">
           {{ 'cards.payToReachTarget' | translate: { amount: formatCurrency(card.amountToPay, card.isoCurrencyCode), date: card.paymentDeadline, target: card.targetPercent } }}
         </p>
+        @if (card.lastAlertSentDate) {
+          <p class="card-item__muted">{{ 'cards.lastAlertSentDate' | translate: { date: card.lastAlertSentDate } }}</p>
+        }
       } @else if (card.amountToPay === 0) {
         <p class="card-item__ok">{{ 'cards.underTarget' | translate }}</p>
       }

@@ -65,7 +65,8 @@ public class CardsController : ControllerBase
                     a.IsOverdue,
                     needsAlert,
                     a.ManualCreditLimit,
-                    a.ManualNextPaymentDueDate);
+                    a.ManualNextPaymentDueDate,
+                    a.LastAlertSentDate);
             })
             .OrderBy(c => c.DaysUntilPaymentDeadline ?? int.MaxValue)
             .ToList();
@@ -263,7 +264,8 @@ public record CardDto(
     bool? IsOverdue,
     bool NeedsAlert,
     decimal? ManualCreditLimit,
-    DateOnly? ManualNextPaymentDueDate
+    DateOnly? ManualNextPaymentDueDate,
+    DateOnly? LastAlertSentDate
 );
 
 public record UpdateCardRequest(

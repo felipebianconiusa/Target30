@@ -24,6 +24,7 @@ export interface Card {
   needsAlert: boolean;
   manualCreditLimit: number | null;
   manualNextPaymentDueDate: string | null;
+  lastAlertSentDate: string | null;
 }
 
 export interface UpdateCardRequest {
@@ -39,6 +40,7 @@ export interface AppSettings {
   notificationsEnabled: boolean;
   weeklyDigestEnabled: boolean;
   email: string | null;
+  lastDigestSentDate: string | null;
 }
 
 export interface CardHistoryPoint {

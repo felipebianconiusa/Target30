@@ -58,6 +58,8 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'accounts.errorExit': 'Conexão cancelada ou falhou no Plaid Link.',
     'accounts.errorExchange': 'Falha ao trocar o token com o backend.',
     'accounts.unnamedInstitution': 'Instituição sem nome',
+    'accounts.lastSyncedAt': 'Última sincronização: {date}',
+    'accounts.neverSynced': 'Ainda não sincronizou',
 
     'transactions.title': 'Transações',
     'transactions.searchPlaceholder': 'Buscar por descrição...',
@@ -110,6 +112,11 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'settings.notificationsEnabledHint':
       'Manda um email quando um cartão precisa de pagamento antes do fechamento (checado automaticamente em background).',
     'settings.weeklyDigestEnabled': 'Receber resumo semanal por email',
+    'settings.lastDigestSentDate': 'Último resumo semanal enviado em {date}.',
+    'settings.yourData': 'Seus dados',
+    'settings.yourDataHint': 'Baixe uma cópia completa de tudo que o app guarda sobre você (contas, transações, configurações) — nunca inclui senhas ou credenciais de acesso ao banco.',
+    'settings.downloadBackup': 'Baixar backup completo',
+    'settings.downloadingBackup': 'Gerando...',
 
     'cards.title': 'Cartões de crédito',
     'cards.downloadReport': 'Baixar relatório',
@@ -132,6 +139,7 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'cards.closingToday': 'Fecha hoje',
     'cards.noClosingDay': 'Configure o dia de fechamento pra calcular o prazo.',
     'cards.overdue': 'Em atraso',
+    'cards.lastAlertSentDate': 'Último alerta por email enviado em {date}.',
     'cards.weekendAdjusted': 'Cai em fim de semana/feriado — pague até {date} (último dia útil)',
     'cards.cardSettings': 'Configurações do cartão',
     'cards.statementClosingDay': 'Dia do fechamento (1-31)',
@@ -225,6 +233,8 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'accounts.errorExit': 'Connection cancelled or failed in Plaid Link.',
     'accounts.errorExchange': 'Failed to exchange the token with the backend.',
     'accounts.unnamedInstitution': 'Unnamed institution',
+    'accounts.lastSyncedAt': 'Last synced: {date}',
+    'accounts.neverSynced': 'Not synced yet',
 
     'transactions.title': 'Transactions',
     'transactions.searchPlaceholder': 'Search by description...',
@@ -277,6 +287,11 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'settings.notificationsEnabledHint':
       'Sends an email when a card needs payment before closing (checked automatically in the background).',
     'settings.weeklyDigestEnabled': 'Receive a weekly email summary',
+    'settings.lastDigestSentDate': 'Last weekly summary sent on {date}.',
+    'settings.yourData': 'Your data',
+    'settings.yourDataHint': 'Download a full copy of everything the app stores about you (accounts, transactions, settings) — never includes passwords or bank access credentials.',
+    'settings.downloadBackup': 'Download full backup',
+    'settings.downloadingBackup': 'Generating...',
 
     'cards.title': 'Credit cards',
     'cards.downloadReport': 'Download report',
@@ -299,6 +314,7 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'cards.closingToday': 'Closes today',
     'cards.noClosingDay': 'Set the closing day to calculate the deadline.',
     'cards.overdue': 'Overdue',
+    'cards.lastAlertSentDate': 'Last email alert sent on {date}.',
     'cards.weekendAdjusted': 'Falls on a weekend/holiday — pay by {date} (last business day)',
     'cards.cardSettings': 'Card settings',
     'cards.statementClosingDay': 'Closing day (1-31)',
@@ -393,6 +409,8 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'accounts.errorExit': 'Conexión cancelada o fallida en Plaid Link.',
     'accounts.errorExchange': 'Error al intercambiar el token con el backend.',
     'accounts.unnamedInstitution': 'Institución sin nombre',
+    'accounts.lastSyncedAt': 'Última sincronización: {date}',
+    'accounts.neverSynced': 'Todavía no sincronizó',
 
     'transactions.title': 'Transacciones',
     'transactions.searchPlaceholder': 'Buscar por descripción...',
@@ -445,6 +463,11 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'settings.notificationsEnabledHint':
       'Envía un email cuando una tarjeta necesita un pago antes del cierre (revisado automáticamente en segundo plano).',
     'settings.weeklyDigestEnabled': 'Recibir un resumen semanal por email',
+    'settings.lastDigestSentDate': 'Último resumen semanal enviado el {date}.',
+    'settings.yourData': 'Tus datos',
+    'settings.yourDataHint': 'Descarga una copia completa de todo lo que la app guarda sobre ti (cuentas, transacciones, configuración) — nunca incluye contraseñas ni credenciales de acceso al banco.',
+    'settings.downloadBackup': 'Descargar backup completo',
+    'settings.downloadingBackup': 'Generando...',
 
     'cards.title': 'Tarjetas de crédito',
     'cards.downloadReport': 'Descargar informe',
@@ -467,6 +490,7 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'cards.closingToday': 'Cierra hoy',
     'cards.noClosingDay': 'Configura el día de cierre para calcular el plazo.',
     'cards.overdue': 'Atrasada',
+    'cards.lastAlertSentDate': 'Última alerta por email enviada el {date}.',
     'cards.weekendAdjusted': 'Cae en fin de semana/feriado — paga antes del {date} (último día hábil)',
     'cards.cardSettings': 'Configuración de la tarjeta',
     'cards.statementClosingDay': 'Día de cierre (1-31)',

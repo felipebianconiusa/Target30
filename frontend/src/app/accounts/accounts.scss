@@ -35,6 +35,12 @@
   }
 }
 
+.accounts__last-synced {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 0.15rem;
+}
+
 .accounts__row-actions {
   display: flex;
   align-items: center;

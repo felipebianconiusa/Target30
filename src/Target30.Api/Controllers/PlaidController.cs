@@ -94,7 +94,7 @@ public class PlaidController : ControllerBase
         var items = await _db.PlaidItems
             .Where(i => i.UserId == CurrentUserId)
             .OrderByDescending(i => i.ConnectedAt)
-            .Select(i => new { i.ItemId, i.InstitutionName, i.ConnectedAt })
+            .Select(i => new { i.ItemId, i.InstitutionName, i.ConnectedAt, i.LastSyncedAt })
             .ToListAsync();
 
         return Ok(items);

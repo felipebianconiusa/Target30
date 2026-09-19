@@ -4,6 +4,7 @@ import { ConnectAccount } from '../connect-account/connect-account';
 import { PlaidItemSummary, PlaidService } from '../plaid.service';
 import { TranslationService } from '../i18n/translation.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { LOCALE_BY_LANG } from '../i18n/translations';
 
 @Component({
   selector: 'app-accounts',
@@ -28,6 +29,14 @@ export class Accounts implements OnInit {
     this.plaidService.getItems().subscribe({
       next: (items) => this.items.set(items),
     });
+  }
+
+  protected formatDateTime(value: string | null): string {
+    if (!value) return '';
+    const locale = LOCALE_BY_LANG[this.translationService.lang()];
+    return new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' }).format(
+      new Date(value),
+    );
   }
 
   protected remove(item: PlaidItemSummary): void {

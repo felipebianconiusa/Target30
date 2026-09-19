@@ -45,7 +45,8 @@ public class SettingsController : ControllerBase
         settings.NotifyDaysBeforeClosing,
         settings.NotificationsEnabled,
         settings.WeeklyDigestEnabled,
-        settings.Email);
+        settings.Email,
+        settings.LastDigestSentDate);
 
     private async Task<UserSettings> GetOrCreateSettingsAsync()
     {
@@ -65,4 +66,5 @@ public record SettingsDto(
     int NotifyDaysBeforeClosing,
     bool NotificationsEnabled,
     bool WeeklyDigestEnabled,
-    string? Email);
+    string? Email,
+    DateOnly? LastDigestSentDate);

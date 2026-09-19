@@ -94,6 +94,9 @@
         {{ 'settings.weeklyDigestEnabled' | translate }}
       </label>
       <p class="settings__hint">{{ 'settings.notificationsEnabledHint' | translate }}</p>
+      @if (lastDigestSentDate()) {
+        <p class="settings__hint">{{ 'settings.lastDigestSentDate' | translate: { date: lastDigestSentDate()! } }}</p>
+      }
     </div>
     <button type="button" [disabled]="savingSettings()" (click)="saveSettings()">
       {{ 'settings.saveSettings' | translate }}
@@ -109,6 +112,14 @@
       {{ 'settings.manageAccountsHint' | translate }}
       <a routerLink="/accounts">{{ 'nav.accounts' | translate }}</a>.
     </p>
+  </div>
+
+  <div class="settings__section">
+    <h2>{{ 'settings.yourData' | translate }}</h2>
+    <p class="settings__hint">{{ 'settings.yourDataHint' | translate }}</p>
+    <button type="button" [disabled]="downloadingBackup()" (click)="downloadBackup()">
+      {{ (downloadingBackup() ? 'settings.downloadingBackup' : 'settings.downloadBackup') | translate }}
+    </button>
   </div>
 
   <div class="settings__section settings__section--danger">

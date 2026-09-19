@@ -14,6 +14,7 @@ export interface PlaidItemSummary {
   itemId: string;
   institutionName: string | null;
   connectedAt: string;
+  lastSyncedAt: string | null;
 }
 
 export interface Transaction {
@@ -117,5 +118,9 @@ export class PlaidService {
 
   getSummary(): Observable<TransactionsSummary> {
     return this.http.get<TransactionsSummary>(`${this.baseUrl}/summary`);
+  }
+
+  downloadBackup(): Observable<Blob> {
+    return this.http.get('/api/backup/export', { responseType: 'blob' });
   }
 }

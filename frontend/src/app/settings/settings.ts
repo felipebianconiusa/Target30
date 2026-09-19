@@ -20,11 +20,13 @@ export class Settings implements OnInit {
   protected readonly themes: Theme[] = ['light', 'dark', 'system'];
   protected readonly deleting = signal(false);
   protected readonly deleteDone = signal(false);
+  protected readonly downloadingBackup = signal(false);
 
   protected readonly globalTargetUtilizationPercent = signal(30);
   protected readonly notifyDaysBeforeClosing = signal(3);
   protected readonly notificationsEnabled = signal(true);
   protected readonly weeklyDigestEnabled = signal(true);
+  protected readonly lastDigestSentDate = signal<string | null>(null);
   protected readonly savingSettings = signal(false);
   protected readonly settingsSaved = signal(false);
 
@@ -42,6 +44,7 @@ export class Settings implements OnInit {
       this.notifyDaysBeforeClosing.set(settings.notifyDaysBeforeClosing);
       this.notificationsEnabled.set(settings.notificationsEnabled);
       this.weeklyDigestEnabled.set(settings.weeklyDigestEnabled);
+      this.lastDigestSentDate.set(settings.lastDigestSentDate);
     });
   }
 
@@ -70,6 +73,7 @@ export class Settings implements OnInit {
       notificationsEnabled: this.notificationsEnabled(),
       weeklyDigestEnabled: this.weeklyDigestEnabled(),
       email: null,
+      lastDigestSentDate: null,
     };
     this.cardsService.updateSettings(payload).subscribe({
       next: () => {
@@ -90,6 +94,22 @@ export class Settings implements OnInit {
 
   protected themeLabelKey(theme: Theme): string {
     return `settings.theme${theme.charAt(0).toUpperCase()}${theme.slice(1)}`;
+  }
+
+  protected downloadBackup(): void {
+    this.downloadingBackup.set(true);
+    this.plaidService.downloadBackup().subscribe({
+      next: (blob) => {
+        this.downloadingBackup.set(false);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `target30-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => this.downloadingBackup.set(false),
+    });
   }
 
   protected deleteAllData(): void {

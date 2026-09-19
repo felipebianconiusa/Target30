@@ -48,6 +48,7 @@ public class PlaidSyncService
         }
 
         item.NextCursor = cursor;
+        item.LastSyncedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
 
         await SyncAccountsAsync(item);

@@ -9,7 +9,12 @@
       <ul>
         @for (item of items(); track item.itemId) {
           <li class="accounts__row">
-            <span>{{ item.institutionName ?? 'accounts.unnamedInstitution' | translate }}</span>
+            <div>
+              <span>{{ item.institutionName ?? 'accounts.unnamedInstitution' | translate }}</span>
+              <div class="accounts__last-synced">
+                {{ (item.lastSyncedAt ? 'accounts.lastSyncedAt' : 'accounts.neverSynced') | translate: { date: formatDateTime(item.lastSyncedAt) } }}
+              </div>
+            </div>
             <div class="accounts__row-actions">
               <a
                 [routerLink]="['/transactions']"

@@ -9,4 +9,8 @@ public class PlaidItem
     public string? InstitutionName { get; set; }
     public DateTime ConnectedAt { get; set; } = DateTime.UtcNow;
     public string? NextCursor { get; set; }
+
+    // Atualizado a cada sync bem-sucedido (manual ou automático) — mostrado na tela de Contas
+    // pra você confiar no que está rodando sozinho em background.
+    public DateTime? LastSyncedAt { get; set; }
 }
