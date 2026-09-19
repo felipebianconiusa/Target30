@@ -1,5 +1,7 @@
+using System.Threading.RateLimiting;
 using Going.Plaid;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Target30.Api.Data;
 using Target30.Api.Services;
@@ -20,6 +22,23 @@ builder.Services.AddDbContext<Target30DbContext>(options =>
 builder.Services.AddScoped<PlaidSyncService>();
 builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
 builder.Services.AddHostedService<PlaidBackgroundService>();
+
+// Limite global por IP — o app guarda dados financeiros reais, então mesmo sendo uso pessoal
+// vale ter uma trava básica contra abuso/força bruta se algum dia ficar exposto na internet.
+// Sem fila (queue 0): quem estourar recebe 429 na hora em vez de esperar.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 300,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+});
 
 builder.Services.AddCors(options =>
 {
@@ -69,6 +88,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
