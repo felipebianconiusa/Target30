@@ -193,7 +193,7 @@ public class CardsController : ControllerBase
         var (eligible, excluded) = BestCardPicker.Rank(withProjections, today);
 
         return Ok(new BestCardResponseDto(
-            eligible.FirstOrDefault() is { } best ? ToBestCardDto(best) : null,
+            eligible.FirstOrDefault(c => c.Tier != CardTier.Caution) is { } best ? ToBestCardDto(best) : null,
             eligible.Select(ToBestCardDto).ToList(),
             excluded.Select(ToBestCardDto).ToList()));
     }
@@ -214,7 +214,16 @@ public class CardsController : ControllerBase
             CardExclusionReason.LimitReached => "limit_reached",
             CardExclusionReason.NoClosingDay => "no_closing_day",
             _ => null,
-        });
+        },
+        r.Tier switch
+        {
+            CardTier.Recommended => "recommended",
+            CardTier.Alternative => "alternative",
+            CardTier.Caution => "caution",
+            _ => null,
+        },
+        r.Projection.TargetPercent,
+        r.OverTarget);
 
     // Dado um valor disponível pra pagar hoje, distribui entre os cartões que precisam de
     // pagamento pra bater a meta — priorizando primeiro quem fecha mais cedo, depois quem
@@ -334,7 +343,10 @@ public record BestCardDto(
     decimal CreditLimit,
     decimal? AvailableCredit,
     decimal? UtilizationPercent,
-    string? ExclusionReason);
+    string? ExclusionReason,
+    string? Tier,
+    decimal TargetPercent,
+    bool OverTarget);
 
 public record BestCardResponseDto(
     BestCardDto? Recommended,

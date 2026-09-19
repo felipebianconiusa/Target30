@@ -64,6 +64,9 @@ export interface BestCard {
   availableCredit: number | null;
   utilizationPercent: number | null;
   exclusionReason: 'limit_reached' | 'no_closing_day' | null;
+  tier: 'recommended' | 'alternative' | 'caution' | null;
+  targetPercent: number;
+  overTarget: boolean;
 }
 
 export interface BestCardResponse {

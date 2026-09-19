@@ -110,9 +110,6 @@ describe('Cards', () => {
       http.match('/api/settings').forEach((r) =>
         r.flush({ globalTargetUtilizationPercent: 30, notifyDaysBeforeClosing: 3 }),
       );
-      http.match('/api/cards/best-today').forEach((r) =>
-        r.flush({ recommended: null, ranking: [], excluded: [] }),
-      );
       http.match('/api/cards').forEach((r) => r.flush(cards));
       fixture.detectChanges();
       return fixture.nativeElement as HTMLElement;

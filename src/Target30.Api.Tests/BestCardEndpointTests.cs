@@ -43,7 +43,8 @@ public class BestCardEndpointTests : IClassFixture<Target30WebApplicationFactory
 
         var result = await _client.GetFromJsonAsync<BestCardResponseDto>("/api/cards/best-today", JsonDefaults.Options);
 
-        Assert.Equal("Free", result!.Recommended!.Name);
+        // O grupo depende de quantos dias faltam pro fechamento (varia com a data do teste); o que é fixo é quem está elegível e quem está fora.
+        Assert.Equal("Free", Assert.Single(result!.Ranking).Name);
         Assert.Equal("Maxed", Assert.Single(result.Excluded).Name);
         Assert.Equal("limit_reached", result.Excluded[0].ExclusionReason);
     }

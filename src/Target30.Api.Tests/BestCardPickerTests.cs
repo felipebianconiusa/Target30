@@ -97,4 +97,64 @@ public class BestCardPickerTests
         Assert.Empty(eligible);
         Assert.Empty(excluded);
     }
+
+    [Fact]
+    public void Rank_classifies_far_away_cards_within_target_as_recommended()
+    {
+        // 26 dias até fechar (>= 15), utilização 10% (dentro da meta de 30%).
+        var (eligible, _) = BestCardPicker.Rank([Card("far", new DateOnly(2026, 2, 10))], Today);
+
+        Assert.Equal(CardTier.Recommended, eligible[0].Tier);
+        Assert.False(eligible[0].OverTarget);
+    }
+
+    [Theory]
+    [InlineData(14, CardTier.Alternative)]
+    [InlineData(7, CardTier.Alternative)]
+    [InlineData(6, CardTier.Caution)]
+    [InlineData(1, CardTier.Caution)]
+    [InlineData(15, CardTier.Recommended)]
+    public void Rank_tier_depends_on_days_until_closing(int days, CardTier expected)
+    {
+        var (eligible, _) = BestCardPicker.Rank([Card("c", Today.AddDays(days))], Today);
+
+        Assert.Equal(expected, eligible[0].Tier);
+    }
+
+    [Fact]
+    public void Rank_puts_a_card_over_its_utilization_target_in_the_caution_group_even_if_it_closes_last()
+    {
+        // 50% de utilização com meta de 30%.
+        var (eligible, _) = BestCardPicker.Rank(
+        [
+            Card("over-target", new DateOnly(2026, 2, 20), balance: 500m),
+            Card("ok-but-sooner", new DateOnly(2026, 1, 25), balance: 100m),
+        ], Today);
+
+        Assert.Equal("ok-but-sooner", eligible[0].Account.Name);
+        Assert.Equal(CardTier.Alternative, eligible[0].Tier);
+        Assert.Equal(CardTier.Caution, eligible[1].Tier);
+        Assert.True(eligible[1].OverTarget);
+    }
+
+    [Fact]
+    public void Rank_does_not_treat_an_unknown_utilization_as_over_target()
+    {
+        var (eligible, _) = BestCardPicker.Rank([Card("no-limit", new DateOnly(2026, 2, 10), limit: 0m)], Today);
+
+        Assert.Equal(CardTier.Recommended, eligible[0].Tier);
+    }
+
+    [Fact]
+    public void Rank_orders_groups_recommended_then_alternative_then_caution()
+    {
+        var (eligible, _) = BestCardPicker.Rank(
+        [
+            Card("caution", Today.AddDays(3)),
+            Card("recommended", Today.AddDays(20)),
+            Card("alternative", Today.AddDays(10)),
+        ], Today);
+
+        Assert.Equal(["recommended", "alternative", "caution"], eligible.Select(c => c.Account.Name));
+    }
 }

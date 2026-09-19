@@ -1,0 +1,68 @@
+.best-card-page h1 {
+  font-size: 1.3rem;
+  margin: 0 0 0.5rem;
+}
+
+.best-card-page__intro {
+  margin: 0 0 1.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.best-card-page__error {
+  color: var(--color-danger);
+}
+
+.best-group {
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+
+  &--recommended {
+    border-color: var(--color-success);
+    background: var(--color-success-bg);
+  }
+
+  &--caution {
+    border-color: var(--color-danger-border);
+    background: var(--color-danger-bg);
+  }
+
+  &--excluded {
+    background: var(--color-surface-alt);
+  }
+}
+
+.best-group__title {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.best-group__hint {
+  margin: 0.15rem 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.best-item {
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--color-border);
+
+  p {
+    margin: 0.15rem 0;
+  }
+}
+
+.best-item__days {
+  font-weight: 600;
+}
+
+.best-item__muted {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.best-item__over {
+  color: var(--color-danger);
+}

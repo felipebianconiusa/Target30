@@ -1,0 +1,89 @@
+<section class="best-card-page">
+  <h1>{{ 'bestCard.title' | translate }}</h1>
+
+  @if (loading()) {
+    <p>{{ 'common.loading' | translate }}</p>
+  } @else if (errored()) {
+    <p class="best-card-page__error">{{ 'bestCard.error' | translate }}</p>
+  } @else if (isEmpty()) {
+    <p>{{ 'bestCard.empty' | translate }}</p>
+  } @else {
+    <p class="best-card-page__intro">{{ 'bestCard.intro' | translate: { days: alternativeMinDays } }}</p>
+
+    @for (tier of tiers; track tier) {
+      <div class="best-group best-group--{{ tier }}">
+        <h2 class="best-group__title">{{ 'bestCard.' + tier | translate }}</h2>
+        <p class="best-group__hint">
+          @switch (tier) {
+            @case ('recommended') {
+              {{ 'bestCard.recommendedHint' | translate: { days: recommendedMinDays } }}
+            }
+            @case ('alternative') {
+              {{ 'bestCard.alternativeHint' | translate }}
+            }
+            @default {
+              {{ 'bestCard.cautionHint' | translate }}
+            }
+          }
+        </p>
+
+        @for (c of inTier(tier); track c.accountId) {
+          <div class="best-item">
+            <div class="best-item__head">
+              <strong>{{ cardLabel(c.nickname, c.name) }}</strong>
+              @if (c.institutionName) {
+                <span class="best-item__muted">— {{ c.institutionName }}</span>
+              }
+            </div>
+            <p class="best-item__days">
+              {{ 'cards.bestTodayDays' | translate: { days: c.daysUntilClosing ?? 0, date: c.nextClosingDate ?? '' } }}
+            </p>
+            @if (c.utilizationPercent !== null) {
+              <p class="best-item__muted" [class.best-item__over]="c.overTarget">
+                {{ 'bestCard.utilization' | translate: { pct: c.utilizationPercent, target: c.targetPercent } }}
+                @if (c.overTarget) {
+                  — {{ 'bestCard.overTarget' | translate }}
+                }
+              </p>
+            }
+            @if (c.availableCredit !== null) {
+              <p class="best-item__muted">
+                {{ 'cards.bestTodayAvailable' | translate: { amount: formatCurrency(c.availableCredit) } }}
+              </p>
+            } @else {
+              <p class="best-item__muted">
+                {{ 'cards.bestTodayNoLimit' | translate }}
+                <a routerLink="/cards">{{ 'bestCard.goToCards' | translate }}</a>
+              </p>
+            }
+          </div>
+        } @empty {
+          <p class="best-item__muted">{{ 'bestCard.groupEmpty' | translate }}</p>
+        }
+      </div>
+    }
+
+    @if (data()!.excluded.length > 0) {
+      <div class="best-group best-group--excluded">
+        <h2 class="best-group__title">{{ 'bestCard.excluded' | translate }}</h2>
+        <p class="best-group__hint">{{ 'bestCard.excludedHint' | translate }}</p>
+        @for (c of data()!.excluded; track c.accountId) {
+          <div class="best-item">
+            <div class="best-item__head">
+              <strong>{{ cardLabel(c.nickname, c.name) }}</strong>
+              @if (c.institutionName) {
+                <span class="best-item__muted">— {{ c.institutionName }}</span>
+              }
+            </div>
+            <p class="best-item__muted">
+              {{ (c.exclusionReason === 'limit_reached' ? 'cards.bestTodayLimitReached' : 'cards.bestTodayNoClosingDay') | translate }}
+              @if (c.exclusionReason === 'no_closing_day') {
+                <a routerLink="/cards">{{ 'bestCard.goToCards' | translate }}</a>
+              }
+            </p>
+          </div>
+        }
+      </div>
+    }
+  }
+</section>
