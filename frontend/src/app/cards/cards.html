@@ -52,6 +52,16 @@
                     {{ 'cards.utilization' | translate }}: {{ allocation.utilizationBefore }}% → {{ allocation.utilizationAfter }}%
                   </div>
                 }
+                @if (allocation.paymentDeadline) {
+                  <a
+                    class="card-item__calendar-link"
+                    [href]="googleCalendarLink(allocation.name, allocation.amountToPay, allocation.paymentDeadline, null)"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    {{ 'cards.addToCalendar' | translate }}
+                  </a>
+                }
               </li>
             }
           </ul>
@@ -126,6 +136,33 @@
       } @else if (card.amountToPay === 0) {
         <p class="card-item__ok">{{ 'cards.underTarget' | translate }}</p>
       }
+
+      <button type="button" class="card-item__edit-toggle" (click)="toggleSimulate(card)">
+        {{ (simulateId() === card.accountId ? 'cards.hideSimulate' : 'cards.showSimulate') | translate }}
+      </button>
+
+      @if (simulateId() === card.accountId) {
+        <div class="card-item__simulate">
+          <label>
+            {{ 'cards.simulateAmount' | translate }}
+            <input
+              type="number"
+              min="0"
+              step="1"
+              [value]="simulateAmount()"
+              (input)="setSimulateAmount($any($event.target).value)"
+            />
+          </label>
+          @if (simulateAmount()) {
+            <p class="card-item__muted">
+              {{ 'cards.simulateResult' | translate: {
+                balance: formatCurrency(simulatedBalance(card), card.isoCurrencyCode),
+                utilization: simulatedUtilization(card) ?? '?'
+              } }}
+            </p>
+          }
+        </div>
+      }
     }
 
     <div class="card-item__dates">
@@ -147,6 +184,16 @@
       }
       @if (card.minimumPaymentAmount) {
         <span>{{ 'cards.minimumPayment' | translate }}: {{ formatCurrency(card.minimumPaymentAmount, card.isoCurrencyCode) }}</span>
+      }
+      @if (card.paymentDeadline) {
+        <a
+          class="card-item__calendar-link"
+          [href]="googleCalendarLink(card.name, card.amountToPay, card.paymentDeadline, card.isoCurrencyCode)"
+          target="_blank"
+          rel="noopener"
+        >
+          {{ 'cards.addToCalendar' | translate }}
+        </a>
       }
     </div>
 

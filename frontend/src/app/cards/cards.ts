@@ -4,6 +4,7 @@ import { AppSettings, Card, CardHistoryPoint, CardsService, PayoffPlan } from '.
 import { TranslationService } from '../i18n/translation.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { LOCALE_BY_LANG } from '../i18n/translations';
+import { buildGoogleCalendarLink } from '../shared/google-calendar-link';
 
 @Component({
   selector: 'app-cards',
@@ -31,6 +32,9 @@ export class Cards implements OnInit {
   protected readonly payoffAmount = signal<number | null>(null);
   protected readonly payoffPlan = signal<PayoffPlan | null>(null);
   protected readonly payoffLoading = signal(false);
+
+  protected readonly simulateId = signal<string | null>(null);
+  protected readonly simulateAmount = signal<number | null>(null);
 
   // Cartões com fatura já vencendo (valor certo, data certa) vs. ciclo ainda aberto (conta
   // recém-conectada ou sem 1º fechamento processado pelo Plaid ainda — sem valor definido).
@@ -146,6 +150,41 @@ export class Cards implements OnInit {
         this.payoffLoading.set(false);
       },
       error: () => this.payoffLoading.set(false),
+    });
+  }
+
+  protected toggleSimulate(card: Card): void {
+    if (this.simulateId() === card.accountId) {
+      this.simulateId.set(null);
+      return;
+    }
+    this.simulateId.set(card.accountId);
+    this.simulateAmount.set(null);
+  }
+
+  protected setSimulateAmount(value: string): void {
+    this.simulateAmount.set(value ? Number(value) : null);
+  }
+
+  // Só matemática local — o objetivo é deixar você ver o efeito antes de decidir pagar, sem
+  // precisar ir e voltar no servidor pra cada valor que você testar.
+  protected simulatedBalance(card: Card): number {
+    const amount = this.simulateAmount() ?? 0;
+    return Math.max(0, card.currentBalance - amount);
+  }
+
+  protected simulatedUtilization(card: Card): number | null {
+    if (card.creditLimit <= 0) return null;
+    return Math.round((this.simulatedBalance(card) / card.creditLimit) * 1000) / 10;
+  }
+
+  protected googleCalendarLink(name: string, amount: number, date: string, currency: string | null): string {
+    return buildGoogleCalendarLink({
+      title: this.translationService.t('cards.calendarEventTitle', { name }),
+      date,
+      details: this.translationService.t('cards.calendarEventDetails', {
+        amount: this.formatCurrency(amount, currency),
+      }),
     });
   }
 

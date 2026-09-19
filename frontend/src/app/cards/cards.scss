@@ -223,6 +223,34 @@
   font-style: italic;
 }
 
+.card-item__calendar-link {
+  color: var(--color-primary);
+  text-decoration: underline;
+  font-style: normal;
+}
+
+.card-item__simulate {
+  padding: 0.5rem 0;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    max-width: 16rem;
+  }
+
+  input {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+  }
+}
+
 .card-item__weekend-note {
   font-size: 0.78rem;
   color: var(--color-danger);
