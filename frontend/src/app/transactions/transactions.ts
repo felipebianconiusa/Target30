@@ -159,13 +159,23 @@ export class Transactions implements OnInit, OnDestroy {
   }
 
   protected onCategoryChange(event: { transaction: Transaction; category: string | null }): void {
-    this.plaidService.updateTransactionCategory(event.transaction.transactionId, event.category).subscribe({
-      next: (updated) => {
-        this.transactions.update((list) =>
-          list.map((t) => (t.transactionId === updated.transactionId ? updated : t)),
-        );
-      },
-    });
+    // OK = todas as do mesmo estabelecimento (e as próximas, via regra); Cancelar = só esta.
+    const merchant = event.transaction.merchantName ?? event.transaction.name;
+    const applyToMerchant = confirm(this.translationService.t('transactions.applyToMerchant', { merchant }));
+
+    this.plaidService
+      .updateTransactionCategory(event.transaction.transactionId, event.category, applyToMerchant)
+      .subscribe({
+        next: (updated) => {
+          if (applyToMerchant) {
+            this.loadPage();
+            return;
+          }
+          this.transactions.update((list) =>
+            list.map((t) => (t.transactionId === updated.transactionId ? updated : t)),
+          );
+        },
+      });
   }
 
   protected goToPage(target: number): void {

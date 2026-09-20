@@ -7,7 +7,7 @@ import { TranslationService } from '../i18n/translation.service';
 import { Settings } from './settings';
 
 describe('Settings automatic backup line', () => {
-  function render(status: object): HTMLElement {
+  function render(status: object, rules: object[] = []): HTMLElement {
     TestBed.configureTestingModule({
       imports: [Settings],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
@@ -23,6 +23,7 @@ describe('Settings automatic backup line', () => {
       }),
     );
     http.expectOne('/api/backup/auto-status').flush(status);
+    http.match('/api/category-rules').forEach((r) => r.flush(rules));
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
   }
@@ -49,5 +50,17 @@ describe('Settings automatic backup line', () => {
     const el = render({ enabled: false, directory: 'D:\\b', lastBackupUtc: null, count: 0, keepCount: 14 });
 
     expect(el.querySelector('.settings__auto-backup')?.textContent).toContain('desligado');
+  });
+
+  it('lists category rules and lets the user remove one', () => {
+    const el = render(
+      { enabled: true, directory: 'D:\\b', lastBackupUtc: null, count: 0, keepCount: 14 },
+      [{ id: 7, merchantKey: 'costco', category: 'FOOD_AND_DRINK' }],
+    );
+
+    expect(el.querySelector('.settings__rules')?.textContent).toContain('costco');
+
+    (el.querySelector('.settings__rules button') as HTMLButtonElement).click();
+    TestBed.inject(HttpTestingController).expectOne('/api/category-rules/7').flush(null);
   });
 });

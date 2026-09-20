@@ -374,8 +374,40 @@ public class PlaidController : ControllerBase
         if (transaction is null)
             return NotFound();
 
-        transaction.UserCategory = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category;
+        var category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category;
+        transaction.UserCategory = category;
+
+        // "Aplicar a todas do estabelecimento": cria/atualiza a regra (o sync aplica às próximas) e
+        // recategoriza as que já existem. Sem categoria (voltar à do Plaid) remove a regra.
+        var applied = 1;
+        var key = MerchantKey.From(transaction.MerchantName, transaction.Name);
+        if (request.ApplyToMerchant && key.Length > 0)
+        {
+            var rule = await _db.CategoryRules.FirstOrDefaultAsync(r => r.UserId == CurrentUserId && r.MerchantKey == key);
+            if (category is null)
+            {
+                if (rule is not null)
+                    _db.CategoryRules.Remove(rule);
+            }
+            else if (rule is null)
+            {
+                _db.CategoryRules.Add(new CategoryRule { UserId = CurrentUserId, MerchantKey = key, Category = category });
+            }
+            else
+            {
+                rule.Category = category;
+            }
+
+            var sameMerchant = (await _db.PlaidTransactions.Where(t => t.UserId == CurrentUserId).ToListAsync())
+                .Where(t => MerchantKey.From(t.MerchantName, t.Name) == key)
+                .ToList();
+            foreach (var t in sameMerchant)
+                t.UserCategory = category;
+            applied = sameMerchant.Count;
+        }
+
         await _db.SaveChangesAsync();
+        Response.Headers["X-Applied-Count"] = applied.ToString();
 
         return Ok(ToDto(transaction));
     }
@@ -399,7 +431,7 @@ public class PlaidController : ControllerBase
 
 public record ExchangeTokenRequest(string PublicToken, string? InstitutionName);
 
-public record UpdateCategoryRequest(string? Category);
+public record UpdateCategoryRequest(string? Category, bool ApplyToMerchant = false);
 
 public record PlaidItemFreshnessDto(
     string ItemId,

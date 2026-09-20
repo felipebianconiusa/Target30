@@ -32,6 +32,12 @@ export interface PlaidRefreshResult {
   plaidLastSuccessfulUpdate: string | null;
 }
 
+export interface CategoryRule {
+  id: number;
+  merchantKey: string;
+  category: string;
+}
+
 export interface AutoBackupStatus {
   enabled: boolean;
   directory: string;
@@ -162,9 +168,23 @@ export class PlaidService {
     return this.http.get('/api/backup/export', { responseType: 'blob' });
   }
 
-  updateTransactionCategory(transactionId: string, category: string | null): Observable<Transaction> {
+  // applyToMerchant: recategoriza todas as do mesmo estabelecimento e cria uma regra pras futuras.
+  updateTransactionCategory(
+    transactionId: string,
+    category: string | null,
+    applyToMerchant = false,
+  ): Observable<Transaction> {
     return this.http.put<Transaction>(`${this.baseUrl}/transactions/${transactionId}/category`, {
       category,
+      applyToMerchant,
     });
+  }
+
+  getCategoryRules(): Observable<CategoryRule[]> {
+    return this.http.get<CategoryRule[]>('/api/category-rules');
+  }
+
+  deleteCategoryRule(id: number): Observable<void> {
+    return this.http.delete<void>(`/api/category-rules/${id}`);
   }
 }

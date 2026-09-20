@@ -27,6 +27,9 @@ public class PlaidSyncService
     {
         var cursor = item.NextCursor;
         var hasMore = true;
+        var rules = await _db.CategoryRules
+            .Where(r => r.UserId == item.UserId)
+            .ToDictionaryAsync(r => r.MerchantKey, r => r.Category);
 
         while (hasMore)
         {
@@ -39,8 +42,8 @@ public class PlaidSyncService
             if (response.Error is not null)
                 return; // item com erro (ex.: precisa reconectar) — não trava o sync dos outros
 
-            await UpsertAsync(item, response.Added);
-            await UpsertAsync(item, response.Modified);
+            await UpsertAsync(item, response.Added, rules);
+            await UpsertAsync(item, response.Modified, rules);
             await RemoveAsync(response.Removed);
 
             cursor = response.NextCursor;
@@ -140,7 +143,8 @@ public class PlaidSyncService
     }
 
 #pragma warning disable CS0612 // Category/Name legados usados como fallback
-    private async Task UpsertAsync(PlaidItem item, IReadOnlyList<Transaction> transactions)
+    private async Task UpsertAsync(
+        PlaidItem item, IReadOnlyList<Transaction> transactions, IReadOnlyDictionary<string, string> rules)
     {
         foreach (var t in transactions)
         {
@@ -167,6 +171,10 @@ public class PlaidSyncService
             existing.Category = t.PersonalFinanceCategory?.Primary ?? t.Category?.FirstOrDefault();
             existing.DetailedCategory = t.PersonalFinanceCategory?.Detailed;
             existing.IsInternalTransfer = TransactionClassifier.IsInternalTransfer(existing.DetailedCategory);
+
+            // Regra por estabelecimento (só onde o usuário ainda não escolheu uma categoria à mão).
+            if (existing.UserCategory is null)
+                existing.UserCategory = MerchantKey.RuleFor(rules, existing.MerchantName, existing.Name);
         }
     }
 #pragma warning restore CS0612

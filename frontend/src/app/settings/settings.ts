@@ -1,7 +1,8 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
-import { AutoBackupStatus, PlaidService } from '../plaid.service';
+import { AutoBackupStatus, CategoryRule, PlaidService } from '../plaid.service';
+import { translateCategory } from '../shared/category-labels';
 import { AppSettings, CardsService } from '../cards/cards.service';
 import { TranslationService } from '../i18n/translation.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
@@ -22,6 +23,7 @@ export class Settings implements OnInit {
   protected readonly deleteDone = signal(false);
   protected readonly downloadingBackup = signal(false);
   protected readonly autoBackup = signal<AutoBackupStatus | null>(null);
+  protected readonly categoryRules = signal<CategoryRule[]>([]);
 
   protected readonly globalTargetUtilizationPercent = signal(30);
   protected readonly notifyDaysBeforeClosing = signal(3);
@@ -41,6 +43,7 @@ export class Settings implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadCategoryRules();
     this.plaidService.getAutoBackupStatus().subscribe({
       next: (status) => this.autoBackup.set(status),
       error: () => undefined,
@@ -93,6 +96,21 @@ export class Settings implements OnInit {
         this.settingsSaved.set(true);
       },
       error: () => this.savingSettings.set(false),
+    });
+  }
+
+  protected categoryLabel(code: string): string {
+    return translateCategory(code, this.translationService.lang());
+  }
+
+  protected deleteCategoryRule(rule: CategoryRule): void {
+    this.plaidService.deleteCategoryRule(rule.id).subscribe(() => this.loadCategoryRules());
+  }
+
+  private loadCategoryRules(): void {
+    this.plaidService.getCategoryRules().subscribe({
+      next: (rules) => this.categoryRules.set(rules),
+      error: () => undefined,
     });
   }
 

@@ -125,6 +125,21 @@
     </p>
   </div>
 
+  @if (categoryRules().length > 0) {
+    <div class="settings__section">
+      <h2>{{ 'settings.categoryRules' | translate }}</h2>
+      <p class="settings__hint">{{ 'settings.categoryRulesHint' | translate }}</p>
+      <ul class="settings__rules">
+        @for (rule of categoryRules(); track rule.id) {
+          <li>
+            <span>{{ rule.merchantKey }} → <strong>{{ categoryLabel(rule.category) }}</strong></span>
+            <button type="button" (click)="deleteCategoryRule(rule)">{{ 'common.remove' | translate }}</button>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
   <div class="settings__section">
     <h2>{{ 'settings.yourData' | translate }}</h2>
     <p class="settings__hint">{{ 'settings.yourDataHint' | translate }}</p>
