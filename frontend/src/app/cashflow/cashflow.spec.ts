@@ -44,4 +44,37 @@ describe('CashFlow', () => {
     expect(cells[3]).toContain('50,00');
     expect(cells[4]).toContain('1.000,00');
   });
+
+  it('highlights a projected low balance with the date and the entry that causes it', async () => {
+    await TestBed.configureTestingModule({
+      imports: [CashFlow],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+    TestBed.inject(TranslationService).setLang('pt');
+    const fixture = TestBed.createComponent(CashFlow);
+    fixture.detectChanges();
+
+    const http = TestBed.inject(HttpTestingController);
+    http.match((r) => r.url === '/api/bills').forEach((r) => r.flush([]));
+    http.match((r) => r.url === '/api/bills/detected-subscriptions').forEach((r) => r.flush([]));
+    http.expectOne((r) => r.url === '/api/cashflow').flush({
+      startingBalance: 100,
+      currentBalance: 100,
+      entries: [],
+      lowBalance: {
+        date: '2026-09-25',
+        balance: -400,
+        description: 'Rent',
+        alreadyBelow: false,
+        minimumBalance: -400,
+      },
+      lowBalanceThreshold: 0,
+    });
+    fixture.detectChanges();
+
+    const banner = (fixture.nativeElement as HTMLElement).querySelector('.cashflow-page__low-balance');
+    expect(banner?.textContent).toContain('Saldo baixo');
+    expect(banner?.textContent).toContain('2026-09-25');
+    expect(banner?.textContent).toContain('Rent');
+  });
 });

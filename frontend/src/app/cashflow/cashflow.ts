@@ -1,5 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { Bill, CashFlowEntry, CashFlowService, DetectedSubscription } from './cashflow.service';
+import { Bill, CashFlowEntry, CashFlowService, DetectedSubscription, LowBalanceWarning } from './cashflow.service';
 import { TranslationService } from '../i18n/translation.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { LOCALE_BY_LANG } from '../i18n/translations';
@@ -13,6 +13,8 @@ import { LOCALE_BY_LANG } from '../i18n/translations';
 export class CashFlow implements OnInit {
   protected readonly entries = signal<CashFlowEntry[]>([]);
   protected readonly currentBalance = signal(0);
+  protected readonly lowBalance = signal<LowBalanceWarning | null>(null);
+  protected readonly lowBalanceThreshold = signal(0);
   protected readonly loading = signal(true);
 
   protected readonly bills = signal<Bill[]>([]);
@@ -136,6 +138,8 @@ export class CashFlow implements OnInit {
       next: (response) => {
         this.entries.set(response.entries);
         this.currentBalance.set(response.currentBalance);
+        this.lowBalance.set(response.lowBalance);
+        this.lowBalanceThreshold.set(response.lowBalanceThreshold);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),

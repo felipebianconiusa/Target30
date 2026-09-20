@@ -20,6 +20,7 @@ builder.Services.AddDbContext<Target30DbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddScoped<PlaidSyncService>();
+builder.Services.AddScoped<CashFlowService>();
 builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
 builder.Services.AddHostedService<PlaidBackgroundService>();
 

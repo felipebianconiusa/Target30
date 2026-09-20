@@ -11,10 +11,20 @@ export interface CashFlowEntry {
   status: 'Done' | 'Pending';
 }
 
+export interface LowBalanceWarning {
+  date: string;
+  balance: number;
+  description: string | null;
+  alreadyBelow: boolean;
+  minimumBalance: number;
+}
+
 export interface CashFlowResponse {
   startingBalance: number;
   currentBalance: number;
   entries: CashFlowEntry[];
+  lowBalance: LowBalanceWarning | null;
+  lowBalanceThreshold: number;
 }
 
 export interface Bill {

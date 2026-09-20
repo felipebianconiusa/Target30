@@ -77,6 +77,17 @@
           (input)="setNotifyDays($any($event.target).value)"
         />
       </label>
+      <label>
+        {{ 'settings.lowBalanceThreshold' | translate }}
+        <input
+          type="number"
+          min="0"
+          step="50"
+          [value]="lowBalanceThreshold()"
+          (input)="setLowBalanceThreshold($any($event.target).value)"
+        />
+      </label>
+      <p class="settings__hint">{{ 'settings.lowBalanceThresholdHint' | translate }}</p>
       <label class="settings__checkbox">
         <input
           type="checkbox"

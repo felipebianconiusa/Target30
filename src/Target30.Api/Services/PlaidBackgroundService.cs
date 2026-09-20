@@ -67,6 +67,7 @@ public class PlaidBackgroundService : BackgroundService
         }
 
         await SendStaleDataAlertsAsync(db, emailSender, scope.ServiceProvider.GetRequiredService<PlaidClient>());
+        await SendLowBalanceAlertsAsync(db, emailSender, scope.ServiceProvider.GetRequiredService<CashFlowService>());
         await SendAlertsAsync(db, emailSender);
         await SendWeeklyDigestsAsync(db, emailSender);
         await SendBudgetAlertsAsync(db, emailSender);
@@ -121,6 +122,47 @@ public class PlaidBackgroundService : BackgroundService
 
             foreach (var p in problems)
                 p.Item.LastStaleAlertSentAt = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    // Avisa por email quando o saldo projetado das contas correntes (Fluxo de Caixa) vai ficar
+    // abaixo do limite escolhido nos próximos 30 dias. Um email por problema (LowBalanceWarning.Key).
+    private async Task SendLowBalanceAlertsAsync(Target30DbContext db, IEmailSender emailSender, CashFlowService cashFlow)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var userIds = await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync();
+
+        foreach (var userId in userIds)
+        {
+            try
+            {
+                var settings = await db.UserSettings.FirstOrDefaultAsync(s => s.UserId == userId);
+                if (settings is null || !settings.NotificationsEnabled || string.IsNullOrWhiteSpace(settings.Email))
+                    continue;
+
+                var (_, currentBalance, rows) = await cashFlow.BuildRowsAsync(userId, 0, 30, today);
+                var warning = LowBalanceDetector.Find(rows, currentBalance, settings.LowBalanceThreshold, today);
+
+                if (warning is null)
+                {
+                    settings.LastLowBalanceAlertKey = null;
+                    continue;
+                }
+
+                if (warning.Key == settings.LastLowBalanceAlertKey)
+                    continue;
+
+                await emailSender.SendAsync(
+                    settings.Email!, "Target30: saldo baixo à vista",
+                    LowBalanceDetector.BuildAlertBody(warning, settings.LowBalanceThreshold));
+                settings.LastLowBalanceAlertKey = warning.Key;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Falha ao checar saldo baixo do usuário {UserId}", userId);
+            }
         }
 
         await db.SaveChangesAsync();

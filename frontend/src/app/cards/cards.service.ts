@@ -43,6 +43,7 @@ export interface AppSettings {
   weeklyDigestEnabled: boolean;
   email: string | null;
   lastDigestSentDate: string | null;
+  lowBalanceThreshold: number;
 }
 
 export interface CardHistoryPoint {

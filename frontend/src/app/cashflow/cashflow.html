@@ -6,6 +6,20 @@
     </div>
   </div>
 
+  @if (lowBalance(); as low) {
+    <div class="cashflow-page__low-balance">
+      <strong>{{ 'cashflow.lowBalanceTitle' | translate }}</strong>
+      @if (low.alreadyBelow) {
+        {{ 'cashflow.lowBalanceNow' | translate: { balance: formatCurrency(low.balance) } }}
+      } @else {
+        {{ 'cashflow.lowBalanceOn' | translate: { date: low.date, description: low.description ?? '', balance: formatCurrency(low.balance) } }}
+      }
+      <span class="cashflow-page__low-balance-hint">
+        {{ 'cashflow.lowBalanceMin' | translate: { minimum: formatCurrency(low.minimumBalance), threshold: formatCurrency(lowBalanceThreshold()) } }}
+      </span>
+    </div>
+  }
+
   <div class="cashflow-page__actions">
     <button type="button" class="cashflow-page__bills-toggle" (click)="toggleBillsManager()">
       {{ 'cashflow.manageBills' | translate }}

@@ -26,6 +26,7 @@ export class Settings implements OnInit {
   protected readonly notifyDaysBeforeClosing = signal(3);
   protected readonly notificationsEnabled = signal(true);
   protected readonly weeklyDigestEnabled = signal(true);
+  protected readonly lowBalanceThreshold = signal(0);
   protected readonly lastDigestSentDate = signal<string | null>(null);
   protected readonly savingSettings = signal(false);
   protected readonly settingsSaved = signal(false);
@@ -44,6 +45,7 @@ export class Settings implements OnInit {
       this.notifyDaysBeforeClosing.set(settings.notifyDaysBeforeClosing);
       this.notificationsEnabled.set(settings.notificationsEnabled);
       this.weeklyDigestEnabled.set(settings.weeklyDigestEnabled);
+      this.lowBalanceThreshold.set(settings.lowBalanceThreshold ?? 0);
       this.lastDigestSentDate.set(settings.lastDigestSentDate);
     });
   }
@@ -54,6 +56,10 @@ export class Settings implements OnInit {
 
   protected setNotifyDays(value: string): void {
     this.notifyDaysBeforeClosing.set(Number(value));
+  }
+
+  protected setLowBalanceThreshold(value: string): void {
+    this.lowBalanceThreshold.set(Math.max(Number(value) || 0, 0));
   }
 
   protected setNotificationsEnabled(value: boolean): void {
@@ -74,6 +80,7 @@ export class Settings implements OnInit {
       weeklyDigestEnabled: this.weeklyDigestEnabled(),
       email: null,
       lastDigestSentDate: null,
+      lowBalanceThreshold: this.lowBalanceThreshold(),
     };
     this.cardsService.updateSettings(payload).subscribe({
       next: () => {

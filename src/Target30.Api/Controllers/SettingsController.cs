@@ -36,6 +36,7 @@ public class SettingsController : ControllerBase
         settings.NotifyDaysBeforeClosing = Math.Clamp(request.NotifyDaysBeforeClosing, 0, 30);
         settings.NotificationsEnabled = request.NotificationsEnabled;
         settings.WeeklyDigestEnabled = request.WeeklyDigestEnabled;
+        settings.LowBalanceThreshold = Math.Max(request.LowBalanceThreshold, 0m);
         await _db.SaveChangesAsync();
         return Ok(ToDto(settings));
     }
@@ -46,7 +47,8 @@ public class SettingsController : ControllerBase
         settings.NotificationsEnabled,
         settings.WeeklyDigestEnabled,
         settings.Email,
-        settings.LastDigestSentDate);
+        settings.LastDigestSentDate,
+        settings.LowBalanceThreshold);
 
     private async Task<UserSettings> GetOrCreateSettingsAsync()
     {
@@ -67,4 +69,5 @@ public record SettingsDto(
     bool NotificationsEnabled,
     bool WeeklyDigestEnabled,
     string? Email,
-    DateOnly? LastDigestSentDate);
+    DateOnly? LastDigestSentDate,
+    decimal LowBalanceThreshold = 0m);

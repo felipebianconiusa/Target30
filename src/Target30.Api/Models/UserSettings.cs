@@ -13,4 +13,12 @@ public class UserSettings
     // Resumo semanal (visão geral de todos os cartões) — independente do alerta de fechamento.
     public bool WeeklyDigestEnabled { get; set; } = true;
     public DateOnly? LastDigestSentDate { get; set; }
+
+    // Avisa (tela de Fluxo de Caixa + email) quando o saldo projetado das contas correntes fica
+    // abaixo disso. 0 = só avisa se for ficar negativo.
+    public decimal LowBalanceThreshold { get; set; }
+
+    // Problema de saldo baixo que já foi avisado por email (LowBalanceWarning.Key); zerado
+    // quando o saldo projetado volta ao normal.
+    public string? LastLowBalanceAlertKey { get; set; }
 }
