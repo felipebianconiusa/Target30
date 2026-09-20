@@ -1,0 +1,121 @@
+<section class="import">
+  <h1>{{ 'import.title' | translate }}</h1>
+  <p class="import__hint">{{ 'import.hint' | translate }}</p>
+
+  <div class="import__form">
+    <label>
+      {{ 'import.account' | translate }}
+      <select (change)="setAccount($any($event.target).value)">
+        <option value="" [selected]="!accountId()">{{ 'import.choose' | translate }}</option>
+        @for (a of accounts(); track a.accountId) {
+          <option [value]="a.accountId" [selected]="a.accountId === accountId()">{{ accountLabel(a) }}</option>
+        }
+      </select>
+    </label>
+    <button type="button" class="import__link" (click)="toggleManual()">
+      {{ 'import.notListed' | translate }}
+    </button>
+
+    @if (showManual()) {
+      <div class="import__manual">
+        <label>
+          {{ 'import.manualName' | translate }}
+          <input type="text" maxlength="80" [value]="manualName()" (input)="setManualName($any($event.target).value)" />
+        </label>
+        <label>
+          {{ 'import.manualType' | translate }}
+          <select (change)="setManualType($any($event.target).value)">
+            <option value="Credit" [selected]="manualType() === 'Credit'">{{ 'import.typeCredit' | translate }}</option>
+            <option value="Depository" [selected]="manualType() === 'Depository'">{{ 'import.typeDepository' | translate }}</option>
+          </select>
+        </label>
+        <button type="button" [disabled]="!manualName().trim() || busy()" (click)="createManualAccount()">
+          {{ 'import.createAccount' | translate }}
+        </button>
+      </div>
+    }
+
+    <label>
+      {{ 'import.file' | translate }}
+      <input type="file" accept=".csv,text/csv,text/plain" #file (change)="onFileSelected(file)" />
+    </label>
+
+    <div class="import__row">
+      <label>
+        {{ 'import.convention' | translate }}
+        <select (change)="setConvention($any($event.target).value)">
+          <option value="expense_negative" [selected]="convention() === 'expense_negative'">{{ 'import.expenseNegative' | translate }}</option>
+          <option value="expense_positive" [selected]="convention() === 'expense_positive'">{{ 'import.expensePositive' | translate }}</option>
+        </select>
+      </label>
+      <label>
+        {{ 'import.dateFormat' | translate }}
+        <select (change)="setDateFormat($any($event.target).value)">
+          <option value="auto" [selected]="dateFormat() === 'auto'">{{ 'import.dateAuto' | translate }}</option>
+          <option value="mdy" [selected]="dateFormat() === 'mdy'">MM/DD/AAAA</option>
+          <option value="dmy" [selected]="dateFormat() === 'dmy'">DD/MM/AAAA</option>
+          <option value="iso" [selected]="dateFormat() === 'iso'">AAAA-MM-DD</option>
+        </select>
+      </label>
+    </div>
+
+    <button type="button" class="import__primary" [disabled]="!canPreview()" (click)="runPreview()">
+      {{ 'import.preview' | translate }}
+    </button>
+  </div>
+
+  @if (error()) {
+    <p class="import__error">{{ error() }}</p>
+  }
+
+  @if (result(); as r) {
+    <p class="import__ok">{{ 'import.done' | translate: { imported: r.imported, duplicates: r.duplicates, errors: r.errors } }}</p>
+    <a routerLink="/transactions">{{ 'import.seeTransactions' | translate }}</a>
+  }
+
+  @if (preview(); as p) {
+    <div class="import__preview">
+      <p>
+        {{ 'import.summary' | translate: { new: p.newCount, duplicates: p.duplicateCount, errors: p.errorCount } }}
+      </p>
+
+      @if (p.rows.length > 0) {
+        <table>
+          <thead>
+            <tr>
+              <th>{{ 'table.date' | translate }}</th>
+              <th>{{ 'table.description' | translate }}</th>
+              <th class="import__num">{{ 'table.amount' | translate }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of p.rows; track row.line) {
+              <tr [class.import__dup]="row.duplicate">
+                <td>{{ row.date }}</td>
+                <td>{{ row.description }}</td>
+                <td class="import__num">{{ formatAmount(row.amount) }}</td>
+                <td>{{ row.duplicate ? ('import.duplicate' | translate) : '' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        @if (p.newCount + p.duplicateCount > p.rows.length) {
+          <p class="import__hint">{{ 'import.onlyFirst' | translate }}</p>
+        }
+      }
+
+      @if (p.errors.length > 0) {
+        <ul class="import__errors">
+          @for (e of p.errors; track e.line) {
+            <li>{{ 'import.line' | translate: { line: e.line } }}: {{ e.message }}</li>
+          }
+        </ul>
+      }
+
+      <button type="button" class="import__primary" [disabled]="busy() || p.newCount === 0" (click)="runCommit()">
+        {{ 'import.confirm' | translate: { count: p.newCount } }}
+      </button>
+    </div>
+  }
+</section>

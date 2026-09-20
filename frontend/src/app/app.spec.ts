@@ -64,6 +64,7 @@ describe('App', () => {
         'Cartões',
         'Melhor cartão',
         'Fluxo de Caixa',
+        'Importar',
         'Configurações',
       ]);
     });

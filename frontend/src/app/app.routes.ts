@@ -5,6 +5,7 @@ import { Billing } from './billing/billing';
 import { Cards } from './cards/cards';
 import { CashFlow } from './cashflow/cashflow';
 import { Dashboard } from './dashboard/dashboard';
+import { Import } from './import/import';
 import { Privacy } from './legal/privacy';
 import { Terms } from './legal/terms';
 import { Settings } from './settings/settings';
@@ -17,6 +18,7 @@ export const routes: Routes = [
   { path: 'cards', component: Cards },
   { path: 'best-card', component: BestCard },
   { path: 'cashflow', component: CashFlow },
+  { path: 'import', component: Import },
   { path: 'billing', component: Billing },
   { path: 'terms', component: Terms },
   { path: 'privacy', component: Privacy },

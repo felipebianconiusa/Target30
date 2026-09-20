@@ -73,6 +73,17 @@ Configuração necessária:
    - `frontend/src/app/auth/google-client-id.ts`
    - `src/Target30.Api/appsettings.Development.json` → `Authentication:Google:ClientId`
 
+## Notificações no celular (ntfy)
+
+Além do e-mail, os alertas (fechamento, saldo baixo, dado desatualizado, orçamento, assinatura, resumo semanal) podem chegar no celular pelo [ntfy](https://ntfy.sh), sem conta: em Configurações gere um tópico, salve/teste e assine o mesmo tópico no app do ntfy. O tópico funciona como uma senha (quem souber o nome lê os alertas). Servidor próprio: `Push:NtfyServer`.
+
+## Importar extrato (CSV)
+
+Tela **Importar**: para bancos/cartões que o Plaid não cobre ou histórico antigo. Escolha a conta (do Plaid ou uma conta manual), o arquivo, a convenção de sinal e o formato da data, confira a pré-visualização e importe. O leitor entende cabeçalhos em pt/en, `,` `;` ou tab, aspas, valores como `(45,10)` ou `1.234,56` e colunas separadas de débito/crédito. Reimportar não duplica (ids determinísticos + comparação com o que o Plaid já trouxe). Regras de categoria por estabelecimento valem nas linhas importadas.
+
+## CI
+
+`.github/workflows/ci.yml` roda os testes do backend e do frontend (e o build de produção) a cada push e pull request. Nenhum segredo é necessário.
 ## Cobrança (assinatura via Stripe)
 
 Vem **desligada** (`Billing:Enabled = false`): o app funciona como sempre, sem limite nem cobrança. Ligada, cada usuário novo ganha um teste grátis (`TrialDays`, padrão 14) e depois precisa de assinatura ativa para o que **custa dinheiro no Plaid**: conectar banco, sincronizar e atualizar agora. A consulta e a exportação dos próprios dados continuam liberadas, e o sync em background/alertas pulam quem está sem acesso. Há um teto de bancos por usuário (`MaxItemsPerUser`, padrão 10).

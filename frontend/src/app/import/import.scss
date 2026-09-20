@@ -1,0 +1,134 @@
+.import h1 {
+  font-size: 1.3rem;
+  margin: 0 0 0.25rem;
+}
+
+.import__hint {
+  margin: 0.25rem 0 1rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.import__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 34rem;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+  }
+
+  select,
+  input[type='text'] {
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+  }
+
+  button {
+    align-self: flex-start;
+    padding: 0.45rem 0.9rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+}
+
+.import__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.import__primary {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary-text) !important;
+}
+
+.import__link {
+  border: 0 !important;
+  background: none !important;
+  padding: 0 !important;
+  color: var(--color-primary) !important;
+  font-size: 0.85rem;
+  text-decoration: underline;
+}
+
+.import__manual {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.import__error {
+  color: var(--color-danger);
+}
+
+.import__ok {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.import__preview {
+  margin-top: 1.25rem;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+  }
+
+  th,
+  td {
+    padding: 0.35rem 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+  }
+
+  button {
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+    font: inherit;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+}
+
+.import__num {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.import__dup {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.import__errors {
+  color: var(--color-danger);
+  font-size: 0.85rem;
+}

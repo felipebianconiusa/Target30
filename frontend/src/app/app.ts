@@ -42,6 +42,7 @@ export class App implements OnInit {
     { path: '/cards', labelKey: 'nav.cards', icon: '💳' },
     { path: '/best-card', labelKey: 'nav.bestCard', icon: '⭐' },
     { path: '/cashflow', labelKey: 'nav.cashflow', icon: '💸' },
+    { path: '/import', labelKey: 'nav.import', icon: '📥' },
     { path: '/billing', labelKey: 'nav.billing', icon: '💎' },
     { path: '/settings', labelKey: 'nav.settings', icon: '⚙️' },
   ];
