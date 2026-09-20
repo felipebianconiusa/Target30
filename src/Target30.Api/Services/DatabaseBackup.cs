@@ -58,7 +58,9 @@ public static class DatabaseBackup
 
         // VACUUM INTO não aceita parâmetro: escapa a aspa simples do caminho.
         var escaped = path.Replace("'", "''");
+#pragma warning disable EF1002 // o caminho é gerado por nós e já tem a aspa simples escapada
         await db.Database.ExecuteSqlRawAsync($"VACUUM INTO '{escaped}'");
+#pragma warning restore EF1002
         return new BackupFile(path, nowUtc);
     }
 

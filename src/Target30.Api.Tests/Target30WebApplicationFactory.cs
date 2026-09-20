@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Target30.Api.Data;
 
 namespace Target30.Api.Tests;
@@ -15,11 +16,25 @@ public class Target30WebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
 
+    // O host de teste também roda o PlaidBackgroundService (com backup automático): aponta a pasta
+    // de backup pra um diretório temporário pra não sujar (nem enganar) a pasta de backups do projeto.
+    private readonly string _backupDirectory = Path.Combine(Path.GetTempPath(), "t30-factory-backups-" + Guid.NewGuid().ToString("N"));
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseSetting("Backup:Directory", _backupDirectory);
+
         builder.ConfigureServices(services =>
         {
             _connection.Open();
+
+            // O sync/alertas/backup em background não fazem parte dos testes de controller e
+            // disputavam a mesma conexão SQLite em memória com o reset/seed de cada teste (falhas
+            // intermitentes "no such table"). Os testes dessas peças chamam as classes direto.
+            foreach (var hosted in services
+                .Where(d => d.ServiceType == typeof(IHostedService) && d.ImplementationType == typeof(Target30.Api.Services.PlaidBackgroundService))
+                .ToList())
+                services.Remove(hosted);
 
             var dbContextOptions = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<Target30DbContext>));
             if (dbContextOptions is not null)
@@ -57,6 +72,10 @@ public class Target30WebApplicationFactory : WebApplicationFactory<Program>
     {
         base.Dispose(disposing);
         if (disposing)
+        {
             _connection.Dispose();
+            if (Directory.Exists(_backupDirectory))
+                Directory.Delete(_backupDirectory, true);
+        }
     }
 }
