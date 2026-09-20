@@ -147,5 +147,32 @@ describe('Cards', () => {
       expect(el.textContent).toContain('1.000');
       expect(el.querySelector('.card-item__link-button')).toBeNull();
     });
+
+    it('shows an owner badge and filters the list by owner', () => {
+      const el = renderWith([
+        makeCard({ accountId: 'a', name: 'Savor Layse', owner: 'Layse' }),
+        makeCard({ accountId: 'b', name: 'Savor Felipe', owner: 'Felipe' }),
+      ]);
+      expect(el.querySelectorAll('.card-item').length).toBe(2);
+      expect(Array.from(el.querySelectorAll('.card-item__owner')).map((e) => e.textContent?.trim())).toEqual(
+        expect.arrayContaining(['Layse', 'Felipe']),
+      );
+
+      component.setOwnerFilter('Layse');
+      fixture.detectChanges();
+
+      expect(el.querySelectorAll('.card-item').length).toBe(1);
+      expect(el.querySelector('.card-item strong')?.textContent).toContain('Savor Layse');
+    });
+
+    it('suggests as owners the last name word that repeats across cards', () => {
+      renderWith([
+        makeCard({ accountId: 'a', name: 'Savor Layse' }),
+        makeCard({ accountId: 'b', name: 'Quicksilver Layse' }),
+        makeCard({ accountId: 'c', name: 'Costco Anywhere Visa Citi' }),
+      ]);
+
+      expect(component.ownerSuggestions()).toEqual(['Layse']);
+    });
   });
 });

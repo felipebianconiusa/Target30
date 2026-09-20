@@ -41,11 +41,13 @@ export class Transactions implements OnInit, OnDestroy {
   protected readonly search = signal('');
   protected readonly categories = signal<string[]>([]);
   protected readonly institutions = signal<string[]>([]);
+  protected readonly owners = signal<string[]>([]);
   protected readonly dateFrom = signal('');
   protected readonly dateTo = signal('');
   protected readonly activePreset = signal<DatePreset>('all');
 
   protected readonly institutionOptions = signal<MultiSelectOption[]>([]);
+  protected readonly ownerOptions = signal<MultiSelectOption[]>([]);
 
   protected readonly totalPages = computed(() => Math.max(1, Math.ceil(this.total() / PAGE_SIZE)));
 
@@ -69,6 +71,7 @@ export class Transactions implements OnInit, OnDestroy {
     if (institutionFromQuery) this.institutions.set([institutionFromQuery]);
 
     this.loadInstitutionOptions();
+    this.loadOwnerOptions();
     this.loadPage();
     this.loadTotals();
   }
@@ -105,6 +108,11 @@ export class Transactions implements OnInit, OnDestroy {
 
   protected onCategoriesChange(values: string[]): void {
     this.categories.set(values);
+    this.onFilterChange();
+  }
+
+  protected onOwnersChange(values: string[]): void {
+    this.owners.set(values);
     this.onFilterChange();
   }
 
@@ -152,6 +160,7 @@ export class Transactions implements OnInit, OnDestroy {
     this.search.set('');
     this.categories.set([]);
     this.institutions.set([]);
+    this.owners.set([]);
     this.dateFrom.set('');
     this.dateTo.set('');
     this.activePreset.set('all');
@@ -200,6 +209,7 @@ export class Transactions implements OnInit, OnDestroy {
       search: this.search() || undefined,
       categories: this.categories().length ? this.categories() : undefined,
       institutions: this.institutions().length ? this.institutions() : undefined,
+      owners: this.owners().length ? this.owners() : undefined,
       dateFrom: this.dateFrom() || undefined,
       dateTo: this.dateTo() || undefined,
     };
@@ -211,6 +221,13 @@ export class Transactions implements OnInit, OnDestroy {
         this.totalIncome.set(totals.totalIncome);
         this.totalExpenses.set(totals.totalExpenses);
       },
+    });
+  }
+
+  private loadOwnerOptions(): void {
+    this.plaidService.getOwners().subscribe({
+      next: (owners) => this.ownerOptions.set(owners.map((value) => ({ value, label: value }))),
+      error: () => undefined,
     });
   }
 

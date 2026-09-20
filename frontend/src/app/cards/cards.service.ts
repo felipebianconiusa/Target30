@@ -26,6 +26,7 @@ export interface Card {
   manualNextPaymentDueDate: string | null;
   lastAlertSentDate: string | null;
   nickname: string | null;
+  owner?: string | null;
 }
 
 export interface UpdateCardRequest {
@@ -34,6 +35,7 @@ export interface UpdateCardRequest {
   manualCreditLimit: number | null;
   manualNextPaymentDueDate: string | null;
   nickname: string | null;
+  owner?: string | null;
 }
 
 export interface AppSettings {
@@ -68,6 +70,7 @@ export interface BestCard {
   tier: 'recommended' | 'alternative' | 'caution' | null;
   targetPercent: number;
   overTarget: boolean;
+  owner?: string | null;
 }
 
 export interface BestCardResponse {

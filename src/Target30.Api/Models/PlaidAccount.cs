@@ -39,6 +39,9 @@ public class PlaidAccount
     // O sync nunca toca neste campo, só em Name.
     public string? Nickname { get; set; }
 
+    // De quem é a conta/cartão (ex.: "Felipe", "Layse") — texto livre, só pra filtrar e agrupar.
+    public string? Owner { get; set; }
+
     public string DisplayName => string.IsNullOrWhiteSpace(Nickname) ? Name : $"{Nickname} ({Name})";
 
     public decimal? EffectiveCreditLimit => ManualCreditLimit ?? CreditLimit;

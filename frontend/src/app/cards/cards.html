@@ -15,6 +15,20 @@
   } @else {
     <app-card-setup [cards]="cards()" (saved)="load()" />
 
+    @if (owners().length > 0) {
+      <div class="cards-owner-filter">
+        <label>
+          {{ 'cards.ownerFilter' | translate }}
+          <select (change)="setOwnerFilter($any($event.target).value)">
+            <option value="" [selected]="ownerFilter() === ''">{{ 'cards.ownerAll' | translate }}</option>
+            @for (o of owners(); track o) {
+              <option [value]="o" [selected]="ownerFilter() === o">{{ o }}</option>
+            }
+          </select>
+        </label>
+      </div>
+    }
+
     <div class="payoff-planner">
       <h2 class="cards-group__title">{{ 'cards.payoffPlanner' | translate }}</h2>
       <p class="cards-group__hint">{{ 'cards.payoffPlannerHint' | translate }}</p>
@@ -104,6 +118,9 @@
         <strong>{{ card.nickname || card.name }}</strong>
         @if (card.nickname) {
           <span class="card-item__original">({{ card.name }})</span>
+        }
+        @if (card.owner) {
+          <span class="card-item__owner">{{ card.owner }}</span>
         }
         @if (card.institutionName) {
           <span class="card-item__institution">— {{ card.institutionName }}</span>
@@ -245,6 +262,21 @@
           />
         </label>
         <p class="card-item__hint">{{ 'cards.nicknameHint' | translate: { name: card.name } }}</p>
+        <label>
+          {{ 'cards.owner' | translate }}
+          <input
+            type="text"
+            maxlength="40"
+            list="owner-suggestions"
+            [value]="editOwner()"
+            (input)="setEditOwner($any($event.target).value)"
+          />
+        </label>
+        <datalist id="owner-suggestions">
+          @for (o of ownerSuggestions(); track o) {
+            <option [value]="o"></option>
+          }
+        </datalist>
         <label>
           {{ 'cards.statementClosingDay' | translate }}
           <input

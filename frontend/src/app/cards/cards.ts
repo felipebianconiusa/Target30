@@ -31,6 +31,8 @@ export class Cards implements OnInit {
   protected readonly editManualLimit = signal<number | null>(null);
   protected readonly editManualDueDate = signal<string | null>(null);
   protected readonly editNickname = signal('');
+  protected readonly editOwner = signal('');
+  protected readonly ownerFilter = signal('');
   protected readonly savingId = signal<string | null>(null);
   protected readonly downloadingReport = signal(false);
 
@@ -47,11 +49,32 @@ export class Cards implements OnInit {
 
   // Cartões com fatura já vencendo (valor certo, data certa) vs. ciclo ainda aberto (conta
   // recém-conectada ou sem 1º fechamento processado pelo Plaid ainda — sem valor definido).
+  // Cartões visíveis depois do filtro de dono ('' = todos).
+  private readonly visibleCards = computed(() =>
+    this.cards().filter((c) => !this.ownerFilter() || c.owner === this.ownerFilter()),
+  );
+
+  protected readonly owners = computed(() =>
+    [...new Set(this.cards().map((c) => c.owner).filter((o): o is string => !!o))].sort(),
+  );
+
+  // Sugestões pro campo "dono": quem já é dono de algum cartão + a última palavra do nome que se
+  // repete em 2+ cartões (ex.: "Savor Layse", "Quicksilver Layse" → "Layse").
+  protected readonly ownerSuggestions = computed(() => {
+    const counts = new Map<string, number>();
+    for (const c of this.cards()) {
+      const word = c.name.trim().split(/\s+/).pop() ?? '';
+      if (/^\p{L}{3,}$/u.test(word)) counts.set(word, (counts.get(word) ?? 0) + 1);
+    }
+    const repeated = [...counts].filter(([, n]) => n >= 2).map(([w]) => w);
+    return [...new Set([...this.owners(), ...repeated])].sort();
+  });
+
   protected readonly cardsWithDueDate = computed(() =>
-    this.cards().filter((c) => c.nextPaymentDueDate !== null),
+    this.visibleCards().filter((c) => c.nextPaymentDueDate !== null),
   );
   protected readonly cardsWithoutDueDate = computed(() =>
-    this.cards().filter((c) => c.nextPaymentDueDate === null),
+    this.visibleCards().filter((c) => c.nextPaymentDueDate === null),
   );
 
   constructor(
@@ -70,6 +93,7 @@ export class Cards implements OnInit {
     this.editManualLimit.set(card.manualCreditLimit);
     this.editManualDueDate.set(card.manualNextPaymentDueDate);
     this.editNickname.set(card.nickname ?? '');
+    this.editOwner.set(card.owner ?? '');
   }
 
   protected cancelEdit(): void {
@@ -86,6 +110,14 @@ export class Cards implements OnInit {
 
   protected setEditManualLimit(value: string): void {
     this.editManualLimit.set(value ? Number(value) : null);
+  }
+
+  protected setEditOwner(value: string): void {
+    this.editOwner.set(value);
+  }
+
+  protected setOwnerFilter(value: string): void {
+    this.ownerFilter.set(value);
   }
 
   protected setEditNickname(value: string): void {
@@ -107,6 +139,7 @@ export class Cards implements OnInit {
         manualCreditLimit: this.editManualLimit(),
         manualNextPaymentDueDate: this.editManualDueDate(),
         nickname: this.editNickname().trim() || null,
+        owner: this.editOwner().trim() || null,
       })
       .subscribe({
         next: () => {

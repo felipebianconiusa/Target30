@@ -183,6 +183,19 @@ public class PlaidController : ControllerBase
         var r = await _client.ItemGetAsync(new ItemGetRequest { AccessToken = item.AccessToken });
         return r.Status?.Transactions?.LastSuccessfulUpdate;
     }
+    // Donos já usados nas contas/cartões (pro filtro de transações).
+    [HttpGet("owners")]
+    public async Task<IActionResult> GetOwners()
+    {
+        var owners = await _db.PlaidAccounts
+            .Where(a => a.UserId == CurrentUserId && a.Owner != null)
+            .Select(a => a.Owner!)
+            .Distinct()
+            .OrderBy(o => o)
+            .ToListAsync();
+        return Ok(owners);
+    }
+
     // Desconecta uma conta: remove o item no Plaid e apaga os dados locais (item + transações)
     [HttpDelete("items/{itemId}")]
     public async Task<IActionResult> RemoveItem(string itemId)
@@ -247,13 +260,14 @@ public class PlaidController : ControllerBase
         [FromQuery] string? search = null,
         [FromQuery] string? categories = null,
         [FromQuery] string? institutions = null,
+        [FromQuery] string? owners = null,
         [FromQuery] string? dateFrom = null,
         [FromQuery] string? dateTo = null)
     {
         page = Math.Max(page, 1);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
-        var query = BuildFilteredQuery(search, categories, institutions, dateFrom, dateTo);
+        var query = BuildFilteredQuery(search, categories, institutions, owners, dateFrom, dateTo);
 
         var total = await query.CountAsync();
         var items = await query
@@ -279,12 +293,13 @@ public class PlaidController : ControllerBase
         [FromQuery] string? search = null,
         [FromQuery] string? categories = null,
         [FromQuery] string? institutions = null,
+        [FromQuery] string? owners = null,
         [FromQuery] string? dateFrom = null,
         [FromQuery] string? dateTo = null)
     {
         // A lista mostra tudo, mas os totais ignoram pagamento de fatura/transferência entre contas
         // (senão o mesmo dinheiro conta duas vezes: saída na corrente e "entrada" no cartão).
-        var query = BuildFilteredQuery(search, categories, institutions, dateFrom, dateTo).ExcludingInternalTransfers();
+        var query = BuildFilteredQuery(search, categories, institutions, owners, dateFrom, dateTo).ExcludingInternalTransfers();
 
         var totalExpenses = await query.Where(t => t.Amount > 0).SumAsync(t => (decimal?)t.Amount) ?? 0m;
         var totalIncome = -(await query.Where(t => t.Amount < 0).SumAsync(t => (decimal?)t.Amount) ?? 0m);
@@ -293,7 +308,7 @@ public class PlaidController : ControllerBase
     }
 
     private IQueryable<PlaidTransaction> BuildFilteredQuery(
-        string? search, string? categories, string? institutions, string? dateFrom, string? dateTo)
+        string? search, string? categories, string? institutions, string? owners, string? dateFrom, string? dateTo)
     {
         var query = _db.PlaidTransactions.Where(t => t.UserId == CurrentUserId);
 
@@ -314,6 +329,16 @@ public class PlaidController : ControllerBase
         var institutionList = SplitParam(institutions);
         if (institutionList.Length > 0)
             query = query.Where(t => t.InstitutionName != null && institutionList.Contains(t.InstitutionName));
+
+        // Dono da conta/cartão (PlaidAccount.Owner): filtra pelas contas desses donos.
+        var ownerList = SplitParam(owners);
+        if (ownerList.Length > 0)
+        {
+            var ownedAccountIds = _db.PlaidAccounts
+                .Where(a => a.UserId == CurrentUserId && a.Owner != null && ownerList.Contains(a.Owner))
+                .Select(a => a.AccountId);
+            query = query.Where(t => ownedAccountIds.Contains(t.AccountId));
+        }
 
         if (DateOnly.TryParse(dateFrom, out var from))
             query = query.Where(t => t.Date >= from);

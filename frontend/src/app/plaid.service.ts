@@ -66,6 +66,7 @@ export interface TransactionsQueryFilter {
   search?: string;
   categories?: string[];
   institutions?: string[];
+  owners?: string[];
   dateFrom?: string;
   dateTo?: string;
 }
@@ -100,6 +101,7 @@ function buildFilterParams(filter: TransactionsQueryFilter): HttpParams {
   if (filter.categories?.length) params = params.set('categories', filter.categories.join(','));
   if (filter.institutions?.length)
     params = params.set('institutions', filter.institutions.join(','));
+  if (filter.owners?.length) params = params.set('owners', filter.owners.join(','));
   if (filter.dateFrom) params = params.set('dateFrom', filter.dateFrom);
   if (filter.dateTo) params = params.set('dateTo', filter.dateTo);
   return params;
@@ -158,6 +160,10 @@ export class PlaidService {
 
   getSummary(): Observable<TransactionsSummary> {
     return this.http.get<TransactionsSummary>(`${this.baseUrl}/summary`);
+  }
+
+  getOwners(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/owners`);
   }
 
   getAutoBackupStatus(): Observable<AutoBackupStatus> {

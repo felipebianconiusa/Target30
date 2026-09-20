@@ -45,6 +45,15 @@
       (selectedChange)="onInstitutionsChange($event)"
     />
 
+    @if (ownerOptions().length > 0) {
+      <app-multi-select
+        [allLabel]="'transactions.allOwners' | translate"
+        [options]="ownerOptions()"
+        [selected]="owners()"
+        (selectedChange)="onOwnersChange($event)"
+      />
+    }
+
     <button type="button" (click)="clearFilters()">{{ 'common.clearFilters' | translate }}</button>
   </div>
 

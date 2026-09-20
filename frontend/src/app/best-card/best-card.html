@@ -34,6 +34,9 @@
               @if (c.institutionName) {
                 <span class="best-item__muted">— {{ c.institutionName }}</span>
               }
+              @if (c.owner) {
+                <span class="best-item__owner">{{ c.owner }}</span>
+              }
             </div>
             <p class="best-item__days">
               {{ 'cards.bestTodayDays' | translate: { days: c.daysUntilClosing ?? 0, date: c.nextClosingDate ?? '' } }}

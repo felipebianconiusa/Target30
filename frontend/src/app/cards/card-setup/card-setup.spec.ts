@@ -57,7 +57,7 @@ describe('CardSetup', () => {
   });
 
   it('saves the typed value and re-sends the settings the card already had', () => {
-    render([card({ nickname: 'Viagem', targetIsCustom: true, targetPercent: 20, manualCreditLimit: 5000 })]);
+    render([card({ nickname: 'Viagem', owner: 'Layse', targetIsCustom: true, targetPercent: 20, manualCreditLimit: 5000 })]);
     const saved: unknown[] = [];
     fixture.componentInstance.saved.subscribe(() => saved.push(1));
 
@@ -75,6 +75,7 @@ describe('CardSetup', () => {
       manualCreditLimit: 5000,
       manualNextPaymentDueDate: null,
       nickname: 'Viagem',
+      owner: 'Layse',
     });
     req.flush(null);
     expect(saved.length).toBe(1);

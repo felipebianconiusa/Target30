@@ -67,7 +67,8 @@ public class CardsController : ControllerBase
                     a.ManualCreditLimit,
                     a.ManualNextPaymentDueDate,
                     a.LastAlertSentDate,
-                    a.Nickname);
+                    a.Nickname,
+                    a.Owner);
             })
             .OrderBy(c => c.DaysUntilPaymentDeadline ?? int.MaxValue)
             .ToList();
@@ -152,6 +153,7 @@ public class CardsController : ControllerBase
 
         var nickname = request.Nickname?.Trim();
         account.Nickname = string.IsNullOrEmpty(nickname) ? null : nickname[..Math.Min(nickname.Length, 60)];
+        account.Owner = NormalizeOwner(request.Owner);
 
         await _db.SaveChangesAsync();
         return NoContent();
@@ -198,6 +200,13 @@ public class CardsController : ControllerBase
             excluded.Select(ToBestCardDto).ToList()));
     }
 
+    // Aparado e limitado; vazio = sem dono.
+    private static string? NormalizeOwner(string? owner)
+    {
+        var trimmed = owner?.Trim();
+        return string.IsNullOrEmpty(trimmed) ? null : trimmed[..Math.Min(trimmed.Length, 40)];
+    }
+
     private static BestCardDto ToBestCardDto(CardRanking r) => new(
         r.Account.AccountId,
         r.Account.Name,
@@ -223,7 +232,8 @@ public class CardsController : ControllerBase
             _ => null,
         },
         r.Projection.TargetPercent,
-        r.OverTarget);
+        r.OverTarget,
+        r.Account.Owner);
 
     // Dado um valor disponível pra pagar hoje, distribui entre os cartões que precisam de
     // pagamento pra bater a meta — priorizando primeiro quem fecha mais cedo, depois quem
@@ -320,7 +330,8 @@ public record CardDto(
     decimal? ManualCreditLimit,
     DateOnly? ManualNextPaymentDueDate,
     DateOnly? LastAlertSentDate,
-    string? Nickname
+    string? Nickname,
+    string? Owner = null
 );
 
 public record UpdateCardRequest(
@@ -328,7 +339,8 @@ public record UpdateCardRequest(
     decimal? TargetUtilizationPercent,
     decimal? ManualCreditLimit,
     DateOnly? ManualNextPaymentDueDate,
-    string? Nickname = null);
+    string? Nickname = null,
+    string? Owner = null);
 
 public record CardHistoryPointDto(DateOnly Date, decimal Balance, decimal? Limit, decimal? UtilizationPercent);
 
@@ -346,7 +358,8 @@ public record BestCardDto(
     string? ExclusionReason,
     string? Tier,
     decimal TargetPercent,
-    bool OverTarget);
+    bool OverTarget,
+    string? Owner = null);
 
 public record BestCardResponseDto(
     BestCardDto? Recommended,

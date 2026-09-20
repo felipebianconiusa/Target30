@@ -63,6 +63,7 @@ export class CardSetup {
         manualCreditLimit: d.limit ?? card.manualCreditLimit,
         manualNextPaymentDueDate: d.dueDate ?? card.manualNextPaymentDueDate,
         nickname: card.nickname,
+        owner: card.owner ?? null,
       })
       .subscribe({
         next: () => {
