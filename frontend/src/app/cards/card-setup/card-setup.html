@@ -1,0 +1,60 @@
+@if (pending.length > 0) {
+  <div class="card-setup">
+    <h2 class="card-setup__title">{{ 'cardSetup.title' | translate: { count: pending.length } }}</h2>
+    <p class="card-setup__hint">{{ 'cardSetup.hint' | translate }}</p>
+
+    @for (p of pending; track p.card.accountId) {
+      <div class="card-setup__row">
+        <div class="card-setup__name">
+          <strong>{{ cardLabel(p.card.nickname, p.card.name) }}</strong>
+          @if (p.card.institutionName) {
+            <span class="card-setup__muted">— {{ p.card.institutionName }}</span>
+          }
+        </div>
+        <div class="card-setup__fields">
+          @if (p.needs.includes('closingDay')) {
+            <label>
+              {{ 'cardSetup.closingDay' | translate }}
+              <input
+                type="number"
+                min="1"
+                max="31"
+                [value]="draft(p.card).closingDay ?? ''"
+                (input)="setDraft(p.card, { closingDay: $any($event.target).value === '' ? null : +$any($event.target).value })"
+              />
+            </label>
+          }
+          @if (p.needs.includes('dueDate')) {
+            <label>
+              {{ 'cardSetup.dueDate' | translate }}
+              <input
+                type="date"
+                [value]="draft(p.card).dueDate ?? ''"
+                (input)="setDraft(p.card, { dueDate: $any($event.target).value || null })"
+              />
+            </label>
+          }
+          @if (p.needs.includes('limit')) {
+            <label>
+              {{ 'cardSetup.limit' | translate }}
+              <input
+                type="number"
+                min="0"
+                step="1"
+                [value]="draft(p.card).limit ?? ''"
+                (input)="setDraft(p.card, { limit: $any($event.target).value === '' ? null : +$any($event.target).value })"
+              />
+            </label>
+          }
+          <button
+            type="button"
+            [disabled]="savingId() === p.card.accountId || !canSave(p.card, p.needs)"
+            (click)="save(p.card)"
+          >
+            {{ 'cards.save' | translate }}
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+}

@@ -37,6 +37,13 @@
       </div>
     }
 
+    @if (cardsNeedingSetup() > 0) {
+      <div class="dashboard__best-card">
+        <span>{{ 'cardSetup.dashboard' | translate: { count: cardsNeedingSetup() } }}</span>
+        <a routerLink="/cards">{{ 'cardSetup.dashboardLink' | translate }}</a>
+      </div>
+    }
+
     @if (bestCard(); as best) {
       <div class="dashboard__best-card">
         <span>{{ 'cards.bestToday' | translate }}:</span>

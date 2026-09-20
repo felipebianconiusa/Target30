@@ -12,10 +12,11 @@ import { TranslatePipe } from '../i18n/translate.pipe';
 import { LOCALE_BY_LANG } from '../i18n/translations';
 import { buildGoogleCalendarLink } from '../shared/google-calendar-link';
 import { cardLabel } from '../shared/card-label';
+import { CardSetup } from './card-setup/card-setup';
 
 @Component({
   selector: 'app-cards',
-  imports: [TranslatePipe, NgTemplateOutlet],
+  imports: [TranslatePipe, NgTemplateOutlet, CardSetup],
   templateUrl: './cards.html',
   styleUrl: './cards.scss',
 })
@@ -232,7 +233,7 @@ export class Cards implements OnInit {
     return card.utilizationPercent > card.targetPercent ? 'over' : 'under';
   }
 
-  private load(): void {
+  protected load(): void {
     this.loading.set(true);
     this.cardsService.getSettings().subscribe((settings) => this.settings.set(settings));
     this.cardsService.getCards().subscribe({

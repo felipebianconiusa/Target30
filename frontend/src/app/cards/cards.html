@@ -13,6 +13,8 @@
   } @else if (cards().length === 0) {
     <p>{{ 'cards.empty' | translate }}</p>
   } @else {
+    <app-card-setup [cards]="cards()" (saved)="load()" />
+
     <div class="payoff-planner">
       <h2 class="cards-group__title">{{ 'cards.payoffPlanner' | translate }}</h2>
       <p class="cards-group__hint">{{ 'cards.payoffPlannerHint' | translate }}</p>

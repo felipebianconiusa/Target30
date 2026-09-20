@@ -6,6 +6,7 @@ import { BestCard, Card, CardsService } from '../cards/cards.service';
 import { Budget, BudgetsService } from './budgets.service';
 import { DashboardService, HealthScore, MonthlyComparisonRow } from './dashboard.service';
 import { cardLabel } from '../shared/card-label';
+import { cardSetupNeeds } from '../cards/card-setup';
 import { TransactionTable } from '../shared/transaction-table/transaction-table';
 import { ALL_CATEGORY_CODES, translateCategory } from '../shared/category-labels';
 import { TranslationService } from '../i18n/translation.service';
@@ -35,6 +36,7 @@ export class Dashboard implements OnInit {
   protected readonly summary = signal<TransactionsSummary>(EMPTY_SUMMARY);
   protected readonly itemCount = signal(0);
   protected readonly cardAlerts = signal<Card[]>([]);
+  protected readonly cardsNeedingSetup = signal(0);
   protected readonly loading = signal(true);
   protected readonly syncing = signal(false);
   protected readonly errorMessage = signal('');
@@ -171,6 +173,7 @@ export class Dashboard implements OnInit {
         this.summary.set(summary);
         this.itemCount.set(items.length);
         this.cardAlerts.set(cards.filter((c) => c.needsAlert));
+        this.cardsNeedingSetup.set(cards.filter((c) => cardSetupNeeds(c).length > 0).length);
         this.loading.set(false);
       },
       error: () => {
