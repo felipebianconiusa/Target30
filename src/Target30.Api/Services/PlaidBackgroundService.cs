@@ -17,6 +17,7 @@ public class PlaidBackgroundService : BackgroundService
     private readonly IConfiguration _configuration;
     private readonly ILogger<PlaidBackgroundService> _logger;
     private readonly IHostEnvironment _environment;
+    private TimeSpan _syncInterval = TimeSpan.FromHours(6);
 
     // Usuários com acesso (assinatura em dia, teste grátis ou isento) no ciclo atual. Quem não tem não
     // é sincronizado com o Plaid (custo) nem recebe alertas baseados em dado que deixou de atualizar.
@@ -36,6 +37,7 @@ public class PlaidBackgroundService : BackgroundService
     {
         var intervalHours = double.TryParse(_configuration["Sync:IntervalHours"], out var h) ? h : 6;
         var interval = TimeSpan.FromHours(Math.Max(intervalHours, 0.5));
+        _syncInterval = interval;
 
         using var timer = new PeriodicTimer(interval);
         do
@@ -60,8 +62,10 @@ public class PlaidBackgroundService : BackgroundService
         var emailSender = scope.ServiceProvider.GetRequiredService<AlertDispatcher>();
 
         s_activeUsers = await scope.ServiceProvider.GetRequiredService<BillingService>().UsersWithAccessAsync();
-        var items = (await db.PlaidItems.ToListAsync(stoppingToken)).Where(i => s_activeUsers.Contains(i.UserId)).ToList();
-        _logger.LogInformation("Sync automático: {Count} item(ns) do Plaid.", items.Count);
+        var activeItems = (await db.PlaidItems.ToListAsync(stoppingToken)).Where(i => s_activeUsers.Contains(i.UserId)).ToList();
+        var nowUtc = DateTime.UtcNow;
+        var items = activeItems.Where(i => SyncSchedule.IsDue(i.LastSyncedAt, nowUtc, _syncInterval)).ToList();
+        _logger.LogInformation("Sync automático: {Count} de {Total} item(ns) do Plaid (o resto sincronizou há pouco).", items.Count, activeItems.Count);
 
         foreach (var item in items)
         {

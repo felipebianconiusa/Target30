@@ -21,4 +21,8 @@ public class PlaidItem
     // Quando avisamos por email que os dados desse banco ficaram velhos (DataFreshness). Zerado
     // quando volta ao normal, pra um próximo problema avisar de novo.
     public DateTime? LastStaleAlertSentAt { get; set; }
+
+    // Próxima vez em que podemos chamar /liabilities/get desse banco (cobrado por requisição) —
+    // ver LiabilitiesSchedule.
+    public DateTime? NextLiabilitiesAt { get; set; }
 }

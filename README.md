@@ -159,3 +159,8 @@ npx skills add openai/skills --skill security-best-practices -y
 
 - [ ] Guardar transações localmente (hoje `transactions/sync` busca do Plaid a cada chamada, sem persistir)
 - [ ] Tela de settings/perfil (hoje só tem o botão "Sair" no header)
+
+## Consumo de chamadas do Plaid
+
+Algumas chamadas do Plaid são cobradas por requisição depois da cota grátis (ex.: **Liabilities**, e o *Atualizar agora*). O app limita isso por padrão: /liabilities/get só roda em bancos que têm cartão de crédito e no máximo a cada Sync:LiabilitiesIntervalHours (padrão 72h; 7 dias depois de um erro, como no OnePay); e ao reiniciar a API um banco que sincronizou há pouco **não** é sincronizado de novo. O ciclo normal continua a cada Sync:IntervalHours (padrão 6h). Acompanhe o saldo de requisições grátis no Dashboard do Plaid.
+

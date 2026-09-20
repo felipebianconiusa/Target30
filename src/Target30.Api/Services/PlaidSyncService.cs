@@ -16,11 +16,14 @@ public class PlaidSyncService
 {
     private readonly PlaidClient _client;
     private readonly Target30DbContext _db;
+    private readonly TimeSpan _liabilitiesInterval;
 
-    public PlaidSyncService(PlaidClient client, Target30DbContext db)
+    public PlaidSyncService(PlaidClient client, Target30DbContext db, IConfiguration configuration)
     {
         _client = client;
         _db = db;
+        var hours = double.TryParse(configuration["Sync:LiabilitiesIntervalHours"], out var h) && h > 0 ? h : 72;
+        _liabilitiesInterval = TimeSpan.FromHours(hours);
     }
 
     public async Task SyncItemAsync(PlaidItem item)
@@ -68,16 +71,27 @@ public class PlaidSyncService
 
         // /liabilities/get só funciona se o Item tiver o produto Liabilities habilitado (itens
         // conectados antes desse produto existir vão falhar aqui — não deve travar o resto).
+        // É cobrado por requisição: só busca se o banco tem cartão de crédito e se já passou o
+        // intervalo (LiabilitiesSchedule). Quando pula, os campos de liabilities já salvos ficam como estão.
         var creditByAccountId = new Dictionary<string, CreditCardLiability>();
-        var liabilitiesResponse = await _client.LiabilitiesGetAsync(new LiabilitiesGetRequest
+        var nowUtc = DateTime.UtcNow;
+        var hasCreditAccount = accountsResponse.Accounts.Any(a => a.Type == AccountType.Credit);
+        if (hasCreditAccount && LiabilitiesSchedule.ShouldFetch(item.NextLiabilitiesAt, nowUtc))
         {
-            AccessToken = item.AccessToken,
-        });
-        if (liabilitiesResponse.Error is null && liabilitiesResponse.Liabilities?.Credit is not null)
-        {
-            foreach (var credit in liabilitiesResponse.Liabilities.Credit)
-                if (credit.AccountId is not null)
-                    creditByAccountId[credit.AccountId] = credit;
+            var liabilitiesResponse = await _client.LiabilitiesGetAsync(new LiabilitiesGetRequest
+            {
+                AccessToken = item.AccessToken,
+            });
+            if (liabilitiesResponse.Error is null && liabilitiesResponse.Liabilities?.Credit is not null)
+            {
+                foreach (var credit in liabilitiesResponse.Liabilities.Credit)
+                    if (credit.AccountId is not null)
+                        creditByAccountId[credit.AccountId] = credit;
+            }
+
+            item.NextLiabilitiesAt = liabilitiesResponse.Error is null
+                ? LiabilitiesSchedule.NextAfterSuccess(nowUtc, _liabilitiesInterval)
+                : LiabilitiesSchedule.NextAfterFailure(nowUtc);
         }
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
