@@ -1,8 +1,10 @@
 using System.Threading.RateLimiting;
 using Going.Plaid;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Target30.Api;
 using Target30.Api.Data;
 using Target30.Api.Services;
 
@@ -15,6 +17,15 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 builder.Services.AddPlaid(builder.Configuration.GetSection("Plaid"));
+
+// Chaves que criptografam os access tokens do Plaid no banco. PERDER esta pasta = perder os
+// tokens (é preciso reconectar os bancos): guarde uma cópia SEPARADA do banco e dos backups.
+var keysDirectory = builder.Configuration["DataProtection:KeysDirectory"];
+if (string.IsNullOrWhiteSpace(keysDirectory))
+    keysDirectory = Path.Combine(builder.Environment.ContentRootPath, "keys");
+builder.Services.AddDataProtection()
+    .SetApplicationName("Target30")
+    .PersistKeysToFileSystem(new DirectoryInfo(keysDirectory));
 
 builder.Services.AddDbContext<Target30DbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
@@ -76,9 +87,14 @@ builder.Services
 
 var app = builder.Build();
 
+TokenCrypto.Configure(new TokenProtector(
+    app.Services.GetRequiredService<IDataProtectionProvider>().CreateProtector("Target30.PlaidAccessToken")));
+
 using (var scope = app.Services.CreateScope())
 {
-    scope.ServiceProvider.GetRequiredService<Target30DbContext>().Database.Migrate();
+    var db = scope.ServiceProvider.GetRequiredService<Target30DbContext>();
+    db.Database.Migrate();
+    await TokenEncryptionMigration.RunAsync(db);
 }
 
 app.UseHttpsRedirection();

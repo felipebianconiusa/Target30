@@ -34,3 +34,7 @@ src/Target30.Api/wwwroot/
 # Backups automáticos do banco (contêm tokens do Plaid)
 backups/
 **/backups/
+
+# Chaves que criptografam os tokens do Plaid (nunca versionar)
+keys/
+**/keys/

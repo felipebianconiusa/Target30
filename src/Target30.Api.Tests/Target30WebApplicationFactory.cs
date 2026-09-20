@@ -14,6 +14,9 @@ namespace Target30.Api.Tests;
 // banco real nem precisar de um login do Google de verdade.
 public class Target30WebApplicationFactory : WebApplicationFactory<Program>
 {
+    public static readonly string SharedKeysDirectory =
+        Path.Combine(Path.GetTempPath(), "t30-test-keys-" + Guid.NewGuid().ToString("N"));
+
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
 
     // O host de teste também roda o PlaidBackgroundService (com backup automático): aponta a pasta
@@ -23,6 +26,10 @@ public class Target30WebApplicationFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("Backup:Directory", _backupDirectory);
+
+        // Todas as fábricas de teste dividem o mesmo chaveiro (o TokenCrypto é estático): assim um
+        // token gravado por um host é legível por outro, e nada vai parar na pasta keys/ do projeto.
+        builder.UseSetting("DataProtection:KeysDirectory", SharedKeysDirectory);
 
         builder.ConfigureServices(services =>
         {

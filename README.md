@@ -73,6 +73,12 @@ Configuração necessária:
    - `frontend/src/app/auth/google-client-id.ts`
    - `src/Target30.Api/appsettings.Development.json` → `Authentication:Google:ClientId`
 
+## Tokens do Plaid criptografados
+
+Os access tokens do Plaid ficam criptografados no banco (ASP.NET Data Protection, prefixo `enc:v1:`). As chaves ficam em `src/Target30.Api/keys` (ou `DataProtection:KeysDirectory`), fora do git. Na primeira execução depois dessa mudança, os tokens que estavam em texto puro são regravados criptografados automaticamente.
+
+**Guarde uma cópia da pasta de chaves em lugar separado do banco e dos backups.** Sem as chaves os tokens não podem ser lidos — o app continua abrindo, mas você precisaria reconectar cada banco. Com as chaves e sem o banco, os tokens não servem pra nada.
+
 ## Backup automático do banco
 
 A cada ciclo de sincronização, se o último backup tiver mais de 24h, a API cria uma cópia consistente do `target30.db` (SQLite `VACUUM INTO`, sem parar o app) e mantém as mais recentes. Configuração (todas opcionais):
@@ -81,7 +87,7 @@ A cada ciclo de sincronização, se o último backup tiver mais de 24h, a API cr
 "Backup": { "Enabled": true, "Directory": "D:\\backups\\target30", "IntervalHours": 24, "KeepCount": 14 }
 ```
 
-Sem `Directory`, usa `src/Target30.Api/backups` (ignorado pelo git). **A cópia inclui os tokens do Plaid**, como o próprio banco: aponte pra um disco/pasta de confiança e fora de pastas sincronizadas na nuvem. Pra restaurar, pare a API e troque o `target30.db` pela cópia. A tela de Configurações mostra o último backup.
+Sem `Directory`, usa `src/Target30.Api/backups` (ignorado pelo git). Os tokens do Plaid vão **criptografados** (ver abaixo), então a cópia sozinha não expõe o acesso aos bancos — mas ela só funciona junto com a pasta keys/, que precisa de backup **separado**. Pra restaurar, pare a API e troque o `target30.db` pela cópia. A tela de Configurações mostra o último backup.
 ## Acesso pelo celular (opcional)
 
 O app roda no seu PC; pra usar no celular (ou receber os alertas com o PC desligado) ele precisa estar acessível de fora. O que já está pronto no projeto:

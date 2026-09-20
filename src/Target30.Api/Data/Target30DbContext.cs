@@ -18,6 +18,11 @@ public class Target30DbContext(DbContextOptions<Target30DbContext> options) : Db
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Access token do Plaid criptografado no banco (ver TokenCrypto).
+        modelBuilder.Entity<PlaidItem>()
+            .Property(i => i.AccessToken)
+            .HasConversion(v => TokenCrypto.Protect(v), v => TokenCrypto.Unprotect(v));
+
         modelBuilder.Entity<RecurringBill>()
             .HasIndex(b => b.UserId);
 
