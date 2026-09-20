@@ -57,7 +57,7 @@ public class PlaidBackgroundService : BackgroundService
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<Target30DbContext>();
         var sync = scope.ServiceProvider.GetRequiredService<PlaidSyncService>();
-        var emailSender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
+        var emailSender = scope.ServiceProvider.GetRequiredService<AlertDispatcher>();
 
         s_activeUsers = await scope.ServiceProvider.GetRequiredService<BillingService>().UsersWithAccessAsync();
         var items = (await db.PlaidItems.ToListAsync(stoppingToken)).Where(i => s_activeUsers.Contains(i.UserId)).ToList();
@@ -112,7 +112,7 @@ public class PlaidBackgroundService : BackgroundService
 
     // Avisa por email quando o Plaid deixa de atualizar um banco (dado velho ou conexão com
     // erro). Um email por problema (DataFreshness.ShouldAlert), não a cada sync. /item/get é grátis.
-    private async Task SendStaleDataAlertsAsync(Target30DbContext db, IEmailSender emailSender, PlaidClient client)
+    private async Task SendStaleDataAlertsAsync(Target30DbContext db, AlertDispatcher emailSender, PlaidClient client)
     {
         var now = DateTimeOffset.UtcNow;
         var items = (await db.PlaidItems.ToListAsync()).Where(i => s_activeUsers.Contains(i.UserId)).ToList();
@@ -149,12 +149,12 @@ public class PlaidBackgroundService : BackgroundService
         foreach (var (userId, problems) in problemsByUser)
         {
             var settings = await db.UserSettings.FirstOrDefaultAsync(s => s.UserId == userId);
-            if (settings is null || !settings.NotificationsEnabled || string.IsNullOrWhiteSpace(settings.Email))
+            if (settings is null || !settings.NotificationsEnabled || !AlertDispatcher.HasChannel(settings))
                 continue;
 
             var body = DataFreshness.BuildAlertBody(
                 problems.Select(p => (p.Item.InstitutionName ?? "Banco", p.Status, p.Last)), now);
-            await emailSender.SendAsync(settings.Email!, "Target30: dados de um banco podem estar desatualizados", body);
+            await emailSender.SendAsync(settings, "Target30: dados de um banco podem estar desatualizados", body);
 
             foreach (var p in problems)
                 p.Item.LastStaleAlertSentAt = DateTime.UtcNow;
@@ -165,7 +165,7 @@ public class PlaidBackgroundService : BackgroundService
 
     // Avisa por email quando o saldo projetado das contas correntes (Fluxo de Caixa) vai ficar
     // abaixo do limite escolhido nos próximos 30 dias. Um email por problema (LowBalanceWarning.Key).
-    private async Task SendLowBalanceAlertsAsync(Target30DbContext db, IEmailSender emailSender, CashFlowService cashFlow)
+    private async Task SendLowBalanceAlertsAsync(Target30DbContext db, AlertDispatcher emailSender, CashFlowService cashFlow)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var userIds = (await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync()).Where(s_activeUsers.Contains).ToList();
@@ -175,7 +175,7 @@ public class PlaidBackgroundService : BackgroundService
             try
             {
                 var settings = await db.UserSettings.FirstOrDefaultAsync(s => s.UserId == userId);
-                if (settings is null || !settings.NotificationsEnabled || string.IsNullOrWhiteSpace(settings.Email))
+                if (settings is null || !settings.NotificationsEnabled || !AlertDispatcher.HasChannel(settings))
                     continue;
 
                 var (_, currentBalance, rows) = await cashFlow.BuildRowsAsync(userId, 0, 30, today);
@@ -191,7 +191,7 @@ public class PlaidBackgroundService : BackgroundService
                     continue;
 
                 await emailSender.SendAsync(
-                    settings.Email!, "Target30: saldo baixo à vista",
+                    settings, "Target30: saldo baixo à vista",
                     LowBalanceDetector.BuildAlertBody(warning, settings.LowBalanceThreshold));
                 settings.LastLowBalanceAlertKey = warning.Key;
             }
@@ -204,7 +204,7 @@ public class PlaidBackgroundService : BackgroundService
         await db.SaveChangesAsync();
     }
 
-    private static async Task SendAlertsAsync(Target30DbContext db, IEmailSender emailSender)
+    private static async Task SendAlertsAsync(Target30DbContext db, AlertDispatcher emailSender)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var userIds = (await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync()).Where(s_activeUsers.Contains).ToList();
@@ -212,7 +212,7 @@ public class PlaidBackgroundService : BackgroundService
         foreach (var userId in userIds)
         {
             var settings = await db.UserSettings.FirstOrDefaultAsync(s => s.UserId == userId);
-            if (settings is null || !settings.NotificationsEnabled || string.IsNullOrWhiteSpace(settings.Email))
+            if (settings is null || !settings.NotificationsEnabled || !AlertDispatcher.HasChannel(settings))
                 continue;
 
             var cards = await db.PlaidAccounts.Where(a => a.UserId == userId && a.Type == "Credit").ToListAsync();
@@ -238,14 +238,14 @@ public class PlaidBackgroundService : BackgroundService
             if (alerts.Count > 0)
             {
                 var body = "Target30 — cartões precisando de pagamento antes do fechamento:\n\n" + string.Join("\n", alerts);
-                await emailSender.SendAsync(settings.Email!, "Target30: pagamento necessário antes do fechamento", body);
+                await emailSender.SendAsync(settings, "Target30: pagamento necessário antes do fechamento", body);
             }
         }
 
         await db.SaveChangesAsync();
     }
 
-    private static async Task SendWeeklyDigestsAsync(Target30DbContext db, IEmailSender emailSender)
+    private static async Task SendWeeklyDigestsAsync(Target30DbContext db, AlertDispatcher emailSender)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var userIds = (await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync()).Where(s_activeUsers.Contains).ToList();
@@ -253,7 +253,7 @@ public class PlaidBackgroundService : BackgroundService
         foreach (var userId in userIds)
         {
             var settings = await db.UserSettings.FirstOrDefaultAsync(s => s.UserId == userId);
-            if (settings is null || !settings.WeeklyDigestEnabled || string.IsNullOrWhiteSpace(settings.Email))
+            if (settings is null || !settings.WeeklyDigestEnabled || !AlertDispatcher.HasChannel(settings))
                 continue;
 
             if (!WeeklyDigest.ShouldSend(settings.LastDigestSentDate, today))
@@ -268,14 +268,14 @@ public class PlaidBackgroundService : BackgroundService
                 .ToList();
 
             var body = WeeklyDigest.BuildBody(withProjections, today);
-            await emailSender.SendAsync(settings.Email!, "Target30: resumo semanal dos seus cartões", body);
+            await emailSender.SendAsync(settings, "Target30: resumo semanal dos seus cartões", body);
             settings.LastDigestSentDate = today;
         }
 
         await db.SaveChangesAsync();
     }
 
-    private static async Task SendBudgetAlertsAsync(Target30DbContext db, IEmailSender emailSender)
+    private static async Task SendBudgetAlertsAsync(Target30DbContext db, AlertDispatcher emailSender)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var currentMonthKey = $"{today.Year:D4}-{today.Month:D2}";
@@ -285,7 +285,7 @@ public class PlaidBackgroundService : BackgroundService
         foreach (var userId in userIds)
         {
             var settings = await db.UserSettings.FirstOrDefaultAsync(s => s.UserId == userId);
-            if (settings is null || !settings.NotificationsEnabled || string.IsNullOrWhiteSpace(settings.Email))
+            if (settings is null || !settings.NotificationsEnabled || !AlertDispatcher.HasChannel(settings))
                 continue;
 
             var budgets = await db.CategoryBudgets.Where(b => b.UserId == userId).ToListAsync();
@@ -317,21 +317,21 @@ public class PlaidBackgroundService : BackgroundService
             if (overBudget.Count > 0)
             {
                 var body = "Target30 — categorias que estouraram o orçamento mensal:\n\n" + string.Join("\n", overBudget);
-                await emailSender.SendAsync(settings.Email!, "Target30: orçamento mensal estourado", body);
+                await emailSender.SendAsync(settings, "Target30: orçamento mensal estourado", body);
             }
         }
 
         await db.SaveChangesAsync();
     }
 
-    private static async Task SendSubscriptionPriceChangeAlertsAsync(Target30DbContext db, IEmailSender emailSender)
+    private static async Task SendSubscriptionPriceChangeAlertsAsync(Target30DbContext db, AlertDispatcher emailSender)
     {
         var userIds = (await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync()).Where(s_activeUsers.Contains).ToList();
 
         foreach (var userId in userIds)
         {
             var settings = await db.UserSettings.FirstOrDefaultAsync(s => s.UserId == userId);
-            if (settings is null || !settings.NotificationsEnabled || string.IsNullOrWhiteSpace(settings.Email))
+            if (settings is null || !settings.NotificationsEnabled || !AlertDispatcher.HasChannel(settings))
                 continue;
 
             var bills = await db.RecurringBills.Where(b => b.UserId == userId && b.IsActive).ToListAsync();
@@ -367,7 +367,7 @@ public class PlaidBackgroundService : BackgroundService
             {
                 var body = "Target30 — o valor de assinaturas/contas recorrentes mudou:\n\n" + string.Join("\n", changes)
                     + "\n\nAtualize em Fluxo de Caixa > Gerenciar contas recorrentes.";
-                await emailSender.SendAsync(settings.Email!, "Target30: valor de assinatura mudou", body);
+                await emailSender.SendAsync(settings, "Target30: valor de assinatura mudou", body);
             }
         }
 

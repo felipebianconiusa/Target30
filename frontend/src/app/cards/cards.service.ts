@@ -46,6 +46,7 @@ export interface AppSettings {
   email: string | null;
   lastDigestSentDate: string | null;
   lowBalanceThreshold: number;
+  pushTopic?: string | null;
 }
 
 export interface CardHistoryPoint {
@@ -140,6 +141,10 @@ export class CardsService {
 
   getSettings(): Observable<AppSettings> {
     return this.http.get<AppSettings>('/api/settings');
+  }
+
+  sendPushTest(): Observable<void> {
+    return this.http.post<void>('/api/settings/push-test', {});
   }
 
   updateSettings(settings: AppSettings): Observable<AppSettings> {

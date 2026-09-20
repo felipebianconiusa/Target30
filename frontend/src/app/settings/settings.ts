@@ -31,6 +31,8 @@ export class Settings implements OnInit {
   protected readonly notificationsEnabled = signal(true);
   protected readonly weeklyDigestEnabled = signal(true);
   protected readonly lowBalanceThreshold = signal(0);
+  protected readonly pushTopic = signal('');
+  protected readonly pushTestState = signal<'idle' | 'sending' | 'ok' | 'error'>('idle');
   protected readonly lastDigestSentDate = signal<string | null>(null);
   protected readonly savingSettings = signal(false);
   protected readonly settingsSaved = signal(false);
@@ -59,6 +61,7 @@ export class Settings implements OnInit {
       this.notificationsEnabled.set(settings.notificationsEnabled);
       this.weeklyDigestEnabled.set(settings.weeklyDigestEnabled);
       this.lowBalanceThreshold.set(settings.lowBalanceThreshold ?? 0);
+      this.pushTopic.set(settings.pushTopic ?? '');
       this.lastDigestSentDate.set(settings.lastDigestSentDate);
     });
   }
@@ -69,6 +72,31 @@ export class Settings implements OnInit {
 
   protected setNotifyDays(value: string): void {
     this.notifyDaysBeforeClosing.set(Number(value));
+  }
+
+  protected setPushTopic(value: string): void {
+    this.pushTopic.set(value.trim());
+    this.pushTestState.set('idle');
+  }
+
+  // Tópico do ntfy = uma "senha" só sua: gera um aleatório e difícil de adivinhar.
+  protected generatePushTopic(): void {
+    const bytes = crypto.getRandomValues(new Uint8Array(12));
+    const random = Array.from(bytes, (b) => b.toString(36).padStart(2, '0')).join('');
+    this.setPushTopic(`t30-${random}`);
+  }
+
+  // Salva as configurações (o teste usa o tópico salvo) e manda a notificação de teste.
+  protected testPush(): void {
+    this.pushTestState.set('sending');
+    this.cardsService.updateSettings(this.buildSettingsPayload()).subscribe({
+      next: () =>
+        this.cardsService.sendPushTest().subscribe({
+          next: () => this.pushTestState.set('ok'),
+          error: () => this.pushTestState.set('error'),
+        }),
+      error: () => this.pushTestState.set('error'),
+    });
   }
 
   protected setLowBalanceThreshold(value: string): void {
@@ -86,15 +114,7 @@ export class Settings implements OnInit {
   protected saveSettings(): void {
     this.savingSettings.set(true);
     this.settingsSaved.set(false);
-    const payload: AppSettings = {
-      globalTargetUtilizationPercent: this.globalTargetUtilizationPercent(),
-      notifyDaysBeforeClosing: this.notifyDaysBeforeClosing(),
-      notificationsEnabled: this.notificationsEnabled(),
-      weeklyDigestEnabled: this.weeklyDigestEnabled(),
-      email: null,
-      lastDigestSentDate: null,
-      lowBalanceThreshold: this.lowBalanceThreshold(),
-    };
+    const payload = this.buildSettingsPayload();
     this.cardsService.updateSettings(payload).subscribe({
       next: () => {
         this.savingSettings.set(false);
@@ -102,6 +122,19 @@ export class Settings implements OnInit {
       },
       error: () => this.savingSettings.set(false),
     });
+  }
+
+  private buildSettingsPayload(): AppSettings {
+    return {
+      globalTargetUtilizationPercent: this.globalTargetUtilizationPercent(),
+      notifyDaysBeforeClosing: this.notifyDaysBeforeClosing(),
+      notificationsEnabled: this.notificationsEnabled(),
+      weeklyDigestEnabled: this.weeklyDigestEnabled(),
+      email: null,
+      lastDigestSentDate: null,
+      lowBalanceThreshold: this.lowBalanceThreshold(),
+      pushTopic: this.pushTopic() || null,
+    };
   }
 
   protected categoryLabel(code: string): string {

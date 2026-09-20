@@ -10,6 +10,9 @@ public class UserSettings
     public string? Email { get; set; }
     public bool NotificationsEnabled { get; set; } = true;
 
+    // Tópico do ntfy pra receber os alertas no celular (opcional, além do e-mail).
+    public string? PushTopic { get; set; }
+
     // Resumo semanal (visão geral de todos os cartões) — independente do alerta de fechamento.
     public bool WeeklyDigestEnabled { get; set; } = true;
     public DateOnly? LastDigestSentDate { get; set; }

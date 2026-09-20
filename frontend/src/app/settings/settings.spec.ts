@@ -1,5 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it } from 'vitest';
@@ -7,7 +8,7 @@ import { TranslationService } from '../i18n/translation.service';
 import { Settings } from './settings';
 
 describe('Settings automatic backup line', () => {
-  function render(status: object, rules: object[] = []): HTMLElement {
+  function render(status: object, rules: object[] = [], pushTopic: string | null = null): HTMLElement {
     TestBed.configureTestingModule({
       imports: [Settings],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
@@ -19,7 +20,7 @@ describe('Settings automatic backup line', () => {
     http.match('/api/settings').forEach((r) =>
       r.flush({
         globalTargetUtilizationPercent: 30, notifyDaysBeforeClosing: 3, notificationsEnabled: true,
-        weeklyDigestEnabled: true, email: null, lastDigestSentDate: null, lowBalanceThreshold: 0,
+        weeklyDigestEnabled: true, email: null, lastDigestSentDate: null, lowBalanceThreshold: 0, pushTopic,
       }),
     );
     http.expectOne('/api/backup/auto-status').flush(status);
@@ -62,5 +63,41 @@ describe('Settings automatic backup line', () => {
 
     (el.querySelector('.settings__rules button') as HTMLButtonElement).click();
     TestBed.inject(HttpTestingController).expectOne('/api/category-rules/7').flush(null);
+  });
+
+  describe('phone notifications (ntfy)', () => {
+    const backup = { enabled: true, directory: 'D:\\b', lastBackupUtc: null, count: 0, keepCount: 14 };
+
+    it('shows the saved topic and generates a hard-to-guess one on request', () => {
+      const el = render(backup, [], 'meu-topico-123');
+      const input = el.querySelector('input[maxlength="64"]') as HTMLInputElement;
+      expect(input.value).toBe('meu-topico-123');
+
+      const generate = Array.from(el.querySelectorAll('.settings__push-actions button'))[0] as HTMLButtonElement;
+      generate.click();
+      TestBed.inject(ApplicationRef).tick();
+
+      expect(input.value).toMatch(/^t30-[0-9a-z]{20,}$/);
+    });
+
+    it('saves the settings with the topic and then sends the test', () => {
+      const el = render(backup, [], 'meu-topico-123');
+      const http = TestBed.inject(HttpTestingController);
+      const test = Array.from(el.querySelectorAll('.settings__push-actions button'))[1] as HTMLButtonElement;
+
+      test.click();
+
+      const save = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings');
+      expect(save.request.body.pushTopic).toBe('meu-topico-123');
+      save.flush({});
+      http.expectOne((r) => r.method === 'POST' && r.url === '/api/settings/push-test').flush(null);
+    });
+
+    it('keeps the test button disabled without a topic', () => {
+      const el = render(backup);
+
+      const test = Array.from(el.querySelectorAll('.settings__push-actions button'))[1] as HTMLButtonElement;
+      expect(test.disabled).toBe(true);
+    });
   });
 });

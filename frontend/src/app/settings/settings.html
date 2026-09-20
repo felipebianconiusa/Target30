@@ -88,6 +88,31 @@
         />
       </label>
       <p class="settings__hint">{{ 'settings.lowBalanceThresholdHint' | translate }}</p>
+      <label>
+        {{ 'settings.pushTopic' | translate }}
+        <input
+          type="text"
+          maxlength="64"
+          autocomplete="off"
+          [value]="pushTopic()"
+          (input)="setPushTopic($any($event.target).value)"
+        />
+      </label>
+      <div class="settings__push-actions">
+        <button type="button" (click)="generatePushTopic()">{{ 'settings.pushGenerate' | translate }}</button>
+        <button type="button" [disabled]="!pushTopic() || pushTestState() === 'sending'" (click)="testPush()">
+          {{ 'settings.pushTest' | translate }}
+        </button>
+        @switch (pushTestState()) {
+          @case ('ok') {
+            <span class="settings__push-ok">{{ 'settings.pushOk' | translate }}</span>
+          }
+          @case ('error') {
+            <span class="settings__push-error">{{ 'settings.pushError' | translate }}</span>
+          }
+        }
+      </div>
+      <p class="settings__hint">{{ 'settings.pushHint' | translate }}</p>
       <label class="settings__checkbox">
         <input
           type="checkbox"

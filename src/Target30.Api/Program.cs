@@ -39,6 +39,8 @@ builder.Services.Configure<BillingOptions>(builder.Configuration.GetSection("Bil
 builder.Services.AddScoped<BillingService>();
 builder.Services.AddHttpClient<IStripeGateway, StripeGateway>();
 builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+builder.Services.AddHttpClient<IPushSender, NtfyPushSender>();
+builder.Services.AddScoped<AlertDispatcher>();
 builder.Services.AddHostedService<PlaidBackgroundService>();
 
 // Limite global por IP — o app guarda dados financeiros reais, então mesmo sendo uso pessoal

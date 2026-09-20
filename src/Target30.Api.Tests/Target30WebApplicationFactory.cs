@@ -20,6 +20,7 @@ public class Target30WebApplicationFactory : WebApplicationFactory<Program>
     // Opções de cobrança e Stripe falso controláveis pelos testes (padrão: cobrança desligada, como no app).
     public Target30.Api.Billing.BillingOptions Billing { get; } = new();
     public FakeStripeGateway Stripe { get; } = new();
+    public FakePushSender Push { get; } = new();
 
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
 
@@ -44,6 +45,7 @@ public class Target30WebApplicationFactory : WebApplicationFactory<Program>
 
             services.AddSingleton(Microsoft.Extensions.Options.Options.Create(Billing));
             services.AddSingleton<Target30.Api.Billing.IStripeGateway>(Stripe);
+            services.AddSingleton<Target30.Api.Services.IPushSender>(Push);
 
             // O sync/alertas/backup em background não fazem parte dos testes de controller e
             // disputavam a mesma conexão SQLite em memória com o reset/seed de cada teste (falhas

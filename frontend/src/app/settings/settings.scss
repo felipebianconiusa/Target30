@@ -150,3 +150,20 @@
     font-size: 0.9rem;
   }
 }
+
+.settings__push-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.settings__push-ok {
+  color: var(--color-success);
+  font-size: 0.85rem;
+}
+
+.settings__push-error {
+  color: var(--color-danger);
+  font-size: 0.85rem;
+}
