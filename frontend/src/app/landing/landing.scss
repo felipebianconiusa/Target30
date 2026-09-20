@@ -1,0 +1,150 @@
+.landing {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 3rem 1rem;
+  color: var(--color-text);
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.landing__hero {
+  text-align: center;
+  margin-bottom: 3rem;
+
+  h1 {
+    margin: 0;
+    font-size: 2.2rem;
+  }
+}
+
+.landing__tagline {
+  margin: 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.landing__sub,
+.landing__hint {
+  margin: 0.25rem 0 1.25rem;
+  color: var(--color-text-muted);
+}
+
+.landing__hint {
+  font-size: 0.8rem;
+}
+
+.landing__login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.landing__features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+
+.landing__feature {
+  padding: 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+
+  h2 {
+    margin: 0 0 0.4rem;
+    font-size: 1rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+  }
+}
+
+.landing__waitlist {
+  padding: 1.5rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  margin-bottom: 2rem;
+
+  h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.1rem;
+  }
+
+  p {
+    margin: 0 0 1rem;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 24rem;
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+  }
+
+  input {
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+  }
+
+  button {
+    padding: 0.55rem 1rem;
+    border: 0;
+    border-radius: 6px;
+    background: var(--color-primary);
+    color: var(--color-primary-text);
+    font: inherit;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+  }
+}
+
+// Fora da tela (não display:none, que alguns robôs reconhecem).
+.landing__trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.landing__ok {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.landing__error {
+  color: var(--color-danger);
+}
+
+.landing__footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+
+  a {
+    color: var(--color-primary);
+  }
+}

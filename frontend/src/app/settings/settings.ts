@@ -24,6 +24,7 @@ export class Settings implements OnInit {
   protected readonly downloadingBackup = signal(false);
   protected readonly autoBackup = signal<AutoBackupStatus | null>(null);
   protected readonly categoryRules = signal<CategoryRule[]>([]);
+  protected readonly waitlistCount = signal<number | null>(null);
 
   protected readonly globalTargetUtilizationPercent = signal(30);
   protected readonly notifyDaysBeforeClosing = signal(3);
@@ -43,6 +44,10 @@ export class Settings implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.plaidService.getWaitlist().subscribe({
+      next: (list) => this.waitlistCount.set(list.length),
+      error: () => undefined,
+    });
     this.loadCategoryRules();
     this.plaidService.getAutoBackupStatus().subscribe({
       next: (status) => this.autoBackup.set(status),

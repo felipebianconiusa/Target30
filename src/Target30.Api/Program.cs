@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Target30.Api;
 using Target30.Api.Billing;
+using Target30.Api.Controllers;
 using Target30.Api.Data;
 using Target30.Api.Services;
 
@@ -46,6 +47,17 @@ builder.Services.AddHostedService<PlaidBackgroundService>();
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Cadastro público na lista de espera: poucos por hora por IP (endpoint sem login).
+    options.AddPolicy(WaitlistController.RateLimitPolicy, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = builder.Configuration.GetValue("RateLimit:WaitlistPerHour", 5),
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0,
+            }));
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
         RateLimitPartition.GetFixedWindowLimiter(
             context.Connection.RemoteIpAddress?.ToString() ?? "unknown",

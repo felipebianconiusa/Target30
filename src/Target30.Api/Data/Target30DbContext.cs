@@ -16,6 +16,7 @@ public class Target30DbContext(DbContextOptions<Target30DbContext> options) : Db
     public DbSet<CategoryRule> CategoryRules => Set<CategoryRule>();
     public DbSet<CardRewardRate> CardRewardRates => Set<CardRewardRate>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
+    public DbSet<WaitlistEntry> WaitlistEntries => Set<WaitlistEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -26,6 +27,10 @@ public class Target30DbContext(DbContextOptions<Target30DbContext> options) : Db
 
         modelBuilder.Entity<RecurringBill>()
             .HasIndex(b => b.UserId);
+
+        modelBuilder.Entity<WaitlistEntry>()
+            .HasIndex(w => w.Email)
+            .IsUnique();
 
         modelBuilder.Entity<Subscription>()
             .HasKey(s => s.UserId);

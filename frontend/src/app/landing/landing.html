@@ -1,0 +1,74 @@
+<main class="landing">
+  <section class="landing__hero">
+    <h1>Target30</h1>
+    <p class="landing__tagline">{{ 'landing.headline' | translate }}</p>
+    <p class="landing__sub">{{ 'login.tagline' | translate }}</p>
+    <div class="landing__login">
+      <app-google-login-button />
+      <p class="landing__hint">{{ 'landing.loginHint' | translate }}</p>
+    </div>
+  </section>
+
+  <section class="landing__features">
+    @for (f of features; track f) {
+      <article class="landing__feature">
+        <h2>{{ 'landing.feature.' + f + '.title' | translate }}</h2>
+        <p>{{ 'landing.feature.' + f + '.text' | translate }}</p>
+      </article>
+    }
+  </section>
+
+  <section class="landing__waitlist">
+    <h2>{{ 'landing.waitlistTitle' | translate }}</h2>
+    <p>{{ 'landing.waitlistText' | translate }}</p>
+
+    @if (joined()) {
+      <p class="landing__ok">{{ 'landing.waitlistDone' | translate }}</p>
+    } @else {
+      <form (submit)="$event.preventDefault(); join()">
+        <label>
+          {{ 'landing.waitlistEmail' | translate }}
+          <input
+            type="email"
+            name="email"
+            autocomplete="email"
+            required
+            [value]="email()"
+            (input)="email.set($any($event.target).value)"
+          />
+        </label>
+        <label>
+          {{ 'landing.waitlistNote' | translate }}
+          <input
+            type="text"
+            name="note"
+            maxlength="300"
+            [value]="note()"
+            (input)="note.set($any($event.target).value)"
+          />
+        </label>
+        <input
+          class="landing__trap"
+          type="text"
+          name="website"
+          tabindex="-1"
+          autocomplete="off"
+          aria-hidden="true"
+          [value]="website()"
+          (input)="website.set($any($event.target).value)"
+        />
+        <button type="submit" [disabled]="sending()">{{ 'landing.waitlistButton' | translate }}</button>
+      </form>
+      @if (error()) {
+        <p class="landing__error">{{ error() }}</p>
+      }
+    }
+  </section>
+
+  <footer class="landing__footer">
+    <p>{{ 'landing.disclaimer' | translate }}</p>
+    <a routerLink="/terms">{{ 'landing.terms' | translate }}</a>
+    ·
+    <a routerLink="/privacy">{{ 'landing.privacy' | translate }}</a>
+  </footer>
+</main>

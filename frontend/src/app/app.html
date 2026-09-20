@@ -3,11 +3,11 @@
     <p>{{ 'common.loading' | translate }}</p>
   </div>
 } @else if (!authService.user()) {
-  <div class="shell shell--centered login-screen">
-    <h1>Target30</h1>
-    <p>{{ 'login.tagline' | translate }}</p>
-    <app-google-login-button />
-  </div>
+  @if (onLegalPage()) {
+    <router-outlet />
+  } @else {
+    <app-landing />
+  }
 } @else {
   <div class="layout" [class.layout--collapsed]="menuCollapsed()">
     <aside class="sidebar">

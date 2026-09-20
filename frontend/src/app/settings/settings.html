@@ -125,6 +125,15 @@
     </p>
   </div>
 
+  @if (waitlistCount() !== null) {
+    <div class="settings__section">
+      <p class="settings__hint">
+        {{ 'settings.waitlist' | translate: { count: waitlistCount()! } }}
+        <a href="/api/waitlist/csv">{{ 'settings.waitlistCsv' | translate }}</a>
+      </p>
+    </div>
+  }
+
   @if (categoryRules().length > 0) {
     <div class="settings__section">
       <h2>{{ 'settings.categoryRules' | translate }}</h2>

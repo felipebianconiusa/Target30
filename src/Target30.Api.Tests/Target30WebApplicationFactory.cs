@@ -31,6 +31,9 @@ public class Target30WebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.UseSetting("Backup:Directory", _backupDirectory);
 
+        // Todos os testes chegam do mesmo "IP": sem isso o limite do cadastro público (5/hora) estouraria.
+        builder.UseSetting("RateLimit:WaitlistPerHour", "1000");
+
         // Todas as fábricas de teste dividem o mesmo chaveiro (o TokenCrypto é estático): assim um
         // token gravado por um host é legível por outro, e nada vai parar na pasta keys/ do projeto.
         builder.UseSetting("DataProtection:KeysDirectory", SharedKeysDirectory);

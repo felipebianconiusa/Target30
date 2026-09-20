@@ -162,6 +162,11 @@ export class PlaidService {
     return this.http.get<TransactionsSummary>(`${this.baseUrl}/summary`);
   }
 
+  // Só o dono do app (Billing:ExemptEmails) recebe a lista; pra os demais a API responde 403.
+  getWaitlist(): Observable<{ email: string }[]> {
+    return this.http.get<{ email: string }[]>('/api/waitlist');
+  }
+
   getOwners(): Observable<string[]> {
     return this.http.get<string[]>(`${this.baseUrl}/owners`);
   }

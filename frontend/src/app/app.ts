@@ -1,11 +1,12 @@
 import { Component, OnInit, effect, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './auth/auth.service';
 import { GoogleLoginButton } from './auth/google-login-button/google-login-button';
 import { TranslationService } from './i18n/translation.service';
 import { TranslatePipe } from './i18n/translate.pipe';
 import { ThemeService } from './theme/theme.service';
 import { BillingService } from './billing/billing.service';
+import { Landing } from './landing/landing';
 
 interface NavItem {
   path: string;
@@ -28,7 +29,7 @@ function initialCollapsed(): boolean {
 }
 
 @Component({
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, GoogleLoginButton, TranslatePipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, GoogleLoginButton, TranslatePipe, Landing],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',
@@ -47,12 +48,22 @@ export class App implements OnInit {
 
   protected readonly menuCollapsed = signal(initialCollapsed());
 
+  // Termos e Política de Privacidade abrem também sem login (o Plaid e o Stripe exigem link público).
+  protected readonly onLegalPage = signal(false);
+
   constructor(
     protected readonly authService: AuthService,
     protected readonly translationService: TranslationService,
     private readonly themeService: ThemeService,
     protected readonly billingService: BillingService,
+    private readonly router: Router,
   ) {
+    const isLegal = (url: string) => /^\/(terms|privacy)(\/|\?|#|$)/.test(url);
+    this.onLegalPage.set(isLegal(this.router.url));
+    this.router.events.subscribe((e) => {
+      if (e instanceof NavigationEnd) this.onLegalPage.set(isLegal(e.urlAfterRedirects));
+    });
+
     // Assim que há usuário logado, carrega a situação da assinatura (menu e aviso de acesso).
     effect(() => {
       if (this.authService.user()) this.billingService.loadStatus().subscribe({ error: () => undefined });

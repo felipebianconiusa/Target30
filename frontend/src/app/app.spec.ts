@@ -21,6 +21,17 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
+  it('shows the public landing page when nobody is logged in', () => {
+    const fixture = TestBed.createComponent(App);
+    TestBed.inject(TranslationService).setLang('pt');
+    TestBed.inject(AuthService).checkedSession.set(true);
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('app-landing')).not.toBeNull();
+    expect(el.querySelector('.sidebar')).toBeNull();
+  });
+
   it('shows a loading state before the session check resolves', () => {
     const fixture = TestBed.createComponent(App);
     TestBed.inject(TranslationService).setLang('pt');
