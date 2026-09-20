@@ -1,0 +1,136 @@
+.rewards {
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.rewards__title {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.rewards__hint,
+.rewards__muted {
+  margin: 0.15rem 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.rewards__picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.rewards select,
+.rewards input {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.rewards__list {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+
+.rewards__item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--color-border);
+
+  &--best {
+    background: var(--color-success-bg);
+  }
+}
+
+.rewards__meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.rewards__rate {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.rewards__chip {
+  margin-left: 0.4rem;
+  padding: 0 0.45rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+
+  &--best {
+    border-color: var(--color-success);
+    color: var(--color-success);
+  }
+
+  &--caution {
+    border-color: var(--color-danger-border);
+    color: var(--color-danger);
+  }
+}
+
+.rewards__toggle,
+.rewards__editor button {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.rewards__editor {
+  margin-top: 0.75rem;
+}
+
+.rewards__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--color-border);
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  input[type='number'] {
+    width: 5rem;
+  }
+}
+
+.rewards__row,
+.rewards__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}

@@ -14,11 +14,16 @@ public class Target30DbContext(DbContextOptions<Target30DbContext> options) : Db
     public DbSet<CategoryBudget> CategoryBudgets => Set<CategoryBudget>();
     public DbSet<RecurringIncome> RecurringIncomes => Set<RecurringIncome>();
     public DbSet<CategoryRule> CategoryRules => Set<CategoryRule>();
+    public DbSet<CardRewardRate> CardRewardRates => Set<CardRewardRate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<RecurringBill>()
             .HasIndex(b => b.UserId);
+
+        modelBuilder.Entity<CardRewardRate>()
+            .HasIndex(r => new { r.UserId, r.AccountId, r.Category })
+            .IsUnique();
 
         modelBuilder.Entity<CategoryRule>()
             .HasIndex(r => new { r.UserId, r.MerchantKey })

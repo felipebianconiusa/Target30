@@ -5,6 +5,7 @@ import { TranslationService } from '../i18n/translation.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { LOCALE_BY_LANG } from '../i18n/translations';
 import { cardLabel } from '../shared/card-label';
+import { RewardsPanel } from './rewards-panel/rewards-panel';
 
 type Tier = 'recommended' | 'alternative' | 'caution';
 
@@ -14,7 +15,7 @@ const ALTERNATIVE_MIN_DAYS = 7;
 
 @Component({
   selector: 'app-best-card',
-  imports: [TranslatePipe, RouterLink],
+  imports: [TranslatePipe, RouterLink, RewardsPanel],
   templateUrl: './best-card.html',
   styleUrl: './best-card.scss',
 })

@@ -10,6 +10,8 @@
   } @else {
     <p class="best-card-page__intro">{{ 'bestCard.intro' | translate: { days: alternativeMinDays } }}</p>
 
+    <app-rewards-panel />
+
     @for (tier of tiers; track tier) {
       <div class="best-group best-group--{{ tier }}">
         <h2 class="best-group__title">{{ 'bestCard.' + tier | translate }}</h2>

@@ -1,0 +1,95 @@
+<div class="rewards">
+  <h2 class="rewards__title">{{ 'rewards.title' | translate }}</h2>
+  <p class="rewards__hint">{{ 'rewards.hint' | translate }}</p>
+
+  <label class="rewards__picker">
+    {{ 'rewards.category' | translate }}
+    <select (change)="setCategory($any($event.target).value)">
+      @for (c of categories; track c) {
+        <option [value]="c" [selected]="c === category()">{{ categoryLabel(c) }}</option>
+      }
+    </select>
+  </label>
+
+  @if (ranking().length === 0) {
+    <p class="rewards__muted">{{ (loading() ? 'common.loading' : 'rewards.none') | translate }}</p>
+  } @else {
+    <ol class="rewards__list">
+      @for (r of ranking(); track r.accountId) {
+        <li class="rewards__item" [class.rewards__item--best]="r.isBest">
+          <div>
+            <strong>{{ cardLabel(r.nickname, r.name) }}</strong>
+            @if (r.owner) {
+              <span class="rewards__chip">{{ r.owner }}</span>
+            }
+            @if (r.isBest) {
+              <span class="rewards__chip rewards__chip--best">{{ 'rewards.best' | translate }}</span>
+            }
+            @if (r.tier === 'caution') {
+              <span class="rewards__chip rewards__chip--caution">{{ 'rewards.caution' | translate }}</span>
+            }
+          </div>
+          <div class="rewards__meta">
+            <span class="rewards__rate">{{ r.ratePercent }}%</span>
+            @if (r.daysUntilClosing !== null) {
+              <span>{{ 'cards.bestTodayDays' | translate: { days: r.daysUntilClosing, date: r.nextClosingDate ?? '' } }}</span>
+            } @else {
+              <span>{{ 'cards.bestTodayNoClosingDay' | translate }}</span>
+            }
+          </div>
+        </li>
+      }
+    </ol>
+  }
+
+  <button type="button" class="rewards__toggle" (click)="toggleEditor()">
+    {{ (editing() ? 'common.hide' : 'rewards.configure') | translate }}
+  </button>
+
+  @if (editing()) {
+    <div class="rewards__editor">
+      <p class="rewards__hint">{{ 'rewards.editorHint' | translate }}</p>
+      @for (card of cards(); track card.accountId) {
+        <div class="rewards__card">
+          <strong>{{ cardLabel(card.nickname, card.name) }}</strong>
+          <label>
+            {{ 'rewards.base' | translate }}
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              [value]="draft(card).base ?? ''"
+              (input)="setBase(card, $any($event.target).value)"
+            />
+          </label>
+          @for (row of draft(card).rows; track $index) {
+            <div class="rewards__row">
+              <select (change)="setRowCategory(card, $index, $any($event.target).value)">
+                @for (c of categories; track c) {
+                  <option [value]="c" [selected]="c === row.category">{{ categoryLabel(c) }}</option>
+                }
+              </select>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                [value]="row.ratePercent ?? ''"
+                (input)="setRowRate(card, $index, $any($event.target).value)"
+              />
+              <span>%</span>
+              <button type="button" (click)="removeRow(card, $index)">{{ 'common.remove' | translate }}</button>
+            </div>
+          }
+          <div class="rewards__actions">
+            <button type="button" (click)="addRow(card)">{{ 'rewards.addCategory' | translate }}</button>
+            <button type="button" [disabled]="savingId() === card.accountId" (click)="save(card)">
+              {{ 'cards.save' | translate }}
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
