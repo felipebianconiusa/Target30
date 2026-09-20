@@ -27,3 +27,6 @@ npm-debug.log*
 # .claude/skills usa symlinks de caminho absoluto, não portáveis entre máquinas.
 .agents/
 .claude/skills/
+
+# Build do Angular servido pela API (scripts/publish-local.ps1)
+src/Target30.Api/wwwroot/

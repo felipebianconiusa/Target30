@@ -81,6 +81,22 @@ using (var scope = app.Services.CreateScope())
     scope.ServiceProvider.GetRequiredService<Target30DbContext>().Database.Migrate();
 }
 
+app.UseHttpsRedirection();
+
+// Modo "um processo só": se o build do Angular estiver em wwwroot (scripts/publish-local.ps1),
+// a própria API serve o app — uma origem, um endereço — o que facilita expor por um túnel
+// (Tailscale/Cloudflare) pra usar no celular. Sem wwwroot, nada muda (dev usa ng serve).
+var serveFrontend = File.Exists(Path.Combine(app.Environment.WebRootPath ?? "", "index.html"));
+// Arquivos estáticos ANTES do roteamento: o middleware ignora requisições em que o roteamento já
+// escolheu um endpoint, e o fallback do SPA casa com qualquer caminho.
+if (serveFrontend)
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+}
+
+app.UseRouting();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -88,14 +104,15 @@ if (app.Environment.IsDevelopment())
     app.UseCors("AngularDev");
 }
 
-app.UseHttpsRedirection();
-
 app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+if (serveFrontend)
+    app.MapFallbackToFile("{*path:regex(^(?!api/).*$)}", "index.html");
 
 app.Run();
 

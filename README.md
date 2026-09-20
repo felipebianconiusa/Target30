@@ -73,6 +73,19 @@ Configuração necessária:
    - `frontend/src/app/auth/google-client-id.ts`
    - `src/Target30.Api/appsettings.Development.json` → `Authentication:Google:ClientId`
 
+## Acesso pelo celular (opcional)
+
+O app roda no seu PC; pra usar no celular (ou receber os alertas com o PC desligado) ele precisa estar acessível de fora. O que já está pronto no projeto:
+
+- **PWA**: o app é instalável ("Adicionar à tela inicial") quando aberto por HTTPS.
+- **Um processo só**: `scripts/publish-local.ps1` gera o build do Angular e copia pra `src/Target30.Api/wwwroot`; com isso a própria API serve o app em `https://localhost:7059` (mesma origem, sem `ng serve`). Sem `wwwroot`, nada muda.
+- **Lista de emails permitidos**: `Authentication:AllowedEmails` (array) em `appsettings.Development.json`/variável de ambiente. Com a lista, só esses emails (verificados pelo Google) conseguem entrar; **sem a lista, qualquer conta Google entra**. Configure **antes** de expor o app, senão um estranho poderia logar e conectar contas usando as suas chaves do Plaid.
+
+```json
+"Authentication": { "AllowedEmails": [ "voce@gmail.com" ] }
+```
+
+O que **não** está feito (depende de você escolher e criar conta): expor o endereço fora do localhost. Opções sem servidor na nuvem: um túnel (Tailscale Funnel/Serve ou Cloudflare Tunnel) apontando pra `https://localhost:7059`. Depois disso, adicione o novo endereço em *Authorized JavaScript origins* do OAuth Client do Google. O banco (`target30.db`) guarda os access tokens do Plaid: mantenha-o no seu PC/servidor de confiança e fora do git.
 ## Agent Skills
 
 Skills do [skills.sh](https://skills.sh) instalados pro Claude Code (EF Core, ASP.NET Core, Angular, revisão de segurança) — `.agents/` e `.claude/skills/` são gerados localmente e não ficam no repo (os symlinks de `.claude/skills` são de caminho absoluto, não portáveis entre máquinas). `skills-lock.json` fica versionado como referência de quais skills o projeto usa.

@@ -44,6 +44,10 @@ public class AuthController : ControllerBase
             return Unauthorized();
         }
 
+        var allowedEmails = _configuration.GetSection("Authentication:AllowedEmails").Get<string[]>();
+        if (!AllowedEmails.IsAllowed(allowedEmails, payload.Email, payload.EmailVerified))
+            return Forbid();
+
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, payload.Subject),
