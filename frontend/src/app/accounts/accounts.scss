@@ -61,3 +61,30 @@
     cursor: default;
   }
 }
+
+.accounts__refresh {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.8rem;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.accounts__warning {
+  font-size: 0.75rem;
+  color: var(--color-danger);
+  margin-top: 0.15rem;
+}
+
+.accounts__refresh-message {
+  font-size: 0.75rem;
+  margin-top: 0.15rem;
+  color: var(--color-success);
+}

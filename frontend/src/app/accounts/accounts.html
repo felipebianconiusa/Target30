@@ -14,8 +14,33 @@
               <div class="accounts__last-synced">
                 {{ (item.lastSyncedAt ? 'accounts.lastSyncedAt' : 'accounts.neverSynced') | translate: { date: formatDateTime(item.lastSyncedAt) } }}
               </div>
+              @if (freshness()[item.itemId]; as f) {
+                @if (f.plaidLastSuccessfulUpdate) {
+                  <div class="accounts__last-synced">
+                    {{ 'accounts.plaidUpdatedAt' | translate: { date: formatDateTime(f.plaidLastSuccessfulUpdate) } }}
+                  </div>
+                }
+                @if (f.errorCode) {
+                  <div class="accounts__warning">{{ 'accounts.plaidError' | translate: { code: f.errorCode } }}</div>
+                } @else if (lastAttemptFailed(f)) {
+                  <div class="accounts__warning">
+                    {{ 'accounts.plaidFailed' | translate: { date: formatDateTime(f.plaidLastFailedUpdate) } }}
+                  </div>
+                }
+              }
+              @if (refreshMessages()[item.itemId]) {
+                <div class="accounts__refresh-message">{{ refreshMessages()[item.itemId] }}</div>
+              }
             </div>
             <div class="accounts__row-actions">
+              <button
+                type="button"
+                class="accounts__refresh"
+                [disabled]="refreshingItemId() !== null"
+                (click)="refresh(item)"
+              >
+                {{ (refreshingItemId() === item.itemId ? 'accounts.refreshing' : 'accounts.refreshNow') | translate }}
+              </button>
               <a
                 [routerLink]="['/transactions']"
                 [queryParams]="{ institution: item.institutionName }"

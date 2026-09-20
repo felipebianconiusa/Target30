@@ -3,6 +3,7 @@ using Going.Plaid;
 using Going.Plaid.Entity;
 using Going.Plaid.Item;
 using Going.Plaid.Link;
+using Going.Plaid.Transactions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -100,6 +101,86 @@ public class PlaidController : ControllerBase
         return Ok(items);
     }
 
+    // Quando o PLAID conseguiu buscar dados novos de cada banco pela última vez (diferente do
+    // "último sync" do app, que só diz quando NÓS perguntamos ao Plaid). Serve pra saber se uma
+    // transação que você fez agora ainda não chegou ao Plaid ou se o problema é nosso.
+    // /item/get é gratuito.
+    [HttpGet("items/freshness")]
+    public async Task<IActionResult> GetFreshness()
+    {
+        var items = await _db.PlaidItems.Where(i => i.UserId == CurrentUserId).ToListAsync();
+
+        var result = await Task.WhenAll(items.Select(async item =>
+        {
+            try
+            {
+                var r = await _client.ItemGetAsync(new ItemGetRequest { AccessToken = item.AccessToken });
+                var tx = r.Status?.Transactions;
+                return new PlaidItemFreshnessDto(
+                    item.ItemId, tx?.LastSuccessfulUpdate, tx?.LastFailedUpdate,
+                    r.Error?.ErrorCode ?? r.Item?.Error?.ErrorCode, item.LastRefreshRequestedAt);
+            }
+            catch
+            {
+                // Indicador informativo: se o Plaid não responder, só fica sem a informação.
+                return new PlaidItemFreshnessDto(item.ItemId, null, null, null, item.LastRefreshRequestedAt);
+            }
+        }));
+
+        return Ok(result);
+    }
+
+    // "Atualizar agora": pede ao Plaid pra buscar no banco AGORA (/transactions/refresh — COBRADO
+    // por chamada), espera um pouco o Plaid terminar e já sincroniza. Protegido por um
+    // intervalo mínimo entre pedidos (PlaidRefreshGuard) pra clique repetido não custar dinheiro.
+    [HttpPost("items/{itemId}/refresh")]
+    public async Task<IActionResult> RefreshItem(string itemId, CancellationToken cancellationToken)
+    {
+        var item = await _db.PlaidItems.FirstOrDefaultAsync(i => i.ItemId == itemId && i.UserId == CurrentUserId);
+        if (item is null)
+            return NotFound();
+
+        var remaining = PlaidRefreshGuard.RemainingCooldown(item.LastRefreshRequestedAt, DateTime.UtcNow);
+        if (remaining is { } wait)
+        {
+            var seconds = (int)Math.Ceiling(wait.TotalSeconds);
+            Response.Headers.RetryAfter = seconds.ToString();
+            return StatusCode(StatusCodes.Status429TooManyRequests, new { retryAfterSeconds = seconds });
+        }
+
+        var before = await GetLastSuccessfulUpdateAsync(item);
+
+        var refresh = await _client.TransactionsRefreshAsync(new TransactionsRefreshRequest
+        {
+            AccessToken = item.AccessToken,
+        });
+        if (refresh.Error is not null)
+            return Problem(refresh.Error.ErrorMessage);
+
+        item.LastRefreshRequestedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        // O refresh é assíncrono no Plaid (sem webhook aqui): espera até ~30s a atualização
+        // avançar. Se não avançar, o sync automático pega quando o Plaid terminar.
+        DateTimeOffset? current = before;
+        var updated = false;
+        for (var attempt = 0; attempt < 10 && !updated; attempt++)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
+            current = await GetLastSuccessfulUpdateAsync(item);
+            updated = current is not null && (before is null || current > before);
+        }
+
+        await _sync.SyncItemAsync(item);
+
+        return Ok(new PlaidRefreshResultDto(updated, current));
+    }
+
+    private async Task<DateTimeOffset?> GetLastSuccessfulUpdateAsync(PlaidItem item)
+    {
+        var r = await _client.ItemGetAsync(new ItemGetRequest { AccessToken = item.AccessToken });
+        return r.Status?.Transactions?.LastSuccessfulUpdate;
+    }
     // Desconecta uma conta: remove o item no Plaid e apaga os dados locais (item + transações)
     [HttpDelete("items/{itemId}")]
     public async Task<IActionResult> RemoveItem(string itemId)
@@ -313,3 +394,12 @@ public class PlaidController : ControllerBase
 public record ExchangeTokenRequest(string PublicToken, string? InstitutionName);
 
 public record UpdateCategoryRequest(string? Category);
+
+public record PlaidItemFreshnessDto(
+    string ItemId,
+    DateTimeOffset? PlaidLastSuccessfulUpdate,
+    DateTimeOffset? PlaidLastFailedUpdate,
+    string? ErrorCode,
+    DateTime? LastRefreshRequestedAt);
+
+public record PlaidRefreshResultDto(bool Updated, DateTimeOffset? PlaidLastSuccessfulUpdate);

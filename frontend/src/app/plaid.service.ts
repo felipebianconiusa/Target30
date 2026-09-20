@@ -17,6 +17,19 @@ export interface PlaidItemSummary {
   lastSyncedAt: string | null;
 }
 
+export interface PlaidItemFreshness {
+  itemId: string;
+  plaidLastSuccessfulUpdate: string | null;
+  plaidLastFailedUpdate: string | null;
+  errorCode: string | null;
+  lastRefreshRequestedAt: string | null;
+}
+
+export interface PlaidRefreshResult {
+  updated: boolean;
+  plaidLastSuccessfulUpdate: string | null;
+}
+
 export interface Transaction {
   transactionId: string;
   accountId: string;
@@ -97,6 +110,15 @@ export class PlaidService {
 
   getItems(): Observable<PlaidItemSummary[]> {
     return this.http.get<PlaidItemSummary[]>(`${this.baseUrl}/items`);
+  }
+
+  getItemsFreshness(): Observable<PlaidItemFreshness[]> {
+    return this.http.get<PlaidItemFreshness[]>(`${this.baseUrl}/items/freshness`);
+  }
+
+  // Cobrado por chamada pelo Plaid (a API também limita a frequência por item).
+  refreshItem(itemId: string): Observable<PlaidRefreshResult> {
+    return this.http.post<PlaidRefreshResult>(`${this.baseUrl}/items/${itemId}/refresh`, {});
   }
 
   removeItem(itemId: string): Observable<void> {

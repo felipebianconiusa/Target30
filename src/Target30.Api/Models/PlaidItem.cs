@@ -13,4 +13,8 @@ public class PlaidItem
     // Atualizado a cada sync bem-sucedido (manual ou automático) — mostrado na tela de Contas
     // pra você confiar no que está rodando sozinho em background.
     public DateTime? LastSyncedAt { get; set; }
+
+    // Quando foi o último "atualizar agora" (/transactions/refresh, cobrado por chamada pelo
+    // Plaid). Guardado no banco pra a trava de segurança sobreviver a reinício da API.
+    public DateTime? LastRefreshRequestedAt { get; set; }
 }

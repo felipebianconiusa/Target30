@@ -1,7 +1,8 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ConnectAccount } from '../connect-account/connect-account';
-import { PlaidItemSummary, PlaidService } from '../plaid.service';
+import { PlaidItemFreshness, PlaidItemSummary, PlaidService } from '../plaid.service';
 import { TranslationService } from '../i18n/translation.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { LOCALE_BY_LANG } from '../i18n/translations';
@@ -15,6 +16,9 @@ import { LOCALE_BY_LANG } from '../i18n/translations';
 export class Accounts implements OnInit {
   protected readonly items = signal<PlaidItemSummary[]>([]);
   protected readonly removingItemId = signal<string | null>(null);
+  protected readonly freshness = signal<Record<string, PlaidItemFreshness>>({});
+  protected readonly refreshingItemId = signal<string | null>(null);
+  protected readonly refreshMessages = signal<Record<string, string>>({});
 
   constructor(
     private readonly plaidService: PlaidService,
@@ -27,8 +31,60 @@ export class Accounts implements OnInit {
 
   protected loadItems(): void {
     this.plaidService.getItems().subscribe({
-      next: (items) => this.items.set(items),
+      next: (items) => {
+        this.items.set(items);
+        this.loadFreshness();
+      },
     });
+  }
+
+  // Informativo (o Plaid pode demorar ou falhar): se não vier, a tela só não mostra a linha.
+  private loadFreshness(): void {
+    this.plaidService.getItemsFreshness().subscribe({
+      next: (list) => this.freshness.set(Object.fromEntries(list.map((f) => [f.itemId, f]))),
+      error: () => undefined,
+    });
+  }
+
+  // O Plaid falhou depois da última atualização bem-sucedida: os dados podem estar defasados.
+  protected lastAttemptFailed(f: PlaidItemFreshness | undefined): boolean {
+    if (!f?.plaidLastFailedUpdate) return false;
+    if (!f.plaidLastSuccessfulUpdate) return true;
+    return new Date(f.plaidLastFailedUpdate) > new Date(f.plaidLastSuccessfulUpdate);
+  }
+
+  protected refresh(item: PlaidItemSummary): void {
+    const institution =
+      item.institutionName ?? this.translationService.t('accounts.unnamedInstitution');
+    // Custa dinheiro a cada chamada no Plaid: sempre confirma antes.
+    if (!confirm(this.translationService.t('accounts.refreshConfirm', { institution }))) return;
+
+    this.refreshingItemId.set(item.itemId);
+    this.setRefreshMessage(item.itemId, '');
+    this.plaidService.refreshItem(item.itemId).subscribe({
+      next: (result) => {
+        this.refreshingItemId.set(null);
+        this.setRefreshMessage(
+          item.itemId,
+          this.translationService.t(result.updated ? 'accounts.refreshUpdated' : 'accounts.refreshPending'),
+        );
+        this.loadItems();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.refreshingItemId.set(null);
+        const seconds = err.status === 429 ? Number(err.error?.retryAfterSeconds) : NaN;
+        this.setRefreshMessage(
+          item.itemId,
+          Number.isFinite(seconds)
+            ? this.translationService.t('accounts.refreshCooldown', { minutes: Math.ceil(seconds / 60) })
+            : this.translationService.t('accounts.refreshError'),
+        );
+      },
+    });
+  }
+
+  private setRefreshMessage(itemId: string, message: string): void {
+    this.refreshMessages.update((m) => ({ ...m, [itemId]: message }));
   }
 
   protected formatDateTime(value: string | null): string {
