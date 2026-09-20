@@ -15,6 +15,7 @@ public class Target30DbContext(DbContextOptions<Target30DbContext> options) : Db
     public DbSet<RecurringIncome> RecurringIncomes => Set<RecurringIncome>();
     public DbSet<CategoryRule> CategoryRules => Set<CategoryRule>();
     public DbSet<CardRewardRate> CardRewardRates => Set<CardRewardRate>();
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -25,6 +26,12 @@ public class Target30DbContext(DbContextOptions<Target30DbContext> options) : Db
 
         modelBuilder.Entity<RecurringBill>()
             .HasIndex(b => b.UserId);
+
+        modelBuilder.Entity<Subscription>()
+            .HasKey(s => s.UserId);
+
+        modelBuilder.Entity<Subscription>()
+            .HasIndex(s => s.StripeCustomerId);
 
         modelBuilder.Entity<CardRewardRate>()
             .HasIndex(r => new { r.UserId, r.AccountId, r.Category })

@@ -7,6 +7,8 @@ using Going.Plaid.Transactions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Target30.Api.Billing;
 using Target30.Api.Data;
 using Target30.Api.Models;
 using Target30.Api.Services;
@@ -21,9 +23,11 @@ public class PlaidController : ControllerBase
     private readonly PlaidClient _client;
     private readonly Target30DbContext _db;
     private readonly PlaidSyncService _sync;
+    private readonly BillingOptions _billing;
 
-    public PlaidController(PlaidClient client, Target30DbContext db, PlaidSyncService sync)
+    public PlaidController(PlaidClient client, Target30DbContext db, PlaidSyncService sync, IOptions<BillingOptions> billing)
     {
+        _billing = billing.Value;
         _client = client;
         _db = db;
         _sync = sync;
@@ -31,10 +35,24 @@ public class PlaidController : ControllerBase
 
     private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
+    // Cada banco conectado custa dinheiro no Plaid: com a cobrança ligada, há um teto por usuário
+    // (o dono, em ExemptEmails, não tem).
+    private async Task<bool> ReachedItemLimitAsync()
+    {
+        if (!_billing.Enabled || SubscriptionAccess.IsExempt(_billing, User.FindFirstValue(ClaimTypes.Email)))
+            return false;
+
+        return await _db.PlaidItems.CountAsync(i => i.UserId == CurrentUserId) >= _billing.MaxItemsPerUser;
+    }
+
     // Passo 1: o frontend chama isso para obter um link_token e abrir o Plaid Link
+    [RequiresSubscription]
     [HttpPost("link-token")]
     public async Task<IActionResult> CreateLinkToken()
     {
+        if (await ReachedItemLimitAsync())
+            return Conflict(new { code = "item_limit" });
+
         var response = await _client.LinkTokenCreateAsync(new LinkTokenCreateRequest
         {
             User = new LinkTokenCreateRequestUser
@@ -61,9 +79,13 @@ public class PlaidController : ControllerBase
 
     // Passo 2: depois que o usuário conecta a conta no Plaid Link, o frontend manda o public_token aqui.
     // O access_token nunca volta pro frontend — fica só persistido no banco.
+    [RequiresSubscription]
     [HttpPost("exchange-token")]
     public async Task<IActionResult> ExchangePublicToken([FromBody] ExchangeTokenRequest request)
     {
+        if (await ReachedItemLimitAsync())
+            return Conflict(new { code = "item_limit" });
+
         var response = await _client.ItemPublicTokenExchangeAsync(new ItemPublicTokenExchangeRequest
         {
             PublicToken = request.PublicToken,
@@ -135,6 +157,7 @@ public class PlaidController : ControllerBase
     // "Atualizar agora": pede ao Plaid pra buscar no banco AGORA (/transactions/refresh — COBRADO
     // por chamada), espera um pouco o Plaid terminar e já sincroniza. Protegido por um
     // intervalo mínimo entre pedidos (PlaidRefreshGuard) pra clique repetido não custar dinheiro.
+    [RequiresSubscription]
     [HttpPost("items/{itemId}/refresh")]
     public async Task<IActionResult> RefreshItem(string itemId, CancellationToken cancellationToken)
     {
@@ -225,6 +248,7 @@ public class PlaidController : ControllerBase
 
     // Busca com o Plaid o que mudou desde a última sincronização de cada item do usuário
     // (usa o cursor salvo — não rebaixa o histórico inteiro toda vez).
+    [RequiresSubscription]
     [HttpPost("sync")]
     public async Task<IActionResult> SyncAll()
     {

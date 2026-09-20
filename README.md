@@ -73,6 +73,29 @@ Configuração necessária:
    - `frontend/src/app/auth/google-client-id.ts`
    - `src/Target30.Api/appsettings.Development.json` → `Authentication:Google:ClientId`
 
+## Cobrança (assinatura via Stripe)
+
+Vem **desligada** (`Billing:Enabled = false`): o app funciona como sempre, sem limite nem cobrança. Ligada, cada usuário novo ganha um teste grátis (`TrialDays`, padrão 14) e depois precisa de assinatura ativa para o que **custa dinheiro no Plaid**: conectar banco, sincronizar e atualizar agora. A consulta e a exportação dos próprios dados continuam liberadas, e o sync em background/alertas pulam quem está sem acesso. Há um teto de bancos por usuário (`MaxItemsPerUser`, padrão 10).
+
+O que **você** precisa fazer (eu não crio contas nem uso suas credenciais):
+
+1. Crie uma conta no Stripe, um *Product* com um *Price* recorrente (ex.: US$ 9/mês) e copie o `price_...`.
+2. Em *Developers → Webhooks* adicione o endpoint `https://SEU-ENDERECO/api/billing/webhook` com os eventos `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted` e `invoice.payment_failed`, e copie o `whsec_...`. Ative também o *Customer portal* (Settings → Billing → Customer portal).
+3. Coloque as chaves fora do git (`appsettings.Development.json`, que já é ignorado, ou variáveis de ambiente):
+
+```json
+"Billing": {
+  "Enabled": true,
+  "TrialDays": 14,
+  "MaxItemsPerUser": 10,
+  "ExemptEmails": [ "voce@gmail.com" ],
+  "PriceLabel": "US$ 9/mês",
+  "PublicBaseUrl": "https://SEU-ENDERECO",
+  "Stripe": { "SecretKey": "sk_live_...", "PriceId": "price_...", "WebhookSecret": "whsec_..." }
+}
+```
+
+`ExemptEmails` é o dono do app (nunca cobrado nem limitado). Teste primeiro com as chaves de teste do Stripe (`sk_test_...`) e a CLI (`stripe listen --forward-to https://localhost:7059/api/billing/webhook`). **Antes de cobrar terceiros**, veja `docs/produto/CHECKLIST.md` (Plaid em produção para outros usuários, termos, privacidade, empresa).
 ## Tokens do Plaid criptografados
 
 Os access tokens do Plaid ficam criptografados no banco (ASP.NET Data Protection, prefixo `enc:v1:`). As chaves ficam em `src/Target30.Api/keys` (ou `DataProtection:KeysDirectory`), fora do git. Na primeira execução depois dessa mudança, os tokens que estavam em texto puro são regravados criptografados automaticamente.

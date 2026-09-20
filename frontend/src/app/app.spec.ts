@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
 import { AuthService } from './auth/auth.service';
+import { BillingService } from './billing/billing.service';
 import { TranslationService } from './i18n/translation.service';
 
 describe('App', () => {
@@ -81,6 +82,23 @@ describe('App', () => {
       const el = renderLoggedIn().nativeElement as HTMLElement;
 
       expect(el.querySelector('.layout')?.classList).toContain('layout--collapsed');
+    });
+
+    it('shows the subscription entry and a no-access banner only when billing is on and access is lost', () => {
+      const fixture = renderLoggedIn();
+      const el = fixture.nativeElement as HTMLElement;
+      const labels = () => Array.from(el.querySelectorAll('.sidebar__label')).map((s) => s.textContent?.trim());
+      expect(labels()).not.toContain('Assinatura');
+      expect(el.querySelector('.layout__banner')).toBeNull();
+
+      TestBed.inject(BillingService).status.set({
+        enabled: true, hasAccess: false, reason: 'trial_ended', status: 'trial', trialEndsAt: null,
+        currentPeriodEnd: null, canManage: false, checkoutAvailable: true, priceLabel: null,
+      });
+      fixture.detectChanges();
+
+      expect(labels()).toContain('Assinatura');
+      expect(el.querySelector('.layout__banner')?.textContent).toContain('suspenso');
     });
   });
 });

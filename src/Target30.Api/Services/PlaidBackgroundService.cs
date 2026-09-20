@@ -2,6 +2,7 @@ using Going.Plaid;
 using Going.Plaid.Item;
 using Microsoft.EntityFrameworkCore;
 using Target30.Api;
+using Target30.Api.Billing;
 using Target30.Api.Data;
 using Target30.Api.Models;
 
@@ -16,6 +17,10 @@ public class PlaidBackgroundService : BackgroundService
     private readonly IConfiguration _configuration;
     private readonly ILogger<PlaidBackgroundService> _logger;
     private readonly IHostEnvironment _environment;
+
+    // Usuários com acesso (assinatura em dia, teste grátis ou isento) no ciclo atual. Quem não tem não
+    // é sincronizado com o Plaid (custo) nem recebe alertas baseados em dado que deixou de atualizar.
+    private static IReadOnlySet<string> s_activeUsers = new HashSet<string>();
 
     public PlaidBackgroundService(
         IServiceScopeFactory scopeFactory, IConfiguration configuration, ILogger<PlaidBackgroundService> logger,
@@ -54,7 +59,8 @@ public class PlaidBackgroundService : BackgroundService
         var sync = scope.ServiceProvider.GetRequiredService<PlaidSyncService>();
         var emailSender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
 
-        var items = await db.PlaidItems.ToListAsync(stoppingToken);
+        s_activeUsers = await scope.ServiceProvider.GetRequiredService<BillingService>().UsersWithAccessAsync();
+        var items = (await db.PlaidItems.ToListAsync(stoppingToken)).Where(i => s_activeUsers.Contains(i.UserId)).ToList();
         _logger.LogInformation("Sync automático: {Count} item(ns) do Plaid.", items.Count);
 
         foreach (var item in items)
@@ -109,7 +115,7 @@ public class PlaidBackgroundService : BackgroundService
     private async Task SendStaleDataAlertsAsync(Target30DbContext db, IEmailSender emailSender, PlaidClient client)
     {
         var now = DateTimeOffset.UtcNow;
-        var items = await db.PlaidItems.ToListAsync();
+        var items = (await db.PlaidItems.ToListAsync()).Where(i => s_activeUsers.Contains(i.UserId)).ToList();
         var problemsByUser = new Dictionary<string, List<(PlaidItem Item, FreshnessStatus Status, DateTimeOffset? Last)>>();
 
         foreach (var item in items)
@@ -162,7 +168,7 @@ public class PlaidBackgroundService : BackgroundService
     private async Task SendLowBalanceAlertsAsync(Target30DbContext db, IEmailSender emailSender, CashFlowService cashFlow)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var userIds = await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync();
+        var userIds = (await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync()).Where(s_activeUsers.Contains).ToList();
 
         foreach (var userId in userIds)
         {
@@ -201,7 +207,7 @@ public class PlaidBackgroundService : BackgroundService
     private static async Task SendAlertsAsync(Target30DbContext db, IEmailSender emailSender)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var userIds = await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync();
+        var userIds = (await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync()).Where(s_activeUsers.Contains).ToList();
 
         foreach (var userId in userIds)
         {
@@ -242,7 +248,7 @@ public class PlaidBackgroundService : BackgroundService
     private static async Task SendWeeklyDigestsAsync(Target30DbContext db, IEmailSender emailSender)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var userIds = await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync();
+        var userIds = (await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync()).Where(s_activeUsers.Contains).ToList();
 
         foreach (var userId in userIds)
         {
@@ -274,7 +280,7 @@ public class PlaidBackgroundService : BackgroundService
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var currentMonthKey = $"{today.Year:D4}-{today.Month:D2}";
         var firstOfMonth = new DateOnly(today.Year, today.Month, 1);
-        var userIds = await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync();
+        var userIds = (await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync()).Where(s_activeUsers.Contains).ToList();
 
         foreach (var userId in userIds)
         {
@@ -320,7 +326,7 @@ public class PlaidBackgroundService : BackgroundService
 
     private static async Task SendSubscriptionPriceChangeAlertsAsync(Target30DbContext db, IEmailSender emailSender)
     {
-        var userIds = await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync();
+        var userIds = (await db.PlaidItems.Select(i => i.UserId).Distinct().ToListAsync()).Where(s_activeUsers.Contains).ToList();
 
         foreach (var userId in userIds)
         {

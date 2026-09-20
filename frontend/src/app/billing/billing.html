@@ -1,0 +1,68 @@
+<section class="billing">
+  <h1>{{ 'billing.title' | translate }}</h1>
+
+  @if (loading()) {
+    <p>{{ 'common.loading' | translate }}</p>
+  } @else if (billing.status(); as s) {
+    @if (justPaid()) {
+      <p class="billing__notice">{{ 'billing.justPaid' | translate }}</p>
+    }
+
+    @if (!s.enabled) {
+      <p>{{ 'billing.disabled' | translate }}</p>
+    } @else {
+      <div class="billing__card">
+        @switch (s.status) {
+          @case ('active') {
+            <p class="billing__state billing__state--ok">{{ 'billing.active' | translate }}</p>
+            @if (s.currentPeriodEnd) {
+              <p class="billing__muted">{{ 'billing.renews' | translate: { date: formatDate(s.currentPeriodEnd) } }}</p>
+            }
+          }
+          @case ('trial') {
+            @if (s.hasAccess) {
+              <p class="billing__state billing__state--ok">
+                {{ 'billing.trial' | translate: { days: daysLeft(s.trialEndsAt) } }}
+              </p>
+            } @else {
+              <p class="billing__state billing__state--bad">{{ 'billing.trialEnded' | translate }}</p>
+            }
+          }
+          @case ('past_due') {
+            <p class="billing__state billing__state--bad">{{ 'billing.pastDue' | translate }}</p>
+          }
+          @default {
+            @if (s.reason === 'exempt') {
+              <p class="billing__state billing__state--ok">{{ 'billing.exempt' | translate }}</p>
+            } @else {
+              <p class="billing__state billing__state--bad">{{ 'billing.canceled' | translate }}</p>
+            }
+          }
+        }
+
+        @if (s.reason !== 'exempt') {
+          @if (s.priceLabel && s.status !== 'active') {
+            <p class="billing__price">{{ s.priceLabel }}</p>
+          }
+          <p class="billing__muted">{{ 'billing.whatItCovers' | translate }}</p>
+
+          <div class="billing__actions">
+            @if (s.status !== 'active' && s.checkoutAvailable) {
+              <button type="button" class="billing__primary" [disabled]="working()" (click)="subscribe()">
+                {{ 'billing.subscribe' | translate }}
+              </button>
+            }
+            @if (s.canManage) {
+              <button type="button" [disabled]="working()" (click)="manage()">{{ 'billing.manage' | translate }}</button>
+            }
+          </div>
+        }
+        <p class="billing__muted">{{ 'billing.dataStays' | translate }}</p>
+      </div>
+    }
+  }
+
+  @if (error()) {
+    <p class="billing__error">{{ error() }}</p>
+  }
+</section>

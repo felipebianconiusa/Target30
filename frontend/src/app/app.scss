@@ -220,3 +220,17 @@
   color: var(--color-text-muted);
   margin: 0 0 1.5rem;
 }
+
+.layout__banner {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-danger-border);
+  border-radius: 8px;
+  background: var(--color-danger-bg);
+  font-size: 0.9rem;
+
+  a {
+    margin-left: 0.5rem;
+    color: var(--color-primary);
+  }
+}

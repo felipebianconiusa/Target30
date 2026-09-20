@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { Accounts } from './accounts/accounts';
 import { BestCard } from './best-card/best-card';
+import { Billing } from './billing/billing';
 import { Cards } from './cards/cards';
 import { CashFlow } from './cashflow/cashflow';
 import { Dashboard } from './dashboard/dashboard';
@@ -14,5 +15,6 @@ export const routes: Routes = [
   { path: 'cards', component: Cards },
   { path: 'best-card', component: BestCard },
   { path: 'cashflow', component: CashFlow },
+  { path: 'billing', component: Billing },
   { path: 'settings', component: Settings },
 ];

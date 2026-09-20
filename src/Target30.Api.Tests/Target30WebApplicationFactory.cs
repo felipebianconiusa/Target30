@@ -17,6 +17,10 @@ public class Target30WebApplicationFactory : WebApplicationFactory<Program>
     public static readonly string SharedKeysDirectory =
         Path.Combine(Path.GetTempPath(), "t30-test-keys-" + Guid.NewGuid().ToString("N"));
 
+    // Opções de cobrança e Stripe falso controláveis pelos testes (padrão: cobrança desligada, como no app).
+    public Target30.Api.Billing.BillingOptions Billing { get; } = new();
+    public FakeStripeGateway Stripe { get; } = new();
+
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
 
     // O host de teste também roda o PlaidBackgroundService (com backup automático): aponta a pasta
@@ -34,6 +38,9 @@ public class Target30WebApplicationFactory : WebApplicationFactory<Program>
         builder.ConfigureServices(services =>
         {
             _connection.Open();
+
+            services.AddSingleton(Microsoft.Extensions.Options.Options.Create(Billing));
+            services.AddSingleton<Target30.Api.Billing.IStripeGateway>(Stripe);
 
             // O sync/alertas/backup em background não fazem parte dos testes de controller e
             // disputavam a mesma conexão SQLite em memória com o reset/seed de cada teste (falhas

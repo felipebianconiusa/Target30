@@ -27,6 +27,7 @@
 
       <nav class="sidebar__nav">
         @for (item of navItems; track item.path) {
+         @if (item.path !== '/billing' || billingService.status()?.enabled) {
           <a
             [routerLink]="item.path"
             routerLinkActive="sidebar__link--active"
@@ -36,6 +37,7 @@
             <span class="sidebar__icon" aria-hidden="true">{{ item.icon }}</span>
             <span class="sidebar__label">{{ item.labelKey | translate }}</span>
           </a>
+         }
         }
       </nav>
 
@@ -57,6 +59,14 @@
 
     <main class="layout__content">
       <div class="layout__inner">
+        @if (billingService.status(); as billing) {
+          @if (billing.enabled && !billing.hasAccess) {
+            <div class="layout__banner">
+              {{ 'billing.noAccessBanner' | translate }}
+              <a routerLink="/billing">{{ 'billing.noAccessLink' | translate }}</a>
+            </div>
+          }
+        }
         <router-outlet />
       </div>
     </main>

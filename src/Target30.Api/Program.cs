@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Target30.Api;
+using Target30.Api.Billing;
 using Target30.Api.Data;
 using Target30.Api.Services;
 
@@ -32,6 +33,10 @@ builder.Services.AddDbContext<Target30DbContext>(options =>
 
 builder.Services.AddScoped<PlaidSyncService>();
 builder.Services.AddScoped<CashFlowService>();
+
+builder.Services.Configure<BillingOptions>(builder.Configuration.GetSection("Billing"));
+builder.Services.AddScoped<BillingService>();
+builder.Services.AddHttpClient<IStripeGateway, StripeGateway>();
 builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
 builder.Services.AddHostedService<PlaidBackgroundService>();
 

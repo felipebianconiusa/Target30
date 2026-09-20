@@ -1,10 +1,11 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, effect, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './auth/auth.service';
 import { GoogleLoginButton } from './auth/google-login-button/google-login-button';
 import { TranslationService } from './i18n/translation.service';
 import { TranslatePipe } from './i18n/translate.pipe';
 import { ThemeService } from './theme/theme.service';
+import { BillingService } from './billing/billing.service';
 
 interface NavItem {
   path: string;
@@ -40,6 +41,7 @@ export class App implements OnInit {
     { path: '/cards', labelKey: 'nav.cards', icon: '💳' },
     { path: '/best-card', labelKey: 'nav.bestCard', icon: '⭐' },
     { path: '/cashflow', labelKey: 'nav.cashflow', icon: '💸' },
+    { path: '/billing', labelKey: 'nav.billing', icon: '💎' },
     { path: '/settings', labelKey: 'nav.settings', icon: '⚙️' },
   ];
 
@@ -49,7 +51,13 @@ export class App implements OnInit {
     protected readonly authService: AuthService,
     protected readonly translationService: TranslationService,
     private readonly themeService: ThemeService,
-  ) {}
+    protected readonly billingService: BillingService,
+  ) {
+    // Assim que há usuário logado, carrega a situação da assinatura (menu e aviso de acesso).
+    effect(() => {
+      if (this.authService.user()) this.billingService.loadStatus().subscribe({ error: () => undefined });
+    });
+  }
 
   ngOnInit(): void {
     this.authService.checkSession();
