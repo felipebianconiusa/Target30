@@ -9,48 +9,56 @@
     <app-google-login-button />
   </div>
 } @else {
-  <div class="shell">
-    <header class="shell__header">
-      <h1>Target30</h1>
-      <nav class="shell__nav">
-        <a
-          routerLink="/"
-          routerLinkActive="shell__nav-link--active"
-          [routerLinkActiveOptions]="{ exact: true }"
+  <div class="layout" [class.layout--collapsed]="menuCollapsed()">
+    <aside class="sidebar">
+      <div class="sidebar__top">
+        <h1 class="sidebar__brand">Target30</h1>
+        <button
+          type="button"
+          class="sidebar__toggle"
+          [attr.aria-expanded]="!menuCollapsed()"
+          [attr.aria-label]="(menuCollapsed() ? 'nav.expandMenu' : 'nav.collapseMenu') | translate"
+          [title]="(menuCollapsed() ? 'nav.expandMenu' : 'nav.collapseMenu') | translate"
+          (click)="toggleMenu()"
         >
-          {{ 'nav.dashboard' | translate }}
-        </a>
-        <a routerLink="/accounts" routerLinkActive="shell__nav-link--active">
-          {{ 'nav.accounts' | translate }}
-        </a>
-        <a routerLink="/transactions" routerLinkActive="shell__nav-link--active">
-          {{ 'nav.transactions' | translate }}
-        </a>
-        <a routerLink="/cards" routerLinkActive="shell__nav-link--active">
-          {{ 'nav.cards' | translate }}
-        </a>
-        <a routerLink="/best-card" routerLinkActive="shell__nav-link--active">
-          {{ 'nav.bestCard' | translate }}
-        </a>
-        <a routerLink="/cashflow" routerLinkActive="shell__nav-link--active">
-          {{ 'nav.cashflow' | translate }}
-        </a>
-        <a routerLink="/settings" routerLinkActive="shell__nav-link--active">
-          {{ 'nav.settings' | translate }}
-        </a>
-      </nav>
-      <div class="shell__user">
-        @if (authService.user()?.picture) {
-          <img class="shell__avatar" [src]="authService.user()?.picture" alt="" />
+          {{ menuCollapsed() ? '›' : '‹' }}
+        </button>
+      </div>
+
+      <nav class="sidebar__nav">
+        @for (item of navItems; track item.path) {
+          <a
+            [routerLink]="item.path"
+            routerLinkActive="sidebar__link--active"
+            [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+            [title]="item.labelKey | translate"
+          >
+            <span class="sidebar__icon" aria-hidden="true">{{ item.icon }}</span>
+            <span class="sidebar__label">{{ item.labelKey | translate }}</span>
+          </a>
         }
-        <span>{{ authService.user()?.name ?? authService.user()?.email }}</span>
-        <button type="button" class="shell__logout" (click)="authService.logout()">
+      </nav>
+
+      <div class="sidebar__user">
+        @if (authService.user()?.picture) {
+          <img class="sidebar__avatar" [src]="authService.user()?.picture" alt="" />
+        }
+        <span class="sidebar__name">{{ authService.user()?.name ?? authService.user()?.email }}</span>
+        <button
+          type="button"
+          class="sidebar__logout"
+          [title]="'common.signOut' | translate"
+          (click)="authService.logout()"
+        >
           {{ 'common.signOut' | translate }}
         </button>
       </div>
-    </header>
-    <main class="shell__content">
-      <router-outlet />
+    </aside>
+
+    <main class="layout__content">
+      <div class="layout__inner">
+        <router-outlet />
+      </div>
     </main>
   </div>
 }

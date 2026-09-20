@@ -25,6 +25,8 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'nav.bestCard': 'Melhor cartão',
     'nav.cashflow': 'Fluxo de Caixa',
     'nav.settings': 'Configurações',
+    'nav.collapseMenu': 'Recolher menu',
+    'nav.expandMenu': 'Expandir menu',
 
     'common.loading': 'Carregando...',
     'common.signOut': 'Sair',
@@ -249,6 +251,8 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'nav.bestCard': 'Best card',
     'nav.cashflow': 'Cash Flow',
     'nav.settings': 'Settings',
+    'nav.collapseMenu': 'Collapse menu',
+    'nav.expandMenu': 'Expand menu',
 
     'common.loading': 'Loading...',
     'common.signOut': 'Sign out',
@@ -473,6 +477,8 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'nav.bestCard': 'Mejor tarjeta',
     'nav.cashflow': 'Flujo de Caja',
     'nav.settings': 'Configuración',
+    'nav.collapseMenu': 'Contraer menú',
+    'nav.expandMenu': 'Expandir menú',
 
     'common.loading': 'Cargando...',
     'common.signOut': 'Cerrar sesión',
