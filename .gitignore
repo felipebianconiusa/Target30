@@ -30,3 +30,7 @@ npm-debug.log*
 
 # Build do Angular servido pela API (scripts/publish-local.ps1)
 src/Target30.Api/wwwroot/
+
+# Backups automáticos do banco (contêm tokens do Plaid)
+backups/
+**/backups/

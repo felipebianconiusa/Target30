@@ -32,6 +32,14 @@ export interface PlaidRefreshResult {
   plaidLastSuccessfulUpdate: string | null;
 }
 
+export interface AutoBackupStatus {
+  enabled: boolean;
+  directory: string;
+  lastBackupUtc: string | null;
+  count: number;
+  keepCount: number;
+}
+
 export interface Transaction {
   transactionId: string;
   accountId: string;
@@ -144,6 +152,10 @@ export class PlaidService {
 
   getSummary(): Observable<TransactionsSummary> {
     return this.http.get<TransactionsSummary>(`${this.baseUrl}/summary`);
+  }
+
+  getAutoBackupStatus(): Observable<AutoBackupStatus> {
+    return this.http.get<AutoBackupStatus>('/api/backup/auto-status');
   }
 
   downloadBackup(): Observable<Blob> {

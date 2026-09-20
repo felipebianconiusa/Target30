@@ -73,6 +73,15 @@ Configuração necessária:
    - `frontend/src/app/auth/google-client-id.ts`
    - `src/Target30.Api/appsettings.Development.json` → `Authentication:Google:ClientId`
 
+## Backup automático do banco
+
+A cada ciclo de sincronização, se o último backup tiver mais de 24h, a API cria uma cópia consistente do `target30.db` (SQLite `VACUUM INTO`, sem parar o app) e mantém as mais recentes. Configuração (todas opcionais):
+
+```json
+"Backup": { "Enabled": true, "Directory": "D:\\backups\\target30", "IntervalHours": 24, "KeepCount": 14 }
+```
+
+Sem `Directory`, usa `src/Target30.Api/backups` (ignorado pelo git). **A cópia inclui os tokens do Plaid**, como o próprio banco: aponte pra um disco/pasta de confiança e fora de pastas sincronizadas na nuvem. Pra restaurar, pare a API e troque o `target30.db` pela cópia. A tela de Configurações mostra o último backup.
 ## Acesso pelo celular (opcional)
 
 O app roda no seu PC; pra usar no celular (ou receber os alertas com o PC desligado) ele precisa estar acessível de fora. O que já está pronto no projeto:

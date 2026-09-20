@@ -15,13 +15,16 @@ public class PlaidBackgroundService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConfiguration _configuration;
     private readonly ILogger<PlaidBackgroundService> _logger;
+    private readonly IHostEnvironment _environment;
 
     public PlaidBackgroundService(
-        IServiceScopeFactory scopeFactory, IConfiguration configuration, ILogger<PlaidBackgroundService> logger)
+        IServiceScopeFactory scopeFactory, IConfiguration configuration, ILogger<PlaidBackgroundService> logger,
+        IHostEnvironment environment)
     {
         _scopeFactory = scopeFactory;
         _configuration = configuration;
         _logger = logger;
+        _environment = environment;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -66,12 +69,39 @@ public class PlaidBackgroundService : BackgroundService
             }
         }
 
+        await RunAutomaticBackupAsync(db);
         await SendStaleDataAlertsAsync(db, emailSender, scope.ServiceProvider.GetRequiredService<PlaidClient>());
         await SendLowBalanceAlertsAsync(db, emailSender, scope.ServiceProvider.GetRequiredService<CashFlowService>());
         await SendAlertsAsync(db, emailSender);
         await SendWeeklyDigestsAsync(db, emailSender);
         await SendBudgetAlertsAsync(db, emailSender);
         await SendSubscriptionPriceChangeAlertsAsync(db, emailSender);
+    }
+
+    // Backup diário do banco (Backup:Directory, Backup:IntervalHours, Backup:KeepCount). Roda a cada
+    // ciclo do sync mas só cria um arquivo novo quando o último passou do intervalo.
+    private async Task RunAutomaticBackupAsync(Target30DbContext db)
+    {
+        try
+        {
+            var settings = BackupSettings.From(_configuration, _environment.ContentRootPath);
+            if (!settings.Enabled)
+                return;
+
+            var now = DateTime.UtcNow;
+            var last = DatabaseBackup.List(settings.Directory).FirstOrDefault()?.CreatedUtc;
+            if (!DatabaseBackup.IsDue(last, now, settings.Interval))
+                return;
+
+            var file = await DatabaseBackup.CreateAsync(db, settings.Directory, now);
+            DatabaseBackup.Prune(settings.Directory, settings.KeepCount);
+            _logger.LogInformation("Backup automático criado: {Path}", file.Path);
+        }
+        catch (Exception ex)
+        {
+            // Backup nunca pode derrubar o sync nem os alertas.
+            _logger.LogError(ex, "Falha no backup automático");
+        }
     }
 
     // Avisa por email quando o Plaid deixa de atualizar um banco (dado velho ou conexão com

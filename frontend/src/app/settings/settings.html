@@ -131,6 +131,21 @@
     <button type="button" [disabled]="downloadingBackup()" (click)="downloadBackup()">
       {{ (downloadingBackup() ? 'settings.downloadingBackup' : 'settings.downloadBackup') | translate }}
     </button>
+
+    @if (autoBackup(); as backup) {
+      <p class="settings__hint settings__auto-backup">
+        @if (!backup.enabled) {
+          {{ 'settings.autoBackupOff' | translate }}
+        } @else if (backup.lastBackupUtc) {
+          {{ 'settings.autoBackupLast' | translate: { date: formatDateTime(backup.lastBackupUtc), count: backup.count, keep: backup.keepCount } }}
+        } @else {
+          {{ 'settings.autoBackupNone' | translate }}
+        }
+        @if (backup.enabled) {
+          <br />{{ 'settings.autoBackupWhere' | translate: { directory: backup.directory } }}
+        }
+      </p>
+    }
   </div>
 
   <div class="settings__section settings__section--danger">

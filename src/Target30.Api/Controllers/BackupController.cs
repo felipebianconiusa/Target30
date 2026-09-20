@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Target30.Api.Data;
+using Target30.Api.Services;
 
 namespace Target30.Api.Controllers;
 
@@ -14,13 +15,28 @@ namespace Target30.Api.Controllers;
 public class BackupController : ControllerBase
 {
     private readonly Target30DbContext _db;
+    private readonly IConfiguration _configuration;
+    private readonly IHostEnvironment _environment;
 
-    public BackupController(Target30DbContext db)
+    public BackupController(Target30DbContext db, IConfiguration configuration, IHostEnvironment environment)
     {
         _db = db;
+        _configuration = configuration;
+        _environment = environment;
     }
 
     private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+    // Situação do backup automático do banco (nunca expõe o caminho da pasta pra fora do dono: é
+    // um app pessoal, e o caminho ajuda a achar os arquivos).
+    [HttpGet("auto-status")]
+    public IActionResult AutoStatus()
+    {
+        var settings = BackupSettings.From(_configuration, _environment.ContentRootPath);
+        var files = DatabaseBackup.List(settings.Directory);
+        return Ok(new AutoBackupStatusDto(
+            settings.Enabled, settings.Directory, files.FirstOrDefault()?.CreatedUtc, files.Count, settings.KeepCount));
+    }
 
     // Backup completo dos seus dados em JSON — nunca inclui o AccessToken do Plaid (é uma
     // credencial, não um dado seu) nem IDs internos do banco, só o que faz sentido pra você
@@ -113,3 +129,6 @@ public class BackupController : ControllerBase
         return File(bytes, "application/json", fileName);
     }
 }
+
+public record AutoBackupStatusDto(bool Enabled, string Directory, DateTime? LastBackupUtc, int Count, int KeepCount);
+

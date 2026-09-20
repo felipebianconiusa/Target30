@@ -1,11 +1,11 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
-import { PlaidService } from '../plaid.service';
+import { AutoBackupStatus, PlaidService } from '../plaid.service';
 import { AppSettings, CardsService } from '../cards/cards.service';
 import { TranslationService } from '../i18n/translation.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { Lang, LANG_LABELS, SUPPORTED_LANGS } from '../i18n/translations';
+import { Lang, LANG_LABELS, LOCALE_BY_LANG, SUPPORTED_LANGS } from '../i18n/translations';
 import { Theme, ThemeService } from '../theme/theme.service';
 
 @Component({
@@ -21,6 +21,7 @@ export class Settings implements OnInit {
   protected readonly deleting = signal(false);
   protected readonly deleteDone = signal(false);
   protected readonly downloadingBackup = signal(false);
+  protected readonly autoBackup = signal<AutoBackupStatus | null>(null);
 
   protected readonly globalTargetUtilizationPercent = signal(30);
   protected readonly notifyDaysBeforeClosing = signal(3);
@@ -40,6 +41,10 @@ export class Settings implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.plaidService.getAutoBackupStatus().subscribe({
+      next: (status) => this.autoBackup.set(status),
+      error: () => undefined,
+    });
     this.cardsService.getSettings().subscribe((settings) => {
       this.globalTargetUtilizationPercent.set(settings.globalTargetUtilizationPercent);
       this.notifyDaysBeforeClosing.set(settings.notifyDaysBeforeClosing);
@@ -89,6 +94,13 @@ export class Settings implements OnInit {
       },
       error: () => this.savingSettings.set(false),
     });
+  }
+
+  protected formatDateTime(value: string): string {
+    const locale = LOCALE_BY_LANG[this.translationService.lang()];
+    // O servidor manda UTC sem sufixo de fuso: força Z pra converter certo pro horário local.
+    const iso = /Z|[+-]\d\d:\d\d$/.test(value) ? value : value + 'Z';
+    return new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso));
   }
 
   protected setLang(lang: Lang): void {
