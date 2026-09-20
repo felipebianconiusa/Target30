@@ -55,6 +55,17 @@ public class CashFlowService
                 entries.Add((date, bill.Description, -bill.Amount, "Pending", 1));
         }
 
+        // Entradas recorrentes que o usuário confirmou (ex.: Zelle semanal): só as futuras — as de
+        // hoje pra trás já são transações reais.
+        var incomes = await _db.RecurringIncomes
+            .Where(i => i.UserId == userId && i.IsActive)
+            .ToListAsync();
+        foreach (var income in incomes)
+        {
+            foreach (var date in IncomeDetector.Occurrences(income, today, endDate))
+                entries.Add((date, income.Description, income.Amount, "Pending", 1));
+        }
+
         var settings = await _db.UserSettings.FirstOrDefaultAsync(s => s.UserId == userId)
             ?? new UserSettings { UserId = userId };
         var cards = await _db.PlaidAccounts

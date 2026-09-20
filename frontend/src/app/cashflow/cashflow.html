@@ -83,6 +83,69 @@
         </button>
       </div>
 
+      <div class="bills-manager__income">
+        <h3>{{ 'cashflow.income' | translate }}</h3>
+        <p class="bills-manager__field-hint">{{ 'cashflow.incomeHint' | translate }}</p>
+
+        @if (incomes().length > 0) {
+          <ul class="bills-manager__list">
+            @for (income of incomes(); track income.id) {
+              <li>
+                <span>{{ income.description }}</span>
+                <span>{{ formatCurrency(income.amount) }}</span>
+                <span>{{ ('cashflow.freq.' + income.frequency) | translate }} · {{ income.anchorDate }}</span>
+                <button type="button" (click)="deleteIncome(income)">{{ 'common.remove' | translate }}</button>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (detectedIncomes().length > 0) {
+          <p class="bills-manager__field-hint">{{ 'cashflow.detectedIncomeHint' | translate }}</p>
+          <ul class="bills-manager__list">
+            @for (d of detectedIncomes(); track d.description) {
+              <li>
+                <span>{{ d.description }}</span>
+                <span>{{ formatCurrency(d.amount) }}</span>
+                <span>{{ ('cashflow.freq.' + d.frequency) | translate }}</span>
+                <span class="bills-manager__field-hint">
+                  {{ 'cashflow.detectedOccurrences' | translate: { count: d.occurrences } }}
+                </span>
+                <button type="button" [disabled]="addingIncome() === d.description" (click)="addDetectedIncome(d)">
+                  {{ 'cashflow.addDetected' | translate }}
+                </button>
+              </li>
+            }
+          </ul>
+        }
+
+        <div class="bills-manager__form">
+          <label>
+            {{ 'cashflow.billDescription' | translate }}
+            <input type="text" [value]="newIncomeDescription()" (input)="setNewIncomeDescription($any($event.target).value)" />
+          </label>
+          <label>
+            {{ 'cashflow.billAmount' | translate }}
+            <input type="number" step="0.01" min="0" [value]="newIncomeAmount() ?? ''" (input)="setNewIncomeAmount($any($event.target).value)" />
+          </label>
+          <label>
+            {{ 'cashflow.incomeFrequency' | translate }}
+            <select (change)="setNewIncomeFrequency($any($event.target).value)">
+              <option value="weekly" [selected]="newIncomeFrequency() === 'weekly'">{{ 'cashflow.freq.weekly' | translate }}</option>
+              <option value="biweekly" [selected]="newIncomeFrequency() === 'biweekly'">{{ 'cashflow.freq.biweekly' | translate }}</option>
+              <option value="monthly" [selected]="newIncomeFrequency() === 'monthly'">{{ 'cashflow.freq.monthly' | translate }}</option>
+            </select>
+          </label>
+          <label>
+            {{ 'cashflow.incomeDate' | translate }}
+            <input type="date" [value]="newIncomeDate()" (input)="setNewIncomeDate($any($event.target).value)" />
+          </label>
+          <button type="button" [disabled]="addingIncome() !== null" (click)="addIncome()">
+            {{ 'cashflow.addIncome' | translate }}
+          </button>
+        </div>
+      </div>
+
       @if (detectedSubscriptions().length > 0) {
         <div class="bills-manager__detected">
           <h3>{{ 'cashflow.detectedSubscriptions' | translate }}</h3>

@@ -77,4 +77,43 @@ describe('CashFlow', () => {
     expect(banner?.textContent).toContain('2026-09-25');
     expect(banner?.textContent).toContain('Rent');
   });
+
+  it('lists detected income in the manager and confirming one creates it', async () => {
+    await TestBed.configureTestingModule({
+      imports: [CashFlow],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+    TestBed.inject(TranslationService).setLang('pt');
+    const fixture = TestBed.createComponent(CashFlow);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.match((r) => r.url === '/api/bills').forEach((r) => r.flush([]));
+    http.match((r) => r.url === '/api/income').forEach((r) => r.flush([]));
+    http.match((r) => r.url === '/api/income/detected').forEach((r) => r.flush([]));
+    http.expectOne((r) => r.url === '/api/cashflow').flush({
+      startingBalance: 0, currentBalance: 0, entries: [], lowBalance: null, lowBalanceThreshold: 0,
+    });
+    fixture.detectChanges();
+
+    (fixture.componentInstance as any).toggleBillsManager();
+    http.match((r) => r.url === '/api/bills/detected-subscriptions').forEach((r) => r.flush([]));
+    http.match((r) => r.url === '/api/income').forEach((r) => r.flush([]));
+    http.match((r) => r.url === '/api/income/detected').forEach((r) =>
+      r.flush([{ description: 'Zelle from Layse', amount: 850, frequency: 'weekly', lastDate: '2026-09-18', occurrences: 4 }]),
+    );
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.bills-manager__income')?.textContent).toContain('Zelle from Layse');
+    expect(el.querySelector('.bills-manager__income')?.textContent).toContain('Semanal');
+
+    const add = Array.from(el.querySelectorAll('.bills-manager__income li button')).find((b) =>
+      b.textContent?.includes('Adicionar'),
+    ) as HTMLButtonElement;
+    add.click();
+    const req = http.expectOne((r) => r.url === '/api/income' && r.method === 'POST');
+    expect(req.request.body).toEqual({
+      description: 'Zelle from Layse', amount: 850, frequency: 'weekly', anchorDate: '2026-09-18',
+    });
+  });
 });

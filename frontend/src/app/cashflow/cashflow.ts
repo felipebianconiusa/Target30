@@ -1,5 +1,14 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { Bill, CashFlowEntry, CashFlowService, DetectedSubscription, LowBalanceWarning } from './cashflow.service';
+import {
+  Bill,
+  CashFlowEntry,
+  CashFlowService,
+  DetectedIncome,
+  DetectedSubscription,
+  Income,
+  IncomeFrequency,
+  LowBalanceWarning,
+} from './cashflow.service';
 import { TranslationService } from '../i18n/translation.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { LOCALE_BY_LANG } from '../i18n/translations';
@@ -28,6 +37,14 @@ export class CashFlow implements OnInit {
   protected readonly detectedSubscriptions = signal<DetectedSubscription[]>([]);
   protected readonly addingSubscription = signal<string | null>(null);
 
+  protected readonly incomes = signal<Income[]>([]);
+  protected readonly detectedIncomes = signal<DetectedIncome[]>([]);
+  protected readonly addingIncome = signal<string | null>(null);
+  protected readonly newIncomeDescription = signal('');
+  protected readonly newIncomeAmount = signal<number | null>(null);
+  protected readonly newIncomeFrequency = signal<IncomeFrequency>('weekly');
+  protected readonly newIncomeDate = signal('');
+
   private readonly today = new Date().toISOString().slice(0, 10);
 
   constructor(
@@ -38,6 +55,7 @@ export class CashFlow implements OnInit {
   ngOnInit(): void {
     this.loadCashFlow();
     this.loadBills();
+    this.loadIncomes();
   }
 
   protected isFuture(entry: CashFlowEntry): boolean {
@@ -52,7 +70,82 @@ export class CashFlow implements OnInit {
   protected toggleBillsManager(): void {
     const opening = !this.showBillsManager();
     this.showBillsManager.set(opening);
-    if (opening) this.loadDetectedSubscriptions();
+    if (opening) {
+      this.loadDetectedSubscriptions();
+      this.loadIncomes();
+    }
+  }
+
+  protected addDetectedIncome(detected: DetectedIncome): void {
+    this.addingIncome.set(detected.description);
+    this.cashFlowService
+      .createIncome({
+        description: detected.description,
+        amount: detected.amount,
+        frequency: detected.frequency,
+        anchorDate: detected.lastDate,
+      })
+      .subscribe({
+        next: () => {
+          this.addingIncome.set(null);
+          this.loadIncomes();
+          this.loadCashFlow();
+        },
+        error: () => this.addingIncome.set(null),
+      });
+  }
+
+  protected setNewIncomeDescription(value: string): void {
+    this.newIncomeDescription.set(value);
+  }
+
+  protected setNewIncomeAmount(value: string): void {
+    this.newIncomeAmount.set(value ? Number(value) : null);
+  }
+
+  protected setNewIncomeFrequency(value: string): void {
+    this.newIncomeFrequency.set(value as IncomeFrequency);
+  }
+
+  protected setNewIncomeDate(value: string): void {
+    this.newIncomeDate.set(value);
+  }
+
+  protected addIncome(): void {
+    const description = this.newIncomeDescription().trim();
+    const amount = this.newIncomeAmount();
+    const anchorDate = this.newIncomeDate();
+    if (!description || amount === null || amount <= 0 || !anchorDate) return;
+
+    this.addingIncome.set(description);
+    this.cashFlowService
+      .createIncome({ description, amount, frequency: this.newIncomeFrequency(), anchorDate })
+      .subscribe({
+        next: () => {
+          this.addingIncome.set(null);
+          this.newIncomeDescription.set('');
+          this.newIncomeAmount.set(null);
+          this.newIncomeDate.set('');
+          this.loadIncomes();
+          this.loadCashFlow();
+        },
+        error: () => this.addingIncome.set(null),
+      });
+  }
+
+  protected deleteIncome(income: Income): void {
+    this.cashFlowService.deleteIncome(income.id).subscribe(() => {
+      this.loadIncomes();
+      this.loadCashFlow();
+    });
+  }
+
+  private loadIncomes(): void {
+    this.cashFlowService.getIncomes().subscribe((list) => this.incomes.set(list));
+    this.cashFlowService.getDetectedIncome().subscribe({
+      next: (list) => this.detectedIncomes.set(list),
+      error: () => undefined,
+    });
   }
 
   protected addDetectedSubscription(subscription: DetectedSubscription): void {

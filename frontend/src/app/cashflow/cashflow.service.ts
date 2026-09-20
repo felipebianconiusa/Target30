@@ -40,6 +40,31 @@ export interface BillRequest {
   dayOfMonth: number;
 }
 
+export type IncomeFrequency = 'weekly' | 'biweekly' | 'monthly';
+
+export interface Income {
+  id: number;
+  description: string;
+  amount: number;
+  frequency: IncomeFrequency;
+  anchorDate: string;
+}
+
+export interface IncomeRequest {
+  description: string;
+  amount: number;
+  frequency: IncomeFrequency;
+  anchorDate: string;
+}
+
+export interface DetectedIncome {
+  description: string;
+  amount: number;
+  frequency: IncomeFrequency;
+  lastDate: string;
+  occurrences: number;
+}
+
 export interface DetectedSubscription {
   merchantName: string;
   averageAmount: number;
@@ -83,6 +108,22 @@ export class CashFlowService {
 
   deleteBill(id: number): Observable<void> {
     return this.http.delete<void>(`/api/bills/${id}`);
+  }
+
+  getIncomes(): Observable<Income[]> {
+    return this.http.get<Income[]>('/api/income');
+  }
+
+  createIncome(request: IncomeRequest): Observable<Income> {
+    return this.http.post<Income>('/api/income', request);
+  }
+
+  deleteIncome(id: number): Observable<void> {
+    return this.http.delete<void>(`/api/income/${id}`);
+  }
+
+  getDetectedIncome(): Observable<DetectedIncome[]> {
+    return this.http.get<DetectedIncome[]>('/api/income/detected');
   }
 
   getDetectedSubscriptions(): Observable<DetectedSubscription[]> {

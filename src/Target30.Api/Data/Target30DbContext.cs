@@ -12,11 +12,15 @@ public class Target30DbContext(DbContextOptions<Target30DbContext> options) : Db
     public DbSet<RecurringBill> RecurringBills => Set<RecurringBill>();
     public DbSet<CardBalanceSnapshot> CardBalanceSnapshots => Set<CardBalanceSnapshot>();
     public DbSet<CategoryBudget> CategoryBudgets => Set<CategoryBudget>();
+    public DbSet<RecurringIncome> RecurringIncomes => Set<RecurringIncome>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<RecurringBill>()
             .HasIndex(b => b.UserId);
+
+        modelBuilder.Entity<RecurringIncome>()
+            .HasIndex(i => i.UserId);
 
         modelBuilder.Entity<PlaidTransaction>()
             .HasIndex(t => t.PlaidTransactionId)
