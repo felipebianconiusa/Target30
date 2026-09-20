@@ -23,5 +23,15 @@ public class PlaidTransaction
     // sobrescrita nos syncs seguintes (só o UpsertAsync toca em Category, nunca neste campo).
     public string? UserCategory { get; set; }
 
+    // Categoria detalhada do Plaid (ex.: LOAN_PAYMENTS_CREDIT_CARD_PAYMENT) — é ela que diz se
+    // uma linha é só dinheiro trocando de lugar, o que a categoria primária não distingue.
+    public string? DetailedCategory { get; set; }
+
+    // Pagamento de fatura de cartão ou transferência entre contas do próprio usuário: aparece
+    // nas duas pontas (saída na corrente, "entrada" no cartão) e por isso NÃO conta como gasto
+    // nem como receita nos totais/orçamentos. Continua na lista e no Fluxo de Caixa (o saldo da
+    // conta realmente muda). Definido no sync por TransactionClassifier.
+    public bool IsInternalTransfer { get; set; }
+
     public string? EffectiveCategory => UserCategory ?? Category;
 }

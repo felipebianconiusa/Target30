@@ -159,6 +159,7 @@ public class PlaidBackgroundService : BackgroundService
                 continue;
 
             var spend = await db.PlaidTransactions
+                .ExcludingInternalTransfers()
                 .Where(t => t.UserId == userId && t.Amount > 0 && t.Date >= firstOfMonth && t.Date <= today)
                 .GroupBy(t => (t.UserCategory ?? t.Category) ?? "OUTROS")
                 .Select(g => new { Category = g.Key, Total = g.Sum(t => t.Amount) })
@@ -204,6 +205,7 @@ public class PlaidBackgroundService : BackgroundService
                 continue;
 
             var transactions = await db.PlaidTransactions
+                .ExcludingInternalTransfers()
                 .Where(t => t.UserId == userId && t.Amount > 0 && !t.Pending)
                 .ToListAsync();
 

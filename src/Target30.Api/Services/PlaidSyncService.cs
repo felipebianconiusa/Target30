@@ -165,6 +165,8 @@ public class PlaidSyncService
             existing.MerchantName = t.MerchantName;
             existing.Pending = t.Pending ?? false;
             existing.Category = t.PersonalFinanceCategory?.Primary ?? t.Category?.FirstOrDefault();
+            existing.DetailedCategory = t.PersonalFinanceCategory?.Detailed;
+            existing.IsInternalTransfer = TransactionClassifier.IsInternalTransfer(existing.DetailedCategory);
         }
     }
 #pragma warning restore CS0612

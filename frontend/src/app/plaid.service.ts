@@ -43,6 +43,7 @@ export interface Transaction {
   pending: boolean;
   category: string | null;
   isCategoryCustom: boolean;
+  isInternalTransfer?: boolean;
 }
 
 export interface TransactionsQueryFilter {

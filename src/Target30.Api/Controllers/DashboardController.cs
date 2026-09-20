@@ -75,12 +75,14 @@ public class DashboardController : ControllerBase
         var lastOfLastMonthComparable = DateMath.BuildClamped(firstOfLastMonth.Year, firstOfLastMonth.Month, today.Day);
 
         var currentMonth = await _db.PlaidTransactions
+            .ExcludingInternalTransfers()
             .Where(t => t.UserId == CurrentUserId && t.Amount > 0 && t.Date >= firstOfThisMonth && t.Date <= today)
             .GroupBy(t => (t.UserCategory ?? t.Category) ?? "OUTROS")
             .Select(g => new CategoryTotalRow(g.Key, g.Sum(t => t.Amount)))
             .ToListAsync();
 
         var previousMonth = await _db.PlaidTransactions
+            .ExcludingInternalTransfers()
             .Where(t => t.UserId == CurrentUserId && t.Amount > 0
                 && t.Date >= firstOfLastMonth && t.Date <= lastOfLastMonthComparable)
             .GroupBy(t => (t.UserCategory ?? t.Category) ?? "OUTROS")

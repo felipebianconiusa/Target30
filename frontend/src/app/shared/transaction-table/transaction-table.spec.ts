@@ -80,4 +80,18 @@ describe('TransactionTable', () => {
     expect(formatted).toContain('25');
     expect(formatted.trim().startsWith('-')).toBe(true);
   });
+
+  it('marks pending transactions and card payments/transfers so they are not mistaken for spending', () => {
+    fixture.componentRef.setInput('transactions', [
+      makeTransaction({ transactionId: 'p', name: 'Coffee', merchantName: 'Coffee', pending: true }),
+      makeTransaction({ transactionId: 'c', name: 'Card pmt', merchantName: 'Card pmt', isInternalTransfer: true }),
+      makeTransaction({ transactionId: 'n', name: 'Plain', merchantName: 'Plain' }),
+    ]);
+    fixture.detectChanges();
+
+    const rows = Array.from(fixture.nativeElement.querySelectorAll('tbody tr')) as HTMLElement[];
+    expect(rows[0].querySelector('.transaction-table__chip')?.textContent).toContain('Pendente');
+    expect(rows[1].querySelector('.transaction-table__chip')?.textContent).toContain('Transferência');
+    expect(rows[2].querySelector('.transaction-table__chip')).toBeNull();
+  });
 });

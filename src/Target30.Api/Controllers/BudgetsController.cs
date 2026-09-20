@@ -90,6 +90,7 @@ public class BudgetsController : ControllerBase
         var firstOfMonth = new DateOnly(today.Year, today.Month, 1);
 
         var rows = await _db.PlaidTransactions
+            .ExcludingInternalTransfers()
             .Where(t => t.UserId == CurrentUserId && t.Amount > 0 && t.Date >= firstOfMonth && t.Date <= today)
             .GroupBy(t => (t.UserCategory ?? t.Category) ?? "OUTROS")
             .Select(g => new { Category = g.Key, Total = g.Sum(t => t.Amount) })

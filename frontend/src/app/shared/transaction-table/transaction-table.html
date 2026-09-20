@@ -19,6 +19,14 @@
           <td>{{ tx.date }}</td>
           <td class="transaction-table__description" [title]="tx.merchantName ?? tx.name">
             {{ tx.merchantName ?? tx.name }}
+            @if (tx.pending) {
+              <span class="transaction-table__chip">{{ 'table.pending' | translate }}</span>
+            }
+            @if (tx.isInternalTransfer) {
+              <span class="transaction-table__chip" [title]="'table.internalTransferHint' | translate">
+                {{ 'table.internalTransfer' | translate }}
+              </span>
+            }
           </td>
           @if (showInstitution) {
             <td>{{ tx.institutionName ?? '—' }}</td>

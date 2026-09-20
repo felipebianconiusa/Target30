@@ -12,5 +12,6 @@ public record TransactionDto(
     string? MerchantName,
     bool Pending,
     string? Category,
-    bool IsCategoryCustom
+    bool IsCategoryCustom,
+    bool IsInternalTransfer = false
 );

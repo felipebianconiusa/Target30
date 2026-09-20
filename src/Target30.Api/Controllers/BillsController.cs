@@ -85,6 +85,7 @@ public class BillsController : ControllerBase
             .ToListAsync();
 
         var transactions = await _db.PlaidTransactions
+            .ExcludingInternalTransfers()
             .Where(t => t.UserId == CurrentUserId && t.Amount > 0 && !t.Pending)
             .ToListAsync();
 

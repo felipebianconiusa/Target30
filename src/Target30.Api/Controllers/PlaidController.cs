@@ -280,7 +280,9 @@ public class PlaidController : ControllerBase
         [FromQuery] string? dateFrom = null,
         [FromQuery] string? dateTo = null)
     {
-        var query = BuildFilteredQuery(search, categories, institutions, dateFrom, dateTo);
+        // A lista mostra tudo, mas os totais ignoram pagamento de fatura/transferência entre contas
+        // (senão o mesmo dinheiro conta duas vezes: saída na corrente e "entrada" no cartão).
+        var query = BuildFilteredQuery(search, categories, institutions, dateFrom, dateTo).ExcludingInternalTransfers();
 
         var totalExpenses = await query.Where(t => t.Amount > 0).SumAsync(t => (decimal?)t.Amount) ?? 0m;
         var totalIncome = -(await query.Where(t => t.Amount < 0).SumAsync(t => (decimal?)t.Amount) ?? 0m);
@@ -324,7 +326,8 @@ public class PlaidController : ControllerBase
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary()
     {
-        var query = _db.PlaidTransactions.Where(t => t.UserId == CurrentUserId);
+        var allQuery = _db.PlaidTransactions.Where(t => t.UserId == CurrentUserId);
+        var query = allQuery.ExcludingInternalTransfers();
 
         var totalExpenses = await query.Where(t => t.Amount > 0).SumAsync(t => (decimal?)t.Amount) ?? 0m;
         var totalIncome = -(await query.Where(t => t.Amount < 0).SumAsync(t => (decimal?)t.Amount) ?? 0m);
@@ -337,7 +340,7 @@ public class PlaidController : ControllerBase
             .Take(6)
             .ToListAsync();
 
-        var recent = await query
+        var recent = await allQuery
             .OrderByDescending(t => t.Date)
             .ThenByDescending(t => t.Id)
             .Take(8)
@@ -387,7 +390,8 @@ public class PlaidController : ControllerBase
         t.MerchantName,
         t.Pending,
         t.UserCategory ?? t.Category,
-        t.UserCategory is not null
+        t.UserCategory is not null,
+        t.IsInternalTransfer
     );
 }
 

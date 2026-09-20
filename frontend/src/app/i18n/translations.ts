@@ -104,6 +104,9 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'transactions.syncError': 'Não foi possível sincronizar com o Plaid.',
 
     'table.date': 'Data',
+    'table.pending': 'Pendente',
+    'table.internalTransfer': 'Transferência',
+    'table.internalTransferHint': 'Pagamento de fatura ou transferência entre suas contas: não entra nos totais de gastos e receitas.',
     'table.description': 'Descrição',
     'table.account': 'Conta',
     'table.category': 'Categoria',
@@ -339,6 +342,9 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'transactions.syncError': 'Could not sync with Plaid.',
 
     'table.date': 'Date',
+    'table.pending': 'Pending',
+    'table.internalTransfer': 'Transfer',
+    'table.internalTransferHint': 'Card payment or transfer between your own accounts: not counted in spending and income totals.',
     'table.description': 'Description',
     'table.account': 'Account',
     'table.category': 'Category',
@@ -575,6 +581,9 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'transactions.syncError': 'No se pudo sincronizar con Plaid.',
 
     'table.date': 'Fecha',
+    'table.pending': 'Pendiente',
+    'table.internalTransfer': 'Transferencia',
+    'table.internalTransferHint': 'Pago de tarjeta o transferencia entre tus cuentas: no cuenta en los totales de gastos e ingresos.',
     'table.description': 'Descripción',
     'table.account': 'Cuenta',
     'table.category': 'Categoría',
