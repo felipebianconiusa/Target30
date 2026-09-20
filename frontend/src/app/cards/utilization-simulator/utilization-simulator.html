@@ -1,0 +1,67 @@
+<div class="util-sim">
+  <h2 class="util-sim__title">{{ 'utilSim.title' | translate }}</h2>
+  <p class="util-sim__hint">{{ 'utilSim.hint' | translate }}</p>
+
+  <div class="util-sim__bands" role="group">
+    @for (b of bands; track b) {
+      <button
+        type="button"
+        class="util-sim__band"
+        [class.util-sim__band--active]="band() === b"
+        (click)="setBand(b)"
+      >
+        {{ 'utilSim.band' | translate: { percent: b } }}
+      </button>
+    }
+  </div>
+
+  @if (plan(); as p) {
+    @if (p.cards.length === 0) {
+      <p class="util-sim__muted">{{ 'utilSim.none' | translate }}</p>
+    } @else {
+      <table class="util-sim__table">
+        <thead>
+          <tr>
+            <th>{{ 'utilSim.card' | translate }}</th>
+            <th class="util-sim__num">{{ 'utilSim.now' | translate }}</th>
+            <th class="util-sim__num">{{ 'utilSim.pay' | translate }}</th>
+            <th class="util-sim__num">{{ 'utilSim.after' | translate }}</th>
+            <th>{{ 'utilSim.payBy' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of p.cards; track c.accountId) {
+            <tr>
+              <td>{{ cardLabel(c.nickname, c.name) }}</td>
+              <td class="util-sim__num">{{ c.utilizationBefore }}%</td>
+              <td class="util-sim__num" [class.util-sim__pay]="c.toPay > 0">
+                {{ c.toPay > 0 ? formatCurrency(c.toPay) : '—' }}
+              </td>
+              <td class="util-sim__num">{{ c.utilizationAfter }}%</td>
+              <td>{{ c.payBy ?? '—' }}</td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>{{ 'utilSim.total' | translate }}</td>
+            <td class="util-sim__num">{{ p.overallBefore ?? '—' }}%</td>
+            <td class="util-sim__num util-sim__pay">{{ formatCurrency(p.totalToPay) }}</td>
+            <td class="util-sim__num">{{ p.overallAfter ?? '—' }}%</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    }
+
+    @if (p.skippedWithoutLimit.length > 0) {
+      <p class="util-sim__muted">
+        {{ 'utilSim.skipped' | translate }}
+        @for (s of p.skippedWithoutLimit; track s.accountId; let last = $last) {
+          {{ cardLabel(s.nickname, s.name) }}{{ last ? '' : ',' }}
+        }
+      </p>
+    }
+    <p class="util-sim__muted">{{ 'utilSim.assumption' | translate }}</p>
+  }
+</div>

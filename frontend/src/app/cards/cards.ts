@@ -13,10 +13,11 @@ import { LOCALE_BY_LANG } from '../i18n/translations';
 import { buildGoogleCalendarLink } from '../shared/google-calendar-link';
 import { cardLabel } from '../shared/card-label';
 import { CardSetup } from './card-setup/card-setup';
+import { UtilizationSimulator } from './utilization-simulator/utilization-simulator';
 
 @Component({
   selector: 'app-cards',
-  imports: [TranslatePipe, NgTemplateOutlet, CardSetup],
+  imports: [TranslatePipe, NgTemplateOutlet, CardSetup, UtilizationSimulator],
   templateUrl: './cards.html',
   styleUrl: './cards.scss',
 })

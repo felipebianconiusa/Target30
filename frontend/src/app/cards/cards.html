@@ -15,6 +15,8 @@
   } @else {
     <app-card-setup [cards]="cards()" (saved)="load()" />
 
+    <app-utilization-simulator />
+
     @if (owners().length > 0) {
       <div class="cards-owner-filter">
         <label>

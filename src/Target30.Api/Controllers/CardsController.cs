@@ -239,6 +239,30 @@ public class CardsController : ControllerBase
     // pagamento pra bater a meta — priorizando primeiro quem fecha mais cedo, depois quem
     // está mais acima da meta. Não considera juros/APR: o objetivo aqui é credit score
     // (utilização), não economia de juros.
+    // Simulador: quanto pagar em cada cartão pra utilização reportada ficar em `target`% (ex.: 30,
+    // 10 ou 9), mais a utilização geral antes/depois.
+    [HttpGet("utilization-plan")]
+    public async Task<IActionResult> GetUtilizationPlan([FromQuery] decimal target = 30)
+    {
+        var settings = await GetOrCreateSettingsAsync();
+        var accounts = await _db.PlaidAccounts
+            .Where(a => a.UserId == CurrentUserId && a.Type == "Credit")
+            .ToListAsync();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var simulation = UtilizationSimulator.Simulate(
+            accounts.Select(a => (Account: a, Projection: CardMath.Compute(a, settings.GlobalTargetUtilizationPercent, today))),
+            target);
+
+        return Ok(new UtilizationPlanDto(
+            simulation.TargetPercent,
+            simulation.Cards.Select(c => new UtilizationPlanCardDto(
+                c.Account.AccountId, c.Account.Name, c.Account.Nickname, c.Account.InstitutionName, c.Account.Owner,
+                c.Balance, c.Limit, c.UtilizationBefore, c.ToPay, c.UtilizationAfter, c.NextClosingDate, c.PayBy, c.DaysUntilPayBy)).ToList(),
+            simulation.SkippedWithoutLimit.Select(a => new UtilizationPlanSkippedDto(a.AccountId, a.Name, a.Nickname, a.InstitutionName)).ToList(),
+            simulation.TotalToPay, simulation.OverallBefore, simulation.OverallAfter));
+    }
+
     [HttpPost("payoff-plan")]
     public async Task<IActionResult> GetPayoffPlan([FromBody] PayoffPlanRequest request)
     {
@@ -387,3 +411,18 @@ public record PayoffPlanResponseDto(
     decimal AllocatedTotal,
     decimal RemainingUnallocated,
     IReadOnlyList<PayoffAllocationDto> Allocations);
+
+public record UtilizationPlanCardDto(
+    string AccountId, string Name, string? Nickname, string? InstitutionName, string? Owner,
+    decimal Balance, decimal Limit, decimal UtilizationBefore, decimal ToPay, decimal UtilizationAfter,
+    DateOnly? NextClosingDate, DateOnly? PayBy, int? DaysUntilPayBy);
+
+public record UtilizationPlanSkippedDto(string AccountId, string Name, string? Nickname, string? InstitutionName);
+
+public record UtilizationPlanDto(
+    decimal TargetPercent,
+    IReadOnlyList<UtilizationPlanCardDto> Cards,
+    IReadOnlyList<UtilizationPlanSkippedDto> SkippedWithoutLimit,
+    decimal TotalToPay,
+    decimal? OverallBefore,
+    decimal? OverallAfter);

@@ -79,6 +79,31 @@ export interface BestCardResponse {
   excluded: BestCard[];
 }
 
+export interface UtilizationPlanCard {
+  accountId: string;
+  name: string;
+  nickname: string | null;
+  institutionName: string | null;
+  owner: string | null;
+  balance: number;
+  limit: number;
+  utilizationBefore: number;
+  toPay: number;
+  utilizationAfter: number;
+  nextClosingDate: string | null;
+  payBy: string | null;
+  daysUntilPayBy: number | null;
+}
+
+export interface UtilizationPlan {
+  targetPercent: number;
+  cards: UtilizationPlanCard[];
+  skippedWithoutLimit: { accountId: string; name: string; nickname: string | null; institutionName: string | null }[];
+  totalToPay: number;
+  overallBefore: number | null;
+  overallAfter: number | null;
+}
+
 export interface PayoffAllocation {
   accountId: string;
   name: string;
@@ -131,6 +156,10 @@ export class CardsService {
 
   getBestCardToday(): Observable<BestCardResponse> {
     return this.http.get<BestCardResponse>('/api/cards/best-today');
+  }
+
+  getUtilizationPlan(target: number): Observable<UtilizationPlan> {
+    return this.http.get<UtilizationPlan>('/api/cards/utilization-plan', { params: { target } });
   }
 
   getPayoffPlan(availableAmount: number): Observable<PayoffPlan> {
