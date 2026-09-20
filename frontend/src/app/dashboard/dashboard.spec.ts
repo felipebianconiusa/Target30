@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { describe, beforeEach, expect, it } from 'vitest';
 import { Dashboard } from './dashboard';
 import { Budget } from './budgets.service';
@@ -17,7 +18,7 @@ describe('Dashboard', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Dashboard],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Dashboard);
@@ -50,6 +51,40 @@ describe('Dashboard', () => {
         recentTransactions: [],
       });
       expect(component.net()).toBe(200);
+    });
+  });
+
+  describe('stale data banner', () => {
+    function render(): HTMLElement {
+      component.loading.set(false);
+      component.itemCount.set(1);
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    const bank = (status: 'ok' | 'stale' | 'attention') => ({
+      itemId: 'i1',
+      institutionName: 'Bank of America',
+      plaidLastSuccessfulUpdate: null,
+      plaidLastFailedUpdate: null,
+      errorCode: null,
+      lastRefreshRequestedAt: null,
+      status,
+    });
+
+    it('warns about a bank whose Plaid data is stale', () => {
+      component.staleBanks.set([bank('stale')]);
+
+      const el = render();
+
+      expect(el.querySelector('.dashboard__stale')?.textContent).toContain('Bank of America');
+      expect(el.querySelector('.dashboard__stale')?.textContent).toContain('mais de um dia');
+    });
+
+    it('shows nothing when every bank is fresh', () => {
+      component.staleBanks.set([]);
+
+      expect(render().querySelector('.dashboard__stale')).toBeNull();
     });
   });
 });

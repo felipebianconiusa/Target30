@@ -23,6 +23,8 @@ export interface PlaidItemFreshness {
   plaidLastFailedUpdate: string | null;
   errorCode: string | null;
   lastRefreshRequestedAt: string | null;
+  status: 'ok' | 'stale' | 'attention';
+  institutionName: string | null;
 }
 
 export interface PlaidRefreshResult {

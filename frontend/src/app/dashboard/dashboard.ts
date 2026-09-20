@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { PlaidService, Transaction, TransactionsSummary } from '../plaid.service';
+import { PlaidItemFreshness, PlaidService, Transaction, TransactionsSummary } from '../plaid.service';
 import { BestCard, Card, CardsService } from '../cards/cards.service';
 import { Budget, BudgetsService } from './budgets.service';
 import { DashboardService, HealthScore, MonthlyComparisonRow } from './dashboard.service';
@@ -49,6 +49,8 @@ export class Dashboard implements OnInit {
 
   protected readonly cardLabel = cardLabel;
   protected readonly bestCard = signal<BestCard | null>(null);
+  // Bancos cujos dados no Plaid estão velhos ou com erro (informativo: falha ao consultar = sem aviso).
+  protected readonly staleBanks = signal<PlaidItemFreshness[]>([]);
   protected readonly healthScore = signal<HealthScore | null>(null);
   protected readonly monthlyComparison = signal<MonthlyComparisonRow[]>([]);
   protected readonly showComparison = signal(false);
@@ -153,6 +155,10 @@ export class Dashboard implements OnInit {
 
   private load(): void {
     this.loadBudgets();
+    this.plaidService.getItemsFreshness().subscribe({
+      next: (list) => this.staleBanks.set(list.filter((f) => f.status !== 'ok')),
+      error: () => undefined,
+    });
     this.cardsService.getBestCardToday().subscribe((best) => this.bestCard.set(best.recommended));
     this.dashboardService.getHealthScore().subscribe((score) => this.healthScore.set(score));
     this.dashboardService.getMonthlyComparison().subscribe((rows) => this.monthlyComparison.set(rows));

@@ -17,4 +17,8 @@ public class PlaidItem
     // Quando foi o último "atualizar agora" (/transactions/refresh, cobrado por chamada pelo
     // Plaid). Guardado no banco pra a trava de segurança sobreviver a reinício da API.
     public DateTime? LastRefreshRequestedAt { get; set; }
+
+    // Quando avisamos por email que os dados desse banco ficaram velhos (DataFreshness). Zerado
+    // quando volta ao normal, pra um próximo problema avisar de novo.
+    public DateTime? LastStaleAlertSentAt { get; set; }
 }

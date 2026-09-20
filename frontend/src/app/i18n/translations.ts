@@ -227,6 +227,10 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'dashboard.cardAlertLine': '{name}: pague {amount} até {date} ({days} dias)',
     'dashboard.viewCards': 'Ver cartões →',
     'dashboard.viewBestCards': 'Ver todos →',
+    'dashboard.staleTitle': 'Dados possivelmente desatualizados',
+    'dashboard.staleOld': 'o Plaid não busca dados novos há mais de um dia.',
+    'dashboard.staleAttention': 'a conexão precisa de atenção.',
+    'dashboard.staleLink': 'Ver em Contas →',
 
     'cashflow.title': 'Fluxo de Caixa',
     'cashflow.downloadReport': 'Baixar CSV',
@@ -465,6 +469,10 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'dashboard.cardAlertLine': '{name}: pay {amount} by {date} ({days} days)',
     'dashboard.viewCards': 'View cards →',
     'dashboard.viewBestCards': 'See all →',
+    'dashboard.staleTitle': 'Data may be out of date',
+    'dashboard.staleOld': 'Plaid has not fetched new data in over a day.',
+    'dashboard.staleAttention': 'the connection needs attention.',
+    'dashboard.staleLink': 'See in Accounts →',
 
     'cashflow.title': 'Cash Flow',
     'cashflow.downloadReport': 'Download CSV',
@@ -704,6 +712,10 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     'dashboard.cardAlertLine': '{name}: paga {amount} antes del {date} ({days} días)',
     'dashboard.viewCards': 'Ver tarjetas →',
     'dashboard.viewBestCards': 'Ver todas →',
+    'dashboard.staleTitle': 'Datos posiblemente desactualizados',
+    'dashboard.staleOld': 'Plaid no obtiene datos nuevos hace más de un día.',
+    'dashboard.staleAttention': 'la conexión necesita atención.',
+    'dashboard.staleLink': 'Ver en Cuentas →',
 
     'cashflow.title': 'Flujo de Caja',
     'cashflow.downloadReport': 'Descargar CSV',

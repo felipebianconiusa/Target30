@@ -22,6 +22,21 @@
       </button>
     </div>
 
+    @if (staleBanks().length > 0) {
+      <div class="dashboard__alert dashboard__stale">
+        <h2>{{ 'dashboard.staleTitle' | translate }}</h2>
+        <ul>
+          @for (bank of staleBanks(); track bank.itemId) {
+            <li>
+              <strong>{{ bank.institutionName ?? ('accounts.unnamedInstitution' | translate) }}</strong>
+              — {{ (bank.status === 'attention' ? 'dashboard.staleAttention' : 'dashboard.staleOld') | translate }}
+            </li>
+          }
+        </ul>
+        <a routerLink="/accounts">{{ 'dashboard.staleLink' | translate }}</a>
+      </div>
+    }
+
     @if (bestCard(); as best) {
       <div class="dashboard__best-card">
         <span>{{ 'cards.bestToday' | translate }}:</span>

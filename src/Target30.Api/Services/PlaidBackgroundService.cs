@@ -1,3 +1,5 @@
+using Going.Plaid;
+using Going.Plaid.Item;
 using Microsoft.EntityFrameworkCore;
 using Target30.Api;
 using Target30.Api.Data;
@@ -64,10 +66,64 @@ public class PlaidBackgroundService : BackgroundService
             }
         }
 
+        await SendStaleDataAlertsAsync(db, emailSender, scope.ServiceProvider.GetRequiredService<PlaidClient>());
         await SendAlertsAsync(db, emailSender);
         await SendWeeklyDigestsAsync(db, emailSender);
         await SendBudgetAlertsAsync(db, emailSender);
         await SendSubscriptionPriceChangeAlertsAsync(db, emailSender);
+    }
+
+    // Avisa por email quando o Plaid deixa de atualizar um banco (dado velho ou conexão com
+    // erro). Um email por problema (DataFreshness.ShouldAlert), não a cada sync. /item/get é grátis.
+    private async Task SendStaleDataAlertsAsync(Target30DbContext db, IEmailSender emailSender, PlaidClient client)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var items = await db.PlaidItems.ToListAsync();
+        var problemsByUser = new Dictionary<string, List<(PlaidItem Item, FreshnessStatus Status, DateTimeOffset? Last)>>();
+
+        foreach (var item in items)
+        {
+            try
+            {
+                var r = await client.ItemGetAsync(new ItemGetRequest { AccessToken = item.AccessToken });
+                var tx = r.Status?.Transactions;
+                var status = DataFreshness.Evaluate(
+                    tx?.LastSuccessfulUpdate, tx?.LastFailedUpdate, r.Error?.ErrorCode ?? r.Item?.Error?.ErrorCode, now);
+
+                if (status == FreshnessStatus.Ok)
+                {
+                    item.LastStaleAlertSentAt = null;
+                    continue;
+                }
+
+                if (!DataFreshness.ShouldAlert(status, item.LastStaleAlertSentAt))
+                    continue;
+
+                if (!problemsByUser.TryGetValue(item.UserId, out var list))
+                    problemsByUser[item.UserId] = list = [];
+                list.Add((item, status, tx?.LastSuccessfulUpdate));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Não foi possível checar a atualização do item {ItemId}", item.ItemId);
+            }
+        }
+
+        foreach (var (userId, problems) in problemsByUser)
+        {
+            var settings = await db.UserSettings.FirstOrDefaultAsync(s => s.UserId == userId);
+            if (settings is null || !settings.NotificationsEnabled || string.IsNullOrWhiteSpace(settings.Email))
+                continue;
+
+            var body = DataFreshness.BuildAlertBody(
+                problems.Select(p => (p.Item.InstitutionName ?? "Banco", p.Status, p.Last)), now);
+            await emailSender.SendAsync(settings.Email!, "Target30: dados de um banco podem estar desatualizados", body);
+
+            foreach (var p in problems)
+                p.Item.LastStaleAlertSentAt = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync();
     }
 
     private static async Task SendAlertsAsync(Target30DbContext db, IEmailSender emailSender)

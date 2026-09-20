@@ -116,14 +116,16 @@ public class PlaidController : ControllerBase
             {
                 var r = await _client.ItemGetAsync(new ItemGetRequest { AccessToken = item.AccessToken });
                 var tx = r.Status?.Transactions;
+                var errorCode = r.Error?.ErrorCode ?? r.Item?.Error?.ErrorCode;
+                var status = DataFreshness.Evaluate(tx?.LastSuccessfulUpdate, tx?.LastFailedUpdate, errorCode, DateTimeOffset.UtcNow);
                 return new PlaidItemFreshnessDto(
                     item.ItemId, tx?.LastSuccessfulUpdate, tx?.LastFailedUpdate,
-                    r.Error?.ErrorCode ?? r.Item?.Error?.ErrorCode, item.LastRefreshRequestedAt);
+                    errorCode, item.LastRefreshRequestedAt, status.ToApiString(), item.InstitutionName);
             }
             catch
             {
                 // Indicador informativo: se o Plaid não responder, só fica sem a informação.
-                return new PlaidItemFreshnessDto(item.ItemId, null, null, null, item.LastRefreshRequestedAt);
+                return new PlaidItemFreshnessDto(item.ItemId, null, null, null, item.LastRefreshRequestedAt, "ok", item.InstitutionName);
             }
         }));
 
@@ -404,6 +406,8 @@ public record PlaidItemFreshnessDto(
     DateTimeOffset? PlaidLastSuccessfulUpdate,
     DateTimeOffset? PlaidLastFailedUpdate,
     string? ErrorCode,
-    DateTime? LastRefreshRequestedAt);
+    DateTime? LastRefreshRequestedAt,
+    string Status = "ok",
+    string? InstitutionName = null);
 
 public record PlaidRefreshResultDto(bool Updated, DateTimeOffset? PlaidLastSuccessfulUpdate);
